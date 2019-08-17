@@ -1,5 +1,8 @@
 use neon::prelude::*;
 use emerald_rs::storage::AccountInfo;
+use std::str::FromStr;
+use hex::FromHex;
+use js::*;
 
 pub struct AccountData {
     pub address: String,
