@@ -9,11 +9,12 @@
     "neon-cli": "^0.2.0"
   },
   "scripts": {
-    "clean": "rimraf lib",
     "build:rs": "neon build --release",
     "build:ts": "tsc",
     "build": "npm run clean && npm run build:rs && npm run build:ts",
     "test": "jest",
+    "clean:test": "rimraf testdata/tmp-*",
+    "clean": "rimraf lib && npm run clean:test",
     "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata"
   },
   "devDependencies": {

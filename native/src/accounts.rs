@@ -1,5 +1,14 @@
 use neon::prelude::*;
 use emerald_rs::storage::AccountInfo;
+use emerald_rs::keystore::{
+    KeyFile, CoreCrypto, KdfParams, Cipher, Kdf, Mac, Prf, CryptoType, Salt
+};
+use emerald_rs::{Address, to_32bytes, to_16bytes};
+use emerald_rs::keystore::serialize::crypto::{CipherParams, Iv};
+use uuid::Uuid;
+use std::str::FromStr;
+use hex::FromHex;
+use js::*;
 
 pub struct AccountData {
     pub address: String,
