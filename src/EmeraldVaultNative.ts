@@ -1,6 +1,11 @@
 import {Config, Account} from './types';
 var addon = require('../native');
 
+export type Update = {
+    name?: string | null,
+    description?: string | null
+}
+
 export class EmeraldVaultNative {
     private conf: Config;
 
@@ -21,5 +26,10 @@ export class EmeraldVaultNative {
     exportAccount(chain: string, address: string): any {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return JSON.parse(addon.exportAccount(opts, address));
+    }
+
+    updateAccount(chain: string, address: string, update: Update): boolean {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.updateAccount(opts, address, JSON.stringify(update));
     }
 }
