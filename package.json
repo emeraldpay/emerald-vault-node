@@ -12,10 +12,11 @@
     "build:rs": "neon build --release",
     "build:ts": "tsc",
     "build": "npm run clean && npm run build:rs && npm run build:ts",
-    "test": "jest",
+    "test": "npm run clean:test && npm run unpack:all && jest",
     "clean:test": "rimraf testdata/tmp-*",
     "clean": "rimraf lib && npm run clean:test",
-    "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata"
+    "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
+    "unpack:all": "npm run unpack:0.26-basic"
   },
   "devDependencies": {
     "typescript": "3.4.2",

@@ -17,4 +17,9 @@ export class EmeraldVaultNative {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.importAccount(opts, JSON.stringify(data)).id;
     }
+
+    exportAccount(chain: string, address: string): any {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return JSON.parse(addon.exportAccount(opts, address));
+    }
 }

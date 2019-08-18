@@ -19,3 +19,5 @@ neon = "0.2.0"
 emerald-rs = { path = "../../emerald-rs/emerald-core"}
 uuid = "0.5.1"
 hex = "0.3.2"
+serde = "1.0"
+serde_json = "1.0"
