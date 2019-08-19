@@ -6,6 +6,16 @@ export type Update = {
     description?: string | null
 }
 
+export type UnsignedTx = {
+    from: string,
+    to: string,
+    gas: string,
+    gasPrice: string,
+    value: string,
+    data?: string | null,
+    nonce: string,
+}
+
 export class EmeraldVaultNative {
     private conf: Config;
 
@@ -31,5 +41,10 @@ export class EmeraldVaultNative {
     updateAccount(chain: string, address: string, update: Update): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.updateAccount(opts, address, JSON.stringify(update));
+    }
+
+    signTx(chain: string, tx: UnsignedTx, password: string): boolean {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.signTx(opts, JSON.stringify(tx), password);
     }
 }

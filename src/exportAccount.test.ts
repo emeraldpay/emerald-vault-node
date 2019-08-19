@@ -50,3 +50,18 @@ describe('Test export JSON', () => {
     });
 
 });
+
+describe('Test export from vault-0.26', () => {
+
+    const vault = new EmeraldVaultNative({
+        dir: "./testdata/vault-0.26-basic"
+    });
+
+    test("export 6412c428", () => {
+        let current = vault.exportAccount("eth", "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+        expect(current.address).toBe("3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+        expect(current.name).toBe("foo bar");
+        expect(current.description).toBe("teßt account #1");
+    });
+
+});
