@@ -17,7 +17,8 @@
     "clean:test": "rimraf testdata/tmp-*",
     "clean": "rimraf lib && npm run clean:test",
     "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
-    "unpack:all": "npm run unpack:0.26-basic"
+    "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
+    "unpack:all": "npm run unpack:0.26-basic && npm run unpack:0.26-book"
   },
   "devDependencies": {
     "typescript": "3.4.2",

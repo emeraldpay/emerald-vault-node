@@ -178,6 +178,41 @@ fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(result)
 }
 
+fn list_address_book(mut cx: FunctionContext) -> JsResult<JsArray> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let chain_code = cfg.chain.clone();
+    let storage = cfg.get_storage();
+
+    let storage = storage.get_addressbook(chain_code.get_code().as_str())
+        .expect("Unable to access address book");
+    let list = storage.list();
+    let result = JsArray::new(&mut cx, list.len() as u32);
+    for (i, e) in list.iter().enumerate() {
+        let book_js = JsObject::new(&mut cx);
+        let handle = cx.string(e.get("address")
+            .expect("Address not set").as_str()
+            .expect("Address is not string"));
+        book_js.set(&mut cx, "address", handle);
+        match e.get("name") {
+            Some(val) => {
+                let val = cx.string(val.as_str().expect("Expect string"));
+                book_js.set(&mut cx, "name", val);
+            },
+            None => {}
+        };
+        match e.get("description") {
+            Some(val) => {
+                let val = cx.string(val.as_str().expect("Expect string"));
+                book_js.set(&mut cx, "description", val);
+            },
+            None => {}
+        };
+
+        result.set(&mut cx, i as u32, book_js).unwrap();
+    };
+    Ok(result)
+}
+
 register_module!(mut cx, {
     cx.export_function("listAccounts", list_accounts);
     cx.export_function("importAccount", import_account);
@@ -185,5 +220,6 @@ register_module!(mut cx, {
     cx.export_function("updateAccount", update_account);
     cx.export_function("signTx", sign_tx);
     cx.export_function("importMnemonic", import_mnemonic);
+    cx.export_function("listAddressBook", list_address_book);
     Ok(())
 });

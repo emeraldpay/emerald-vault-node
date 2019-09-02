@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
-describe('Test vault 0.26', () => {
+describe('Test vault 0.26 basic', () => {
 
     let vault;
     beforeAll(() => {

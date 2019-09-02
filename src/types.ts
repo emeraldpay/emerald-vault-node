@@ -32,3 +32,9 @@ export type ImportMnemonic = {
     mnemonic: string,
     hdPath: string,
 }
+
+export type AddressBookItem = {
+    address: string,
+    description?: string,
+    name?: string
+}
