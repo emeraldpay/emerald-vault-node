@@ -13,7 +13,7 @@ mod js;
 
 use neon::prelude::*;
 use accounts::*;
-use access::{VaultConfig};
+use access::{VaultConfig, Vault};
 use emerald_rs::{
     Address,
     Transaction,
@@ -36,12 +36,10 @@ use js::*;
 use std::str::FromStr;
 
 fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
+    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
-    let storage = cfg.get_storage();
-    let ks = storage.get_keystore(&cfg.chain.get_path_element())
-        .expect("Keyfile Storage not opened");
-    let accounts = ks.list_accounts(false)
-        .expect("No accounts loaded");
+    let vault = Vault::new(cfg);
+    let accounts = vault.list_accounts();
 
     let result = JsArray::new(&mut cx, accounts.len() as u32);
     for (i, e) in accounts.iter().map(|acc| AccountData::from(acc)).enumerate() {
@@ -53,14 +51,13 @@ fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
 }
 
 fn import_account(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
-    let storage = cfg.get_storage();
-    let ks = storage.get_keystore(&cfg.chain.get_path_element())
-        .expect("Keyfile Storage not opened");
+    let vault = Vault::new(cfg);
 
     let raw = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
     let pk = KeyFile::decode(raw.as_str()).expect("Invalid JSON");
-    ks.put(&pk);
+    vault.put(&pk);
 
     let result = JsObject::new(&mut cx);
     let id_handle = cx.string(pk.uuid.to_string());
@@ -70,16 +67,14 @@ fn import_account(mut cx: FunctionContext) -> JsResult<JsObject> {
 }
 
 fn export_account(mut cx: FunctionContext) -> JsResult<JsString> {
+    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
-    let storage = cfg.get_storage();
-    let ks = storage.get_keystore(&cfg.chain.get_path_element())
-        .expect("Keyfile Storage not opened");
+    let vault = Vault::new(cfg);
 
-    let address = cx.argument::<JsString>(1).unwrap().value();
+    let address_js = cx.argument::<JsString>(1).unwrap().value();
+    let address = Address::from_str(address_js.as_str()).expect("Invalid address");
 
-    let addr = Address::from_str(address.as_str()).expect("Invalid address");
-
-    let (_, kf) = ks.search_by_address(&addr).expect("Address not found");
+    let kf= vault.get(&address);
     let value = serde_json::to_value(&kf).expect("Failed to encode JSON");
     let value_js = cx.string(format!("{}", value));
 
@@ -87,14 +82,13 @@ fn export_account(mut cx: FunctionContext) -> JsResult<JsString> {
 }
 
 fn update_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
+    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
-    let storage = cfg.get_storage();
-    let ks = storage.get_keystore(&cfg.chain.get_path_element())
-        .expect("Keyfile Storage not opened");
+    let vault = Vault::new(cfg);
 
     let address_str = cx.argument::<JsString>(1).unwrap().value();
     let address = Address::from_str(address_str.as_str()).expect("Invalid address");
-    let (_, mut kf) = ks.search_by_address(&address).expect("Address not found");
+    let mut kf = vault.get(&address);
 
     let update_js = cx.argument::<JsString>(2).unwrap().value();
     let update = serde_json::from_str::<UpdateAccount>(update_js.as_str())
@@ -102,24 +96,24 @@ fn update_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
 
     kf.name = update.name.or(kf.name);
     kf.description = update.description.or(kf.description);
-    ks.put(&kf);
+    vault.put(&kf);
 
     let result = cx.boolean(true);
     Ok(result)
 }
 
 fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
+    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
-    let storage = cfg.get_storage();
-    let ks = storage.get_keystore(&cfg.chain.get_path_element())
-        .expect("Keyfile Storage not opened");
+    let chain_id = cfg.chain.get_chain_id();
+    let vault = Vault::new(cfg);
 
     let sign_js = cx.argument::<JsString>(1).unwrap().value();
     let sign = serde_json::from_str::<SignTxTransaction>(sign_js.as_str())
         .expect("Invalid sign JSON");
 
     let address = Address::from_str(sign.from.as_str()).expect("Invalid from address");
-    let (_, mut kf) = ks.search_by_address(&address).expect("Address not found");
+    let kf= vault.get(&address);
 
     let raw_hex = match kf.crypto {
         CryptoType::Core(_) => {
@@ -127,7 +121,7 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
 
             let tr = sign.try_into().expect("Invalid sign JSON");
             let pk = kf.decrypt_key(&pass).expect("Invalid password");
-            let raw_tx = tr.to_signed_raw(pk, cfg.chain.get_chain_id()).expect("Expect to sign a transaction");
+            let raw_tx = tr.to_signed_raw(pk, chain_id).expect("Expect to sign a transaction");
             format!("0x{}", raw_tx.to_hex())
         }
         _ => panic!("Unsupported crypto")
