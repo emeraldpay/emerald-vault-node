@@ -25,11 +25,15 @@ use emerald_rs::{
         keyfile::{KeystoreError}
     },
     keystore::{
-        KeyFile, CryptoType
+        KeyFile, CryptoType, KdfDepthLevel, Kdf, os_random
     },
     util::{
         ToHex
-    }
+    },
+    mnemonic::{
+        Mnemonic, HDPath, Language, generate_key
+    },
+    rpc::common::NewMnemonicAccount
 };
 use std::path::{Path, PathBuf};
 use js::*;
@@ -132,11 +136,54 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
     Ok(value_js)
 }
 
+fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let guard = cx.lock();
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = Vault::new(cfg);
+
+    let raw = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
+    let account: NewMnemonicAccount = serde_json::from_str(&raw).expect("Invalid JSON");
+
+    if account.password.is_empty() {
+        panic!("Empty password");
+    }
+
+    let mnemonic = Mnemonic::try_from(Language::English, &account.mnemonic).expect("Mnemonic is not valid");
+    let hd_path = HDPath::try_from(&account.hd_path).expect("HDPath is not valid");
+    let pk = generate_key(&hd_path, &mnemonic.seed("")).expect("Unable to generate private key");
+
+    let kdf = if cfg!(target_os = "windows") {
+        Kdf::from_str("pbkdf").expect("PBKDF not available")
+    } else {
+        Kdf::from(KdfDepthLevel::Normal)
+    };
+
+    let mut rng = os_random();
+    let kf = KeyFile::new_custom(
+        pk,
+        &account.password,
+        kdf,
+        &mut rng,
+        Some(account.name),
+        Some(account.description),
+    ).expect("Unable to generate KeyFile");
+
+    let addr = kf.address.to_string();
+    vault.put(&kf);
+
+    let result = JsObject::new(&mut cx);
+    let id_handle = cx.string(kf.uuid.to_string());
+    result.set(&mut cx, "id", id_handle);
+
+    Ok(result)
+}
+
 register_module!(mut cx, {
     cx.export_function("listAccounts", list_accounts);
     cx.export_function("importAccount", import_account);
     cx.export_function("exportAccount", export_account);
     cx.export_function("updateAccount", update_account);
     cx.export_function("signTx", sign_tx);
+    cx.export_function("importMnemonic", import_mnemonic);
     Ok(())
 });

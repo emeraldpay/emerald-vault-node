@@ -1,20 +1,5 @@
-import {Config, Account} from './types';
+import {Config, Account, UnsignedTx, Update, ImportMnemonic} from './types';
 var addon = require('../native');
-
-export type Update = {
-    name?: string | null,
-    description?: string | null
-}
-
-export type UnsignedTx = {
-    from: string,
-    to: string,
-    gas: string,
-    gasPrice: string,
-    value: string,
-    data?: string | null,
-    nonce: string,
-}
 
 export class EmeraldVaultNative {
     private conf: Config;
@@ -46,5 +31,10 @@ export class EmeraldVaultNative {
     signTx(chain: string, tx: UnsignedTx, password: string): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.signTx(opts, JSON.stringify(tx), password);
+    }
+
+    importMnemonic(chain: string, mnemonic: ImportMnemonic): string {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.importMnemonic(opts, JSON.stringify(mnemonic)).id;
     }
 }
