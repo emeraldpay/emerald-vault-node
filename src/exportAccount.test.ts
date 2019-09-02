@@ -2,10 +2,11 @@ import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
 describe('Test export JSON', () => {
 
-    //../emerald-rs/target/release/emerald-vault --chain eth -p ./testdata/tmp-import-json account list
-
-    const vault = new EmeraldVaultNative({
-        dir: "./testdata/tmp-export-json"
+    let vault;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative({
+            dir: "./testdata/tmp-export-json"
+        });
     });
 
     test("errors for unknown account", () => {
@@ -53,8 +54,11 @@ describe('Test export JSON', () => {
 
 describe('Test export from vault-0.26', () => {
 
-    const vault = new EmeraldVaultNative({
-        dir: "./testdata/vault-0.26-basic"
+    let vault;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative({
+            dir: "./testdata/vault-0.26-basic"
+        });
     });
 
     test("export 6412c428", () => {

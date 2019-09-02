@@ -2,8 +2,11 @@ import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
 describe('Test signining', () => {
 
-    const vault = new EmeraldVaultNative({
-        dir: "./testdata/vault-0.26-basic"
+    let vault;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative({
+            dir: "./testdata/vault-0.26-basic"
+        });
     });
 
     test("sign", () => {

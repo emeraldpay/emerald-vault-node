@@ -2,10 +2,11 @@ import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
 describe('Test import JSON', () => {
 
-    //../emerald-rs/target/release/emerald-vault --chain eth -p ./testdata/tmp-import-json account list
-
-    const vault = new EmeraldVaultNative({
-        dir: "./testdata/tmp-import-json"
+    let vault;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative({
+            dir: "./testdata/tmp-import-json"
+        });
     });
 
     test("import 6412c428", () => {

@@ -9,4 +9,5 @@ module.exports = {
   collectCoverageFrom: [
     "src/**/*.ts"
   ],
+  runner: 'jest-serial-runner'
 };

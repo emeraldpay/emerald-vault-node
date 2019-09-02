@@ -2,8 +2,11 @@ import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
 describe('Test update account', () => {
 
-    const vault = new EmeraldVaultNative({
-        dir: "./testdata/tmp-update"
+    let vault;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative({
+            dir: "./testdata/tmp-update"
+        });
     });
 
     test("errors for unknown account", () => {
