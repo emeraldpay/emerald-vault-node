@@ -1,12 +1,25 @@
 {
-  "name": "emerald-vault-node",
+  "name": "@emeraldpay/emerald-vault-node",
   "version": "0.1.0-0.26.0",
   "description": "Emerald Vault as NodeJS library",
   "main": "lib/index.js",
-  "author": "Igor Artamonov <igor@artamonov.ru>",
+  "author": "Igor Artamonov <splix@emeraldpay.io>",
   "license": "Apache-2.0",
-  "dependencies": {
-    "neon-cli": "^0.2.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emeraldpay/emerald-vault-node.git"
+  },
+  "files": [
+    "native/index.node",
+    "lib"
+  ],
+  "binary": {
+    "module_name": "index",
+    "host": "https://github.com/emeraldpay/emerald-vault-node/releases/download/",
+    "remote_path": "{version}",
+    "package_name": "{node_abi}-{platform}-{arch}.tar.gz",
+    "module_path": "./native",
+    "pkg_path": "."
   },
   "scripts": {
     "build:rs": "neon build --release",
@@ -18,7 +31,16 @@
     "clean": "rimraf lib && npm run clean:test",
     "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
     "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
-    "unpack:all": "npm run unpack:0.26-basic && npm run unpack:0.26-book"
+    "unpack:all": "npm run unpack:0.26-basic && npm run unpack:0.26-book",
+
+    "install": "node-pre-gyp install --fallback-to-build=false || neon build --release",
+    "package": "node-pre-gyp package",
+    "upload-binary": "node-pre-gyp package && node-pre-gyp-github publish"
+  },
+  "dependencies": {
+    "neon-cli": "^0.2.0",
+    "node-pre-gyp": "amilajack/node-pre-gyp#neon-compat",
+    "node-pre-gyp-github": "^1.4.3"
   },
   "devDependencies": {
     "typescript": "3.4.2",
