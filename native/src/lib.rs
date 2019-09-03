@@ -153,7 +153,7 @@ fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     let pk = generate_key(&hd_path, &mnemonic.seed("")).expect("Unable to generate private key");
 
     let kdf = if cfg!(target_os = "windows") {
-        Kdf::from_str("pbkdf").expect("PBKDF not available")
+        Kdf::from_str("pbkdf2").expect("PBKDF not available")
     } else {
         Kdf::from(KdfDepthLevel::Normal)
     };
