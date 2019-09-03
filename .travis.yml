@@ -8,8 +8,6 @@ language: node_js
 node_js:
   - node
   - 10
-rust:
-  - stable
 
 cache: cargo
 
@@ -18,7 +16,16 @@ addons:
     packages:
       - libusb-1.0-0-dev
 
+env:
+  global:
+    - PATH="$HOME/.cargo/bin:$PATH"
+    - RUSTFLAGS="-C target-feature=+crt-static"
+    - RUST_BACKTRACE=1
+
 before_install:
+  # Install Rust and Cargo
+  - curl https://sh.rustup.rs -sSf > /tmp/rustup.sh
+  - sh /tmp/rustup.sh -y
   # Install NPM packages
   - node -v
   - npm -v
