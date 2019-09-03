@@ -18,6 +18,9 @@ before_install:
   - sh /tmp/rustup.sh -y
   - export PATH="$HOME/.cargo/bin:$PATH"
   - source "$HOME/.cargo/env"
+  # Compilation dependencies
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libusb-1.0-0-dev
   # Install NPM packages
   - node -v
   - npm -v
