@@ -17,9 +17,10 @@ addons:
       - libusb-1.0-0-dev
 
 env:
-  - PATH="$HOME/.cargo/bin:$PATH"
-  - RUSTFLAGS="-C target-feature=+crt-static"
-  - RUST_BACKTRACE=1
+  global:
+    - PATH="$HOME/.cargo/bin:$PATH"
+    - RUSTFLAGS="-C target-feature=+crt-static"
+    - RUST_BACKTRACE=1
 
 before_install:
   # Install Rust and Cargo
