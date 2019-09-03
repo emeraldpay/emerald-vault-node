@@ -11,10 +11,10 @@ name = "emerald_vault_node"
 crate-type = ["dylib"]
 
 [build-dependencies]
-neon-build = "0.2.0"
+neon-build = "0.3.1"
 
 [dependencies]
-neon = "0.2.0"
+neon = "0.3.1"
 emerald-vault-core = "0.26"
 #emerald-vault-core = { path = "../../emerald-rs/emerald-core"}
 uuid = "0.5.1"
