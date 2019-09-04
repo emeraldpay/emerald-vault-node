@@ -9,7 +9,11 @@ node_js:
   - node
   - 10
 
-cache: cargo
+cache:
+  directories:
+    - $HOME/.cargo
+    - $TRAVIS_BUILD_DIR/native/target
+    - $TRAVIS_BUILD_DIR/node_modules
 
 addons:
   apt:
@@ -29,7 +33,9 @@ before_install:
   # Install NPM packages
   - node -v
   - npm -v
-  - npm install
+
+install:
+  - travis_wait 30 npm install
 
 script:
   - npm test
