@@ -9,20 +9,14 @@ extern crate serde_derive;
 
 mod accounts;
 mod access;
-mod js;
 
 use neon::prelude::*;
 use accounts::*;
 use access::{VaultConfig, Vault};
 use emerald_rs::{
     Address,
-    Transaction,
     rpc::common::{
         SignTxTransaction
-    },
-    storage::{
-        KeyfileStorage, StorageController, default_path,
-        keyfile::{KeystoreError}
     },
     keystore::{
         KeyFile, CryptoType, KdfDepthLevel, Kdf, os_random
@@ -35,12 +29,9 @@ use emerald_rs::{
     },
     rpc::common::NewMnemonicAccount
 };
-use std::path::{Path, PathBuf};
-use js::*;
 use std::str::FromStr;
 
 fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
-    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = Vault::new(cfg);
     let accounts = vault.list_accounts();
@@ -55,7 +46,6 @@ fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
 }
 
 fn import_account(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = Vault::new(cfg);
 
@@ -65,13 +55,12 @@ fn import_account(mut cx: FunctionContext) -> JsResult<JsObject> {
 
     let result = JsObject::new(&mut cx);
     let id_handle = cx.string(pk.uuid.to_string());
-    result.set(&mut cx, "id", id_handle);
+    result.set(&mut cx, "id", id_handle).expect("Failed to set id");
 
     Ok(result)
 }
 
 fn export_account(mut cx: FunctionContext) -> JsResult<JsString> {
-    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = Vault::new(cfg);
 
@@ -86,7 +75,6 @@ fn export_account(mut cx: FunctionContext) -> JsResult<JsString> {
 }
 
 fn update_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
-    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = Vault::new(cfg);
 
@@ -107,7 +95,6 @@ fn update_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
 }
 
 fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
-    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
     let chain_id = cfg.chain.get_chain_id();
     let vault = Vault::new(cfg);
@@ -137,7 +124,6 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
 }
 
 fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let guard = cx.lock();
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = Vault::new(cfg);
 
@@ -168,12 +154,11 @@ fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
         Some(account.description),
     ).expect("Unable to generate KeyFile");
 
-    let addr = kf.address.to_string();
     vault.put(&kf);
 
     let result = JsObject::new(&mut cx);
     let id_handle = cx.string(kf.uuid.to_string());
-    result.set(&mut cx, "id", id_handle);
+    result.set(&mut cx, "id", id_handle).expect("Failed to set id");
 
     Ok(result)
 }
@@ -192,18 +177,23 @@ fn list_address_book(mut cx: FunctionContext) -> JsResult<JsArray> {
         let handle = cx.string(e.get("address")
             .expect("Address not set").as_str()
             .expect("Address is not string"));
-        book_js.set(&mut cx, "address", handle);
+        book_js.set(&mut cx, "address", handle)
+            .expect("Failed to set address");
         match e.get("name") {
             Some(val) => {
-                let val = cx.string(val.as_str().expect("Expect string"));
-                book_js.set(&mut cx, "name", val);
+                let val = cx.string(val.as_str()
+                    .expect("Expect string for the name field"));;
+                book_js.set(&mut cx, "name", val)
+                    .expect("Failed to set name");
             },
             None => {}
         };
         match e.get("description") {
             Some(val) => {
-                let val = cx.string(val.as_str().expect("Expect string"));
-                book_js.set(&mut cx, "description", val);
+                let val = cx.string(val.as_str()
+                    .expect("Expect string for the description field"));
+                book_js.set(&mut cx, "description", val)
+                    .expect("Failed to set description");
             },
             None => {}
         };
@@ -214,12 +204,12 @@ fn list_address_book(mut cx: FunctionContext) -> JsResult<JsArray> {
 }
 
 register_module!(mut cx, {
-    cx.export_function("listAccounts", list_accounts);
-    cx.export_function("importAccount", import_account);
-    cx.export_function("exportAccount", export_account);
-    cx.export_function("updateAccount", update_account);
-    cx.export_function("signTx", sign_tx);
-    cx.export_function("importMnemonic", import_mnemonic);
-    cx.export_function("listAddressBook", list_address_book);
+    cx.export_function("listAccounts", list_accounts).expect("listAccounts not exported");
+    cx.export_function("importAccount", import_account).expect("importAccount not exported");
+    cx.export_function("exportAccount", export_account).expect("exportAccount not exported");
+    cx.export_function("updateAccount", update_account).expect("updateAccount not exported");
+    cx.export_function("signTx", sign_tx).expect("signTx not exported");
+    cx.export_function("importMnemonic", import_mnemonic).expect("importMnemonic not exported");
+    cx.export_function("listAddressBook", list_address_book).expect("listAddressBook not exported");
     Ok(())
 });
