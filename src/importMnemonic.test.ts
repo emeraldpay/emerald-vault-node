@@ -70,4 +70,16 @@ describe('Test import mnemonic', () => {
         expect(current.id).toBe(id);
     });
 
+    test("import 12 words mnemonic", () => {
+        let data = {
+            password: "testtest",
+            hdPath: "m/44'/60'/0'/0/1",
+            mnemonic: "cave math raven foam maze humble leave razor bonus merit leisure rough"
+        };
+        let id = vault.importMnemonic("eth", data);
+        expect(id).toBeDefined();
+        let current = vault.exportAccount("eth", "0xaCeA13E5eB2120c2B42E0EdA0642d846Fa740F51");
+        expect(current.id).toBe(id);
+    });
+
 });
