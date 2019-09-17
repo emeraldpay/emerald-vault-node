@@ -82,4 +82,40 @@ describe('Test import mnemonic', () => {
         expect(current.id).toBe(id);
     });
 
+    test("import 18 words mnemonic", () => {
+        let data = {
+            password: "testtest",
+            hdPath: "m/44'/60'/0'/0/2",
+            mnemonic: "below bird fossil menu slab chalk glow attitude work mammal orphan rose music holiday magic weather beef midnight"
+        };
+        let id = vault.importMnemonic("eth", data);
+        expect(id).toBeDefined();
+        let current = vault.exportAccount("eth", "0x1E728c6d055380b69ac1c0fDC27425158621f109");
+        expect(current.id).toBe(id);
+    });
+
+    test("import 21 words mnemonic", () => {
+        let data = {
+            password: "testtest",
+            hdPath: "m/44'/60'/0'/0/2030",
+            mnemonic: "around force sponsor slender upper cheese gas smile guard similar dog rival select gate fit load upper spread wolf magic marble"
+        };
+        let id = vault.importMnemonic("eth", data);
+        expect(id).toBeDefined();
+        let current = vault.exportAccount("eth", "0x61bfe74D742679902E0Ed88385A1272a9922FFb5");
+        expect(current.id).toBe(id);
+    });
+
+    test("import 24 words mnemonic", () => {
+        let data = {
+            password: "testtest",
+            hdPath: "m/44'/60'/0'/0/1000",
+            mnemonic: "erode youth impose rhythm best obey virtual general essay convince visit truck blanket lucky lizard stadium display hip market hello alley orient parrot blanket"
+        };
+        let id = vault.importMnemonic("eth", data);
+        expect(id).toBeDefined();
+        let current = vault.exportAccount("eth", "0x928560FaEe442342F703dabf04BC98460314B1C8");
+        expect(current.id).toBe(id);
+    });
+
 });
