@@ -25,7 +25,8 @@ use emerald_rs::{
         ToHex
     },
     mnemonic::{
-        Mnemonic, HDPath, Language, generate_key
+        Mnemonic, HDPath, Language, generate_key, gen_entropy,
+        StandardMnemonic, MnemonicSize
     },
     rpc::common::NewMnemonicAccount
 };
@@ -100,7 +101,7 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
     let vault = Vault::new(cfg);
 
     let sign_js = cx.argument::<JsString>(1).unwrap().value();
-    let sign = serde_json::from_str::<SignTxTransaction>(sign_js.as_str())
+    let sign: SignTxTransaction = serde_json::from_str::<SignTxTransaction>(sign_js.as_str())
         .expect("Invalid sign JSON");
 
     let address = Address::from_str(sign.from.as_str()).expect("Invalid from address");
@@ -118,7 +119,20 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
         _ => panic!("Unsupported crypto")
     };
 
-    let value_js = cx.string(format!("{}", raw_hex));
+    let value_js = cx.string(raw_hex);
+
+    Ok(value_js)
+}
+
+fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
+    let size = cx.argument::<JsNumber>(0)
+        .expect("Mnemonic size is not provided").value() as usize;
+
+    let size = MnemonicSize::from_length(size).expect("Invalid mnemonic size");
+    let mnemonic = Mnemonic::new(Language::English, size).expect("Failed to generate mnemonic");
+    let sentence = mnemonic.sentence();
+
+    let value_js = cx.string(sentence);
 
     Ok(value_js)
 }
@@ -136,7 +150,7 @@ fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
 
     let mnemonic = Mnemonic::try_from(Language::English, &account.mnemonic).expect("Mnemonic is not valid");
     let hd_path = HDPath::try_from(&account.hd_path).expect("HDPath is not valid");
-    let pk = generate_key(&hd_path, &mnemonic.seed("")).expect("Unable to generate private key");
+    let pk = generate_key(&hd_path, &mnemonic.seed(None)).expect("Unable to generate private key");
 
     let kdf = if cfg!(target_os = "windows") {
         Kdf::from_str("pbkdf2").expect("PBKDF not available")
@@ -208,8 +222,12 @@ register_module!(mut cx, {
     cx.export_function("importAccount", import_account).expect("importAccount not exported");
     cx.export_function("exportAccount", export_account).expect("exportAccount not exported");
     cx.export_function("updateAccount", update_account).expect("updateAccount not exported");
+
     cx.export_function("signTx", sign_tx).expect("signTx not exported");
+
     cx.export_function("importMnemonic", import_mnemonic).expect("importMnemonic not exported");
+    cx.export_function("generateMnemonic", generate_mnemonic).expect("generateMnemonic not exported");
+
     cx.export_function("listAddressBook", list_address_book).expect("listAddressBook not exported");
     Ok(())
 });

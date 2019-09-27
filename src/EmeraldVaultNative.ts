@@ -38,6 +38,10 @@ export class EmeraldVaultNative {
         return addon.importMnemonic(opts, JSON.stringify(mnemonic)).id;
     }
 
+    generateMnemonic(size: number): string {
+        return addon.generateMnemonic(size);
+    }
+
     listAddressBook(chain: string): AddressBookItem[] {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.listAddressBook(opts);
