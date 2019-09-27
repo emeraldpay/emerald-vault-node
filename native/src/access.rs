@@ -71,4 +71,12 @@ impl Vault {
         let (_, kf) = ks.search_by_address(&addr).expect("Address not found");
         kf
     }
+
+    pub fn remove(&self, addr: &Address) {
+        let storage = &self.cfg.get_storage();
+        let ks = storage.get_keystore(&self.cfg.chain.get_path_element())
+            .expect("Keyfile Storage not opened");
+        ks.delete(&addr).expect("Address not deleted");
+    }
+
 }

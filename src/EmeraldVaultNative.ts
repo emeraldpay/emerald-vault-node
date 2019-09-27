@@ -28,6 +28,11 @@ export class EmeraldVaultNative {
         return addon.updateAccount(opts, address, JSON.stringify(update));
     }
 
+    removeAccount(chain: string, address: string): boolean {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.removeAccount(opts, address);
+    }
+
     signTx(chain: string, tx: UnsignedTx, password: string): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.signTx(opts, JSON.stringify(tx), password);

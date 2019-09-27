@@ -95,6 +95,17 @@ fn update_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
     Ok(result)
 }
 
+fn remove_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = Vault::new(cfg);
+
+    let address_str = cx.argument::<JsString>(1).unwrap().value();
+    let address = Address::from_str(address_str.as_str()).expect("Invalid address");
+    vault.remove(&address);
+    let result = cx.boolean(true);
+    Ok(result)
+}
+
 fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let chain_id = cfg.chain.get_chain_id();
@@ -222,6 +233,7 @@ register_module!(mut cx, {
     cx.export_function("importAccount", import_account).expect("importAccount not exported");
     cx.export_function("exportAccount", export_account).expect("exportAccount not exported");
     cx.export_function("updateAccount", update_account).expect("updateAccount not exported");
+    cx.export_function("removeAccount", remove_account).expect("removeAccount not exported");
 
     cx.export_function("signTx", sign_tx).expect("signTx not exported");
 
