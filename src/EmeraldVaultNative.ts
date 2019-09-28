@@ -8,6 +8,10 @@ export class EmeraldVaultNative {
         this.conf = conf;
     }
 
+    vaultVersion(): string {
+        return "0.26.0"
+    }
+
     listAccounts(chain: string): Array<Account> {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.listAccounts(opts);
@@ -33,7 +37,7 @@ export class EmeraldVaultNative {
         return addon.removeAccount(opts, address);
     }
 
-    signTx(chain: string, tx: UnsignedTx, password: string): boolean {
+    signTx(chain: string, tx: UnsignedTx, password: string): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.signTx(opts, JSON.stringify(tx), password);
     }

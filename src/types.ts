@@ -1,5 +1,5 @@
 export type Config = {
-    dir: string | null
+    dir?: string | null
 }
 
 export type Account = {
