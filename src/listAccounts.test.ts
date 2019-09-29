@@ -34,3 +34,30 @@ describe('Test vault 0.26 basic', () => {
         expect(accounts.length).toBe(0);
     });
 });
+
+describe('Test default dir', () => {
+
+    let vault;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative();
+    });
+
+    test("list etc", () => {
+        let accounts = vault.listAccounts("etc");
+        console.log("accounts", accounts);
+    });
+
+    test("list eth", () => {
+        let accounts = vault.listAccounts("eth");
+        console.log("accounts", accounts);
+    });
+    test("list morden", () => {
+        let accounts = vault.listAccounts("morden");
+        console.log("accounts", accounts);
+    });
+    test("list kovan", () => {
+        let accounts = vault.listAccounts("kovan");
+        console.log("accounts", accounts);
+    });
+
+});

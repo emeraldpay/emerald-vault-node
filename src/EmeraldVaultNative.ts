@@ -4,8 +4,8 @@ var addon = require('../native');
 export class EmeraldVaultNative {
     private conf: Config;
 
-    constructor(conf: Config) {
-        this.conf = conf;
+    constructor(conf?: Config | undefined) {
+        this.conf = conf || {};
     }
 
     vaultVersion(): string {
