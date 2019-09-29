@@ -55,4 +55,9 @@ export class EmeraldVaultNative {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.listAddressBook(opts);
     }
+
+    addToAddressBook(chain: string, item: AddressBookItem): boolean {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.addToAddressBook(opts, JSON.stringify(item));
+    }
 }
