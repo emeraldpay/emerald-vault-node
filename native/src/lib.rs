@@ -246,6 +246,21 @@ fn add_address_book(mut cx: FunctionContext) -> JsResult<JsBoolean> {
     Ok(result)
 }
 
+fn remove_address_book(mut cx: FunctionContext) -> JsResult<JsBoolean> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let chain_code = cfg.chain.clone();
+    let storage = cfg.get_storage();
+
+    let storage = storage.get_addressbook(chain_code.get_code().as_str())
+        .expect("Unable to access address book");
+    let address = cx.argument::<JsString>(1).expect("Address no provided").value();
+    let address = Address::from_str(address.as_str()).expect("Invalid address");
+    storage.delete(&serde_json::Value::String(address.to_string())).expect("Failed to remove from Address Book");
+
+    let result = cx.boolean(true);
+    Ok(result)
+}
+
 register_module!(mut cx, {
     cx.export_function("listAccounts", list_accounts).expect("listAccounts not exported");
     cx.export_function("importAccount", import_account).expect("importAccount not exported");
@@ -260,6 +275,7 @@ register_module!(mut cx, {
 
     cx.export_function("listAddressBook", list_address_book).expect("listAddressBook not exported");
     cx.export_function("addToAddressBook", add_address_book).expect("addToAddressBook not exported");
+    cx.export_function("removeFromAddressBook", remove_address_book).expect("removeFromAddressBook not exported");
 
     Ok(())
 });

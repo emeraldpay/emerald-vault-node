@@ -73,4 +73,27 @@ describe("Address Book", () => {
         });
     });
 
+    describe('Delete Item', () => {
+
+        let vault;
+        beforeAll(() => {
+            const seq = new Date().getTime();
+            vault = new EmeraldVaultNative({
+                dir: `./testdata/tmp-book-delete-${seq}`
+            });
+        });
+
+        test("add and delete", () => {
+            let accounts = vault.listAddressBook("etc");
+            expect(accounts.length).toBe(0);
+            vault.addToAddressBook("etc", {name: "test 1", address: "0xc2d7cf95645d33006175b78989035c7c9061d3f9"});
+            accounts = vault.listAddressBook("etc");
+            expect(accounts.length).toBe(1);
+            expect(accounts[0].address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
+
+            vault.removeFromAddressBook("etc", "0xc2d7cf95645d33006175b78989035c7c9061d3f9");
+            accounts = vault.listAddressBook("etc");
+            expect(accounts.length).toBe(0);
+        });
+    });
 });
