@@ -10,7 +10,10 @@
     "url": "git+https://github.com/emeraldpay/emerald-vault-node.git"
   },
   "files": [
-    "native/index.node",
+    "native/src",
+    "native/build.rs",
+    "native/Cargo.lock",
+    "native/Cargo.toml",
     "lib"
   ],
   "binary": {
@@ -32,7 +35,6 @@
     "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
     "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
     "unpack:all": "npm run unpack:0.26-basic && npm run unpack:0.26-book",
-
     "install": "node-pre-gyp install --fallback-to-build=false || neon build --release",
     "package": "node-pre-gyp package",
     "upload-binary": "node-pre-gyp package && node-pre-gyp-github publish"
