@@ -170,8 +170,8 @@ describe("Accounts", () => {
                     "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
                 }
             };
-            let id = vault.importAccount("eth", data);
-            expect(id).toBe("305f4853-80af-4fa6-8619-6f285e83cf28");
+            let address = vault.importAccount("eth", data);
+            expect(address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
         });
 
         test("import c2d7cf95", () => {
@@ -198,8 +198,8 @@ describe("Accounts", () => {
                 "version":3
             };
 
-            let id = vault.importAccount("morden", data);
-            expect(id).toBe("eddd71dd-7ad6-4cd3-bc1a-11022f7db76c");
+            let address = vault.importAccount("morden", data);
+            expect(address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
         });
 
         test("import c2d7cf95", () => {
@@ -225,8 +225,8 @@ describe("Accounts", () => {
                 "version" : 3
             };
 
-            let id = vault.importAccount("etc", data);
-            expect(id).toBe("3198bc9c-6672-5ab3-d995-4942343ae5b6");
+            let address = vault.importAccount("etc", data);
+            expect(address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
         })
     });
 

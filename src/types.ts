@@ -17,7 +17,7 @@ export type Update = {
 
 export type UnsignedTx = {
     from: string,
-    to: string,
+    to?: string | null,
     gas: string,
     gasPrice: string,
     value: string,

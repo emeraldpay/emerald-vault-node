@@ -25,8 +25,7 @@ use emerald_rs::{
         ToHex
     },
     mnemonic::{
-        Mnemonic, HDPath, Language, generate_key, gen_entropy,
-        StandardMnemonic, MnemonicSize
+        Mnemonic, HDPath, Language, generate_key, MnemonicSize
     },
     rpc::common::NewMnemonicAccount
 };
@@ -57,6 +56,8 @@ fn import_account(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = JsObject::new(&mut cx);
     let id_handle = cx.string(pk.uuid.to_string());
     result.set(&mut cx, "id", id_handle).expect("Failed to set id");
+    let addr_handle = cx.string("0x".to_owned() + pk.address.to_hex().as_str());
+    result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
 
     Ok(result)
 }
@@ -184,6 +185,8 @@ fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = JsObject::new(&mut cx);
     let id_handle = cx.string(kf.uuid.to_string());
     result.set(&mut cx, "id", id_handle).expect("Failed to set id");
+    let addr_handle = cx.string("0x".to_owned()+kf.address.to_hex().as_str());
+    result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
 
     Ok(result)
 }

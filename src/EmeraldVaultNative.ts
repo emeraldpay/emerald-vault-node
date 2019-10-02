@@ -19,7 +19,7 @@ export class EmeraldVaultNative {
 
     importAccount(chain: string, data: any): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.importAccount(opts, JSON.stringify(data)).id;
+        return addon.importAccount(opts, JSON.stringify(data)).address;
     }
 
     exportAccount(chain: string, address: string): any {
@@ -44,7 +44,7 @@ export class EmeraldVaultNative {
 
     importMnemonic(chain: string, mnemonic: ImportMnemonic): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.importMnemonic(opts, JSON.stringify(mnemonic)).id;
+        return addon.importMnemonic(opts, JSON.stringify(mnemonic)).address;
     }
 
     generateMnemonic(size: number): string {
