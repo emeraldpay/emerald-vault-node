@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-node",
-  "version": "0.2.0-0.26.1",
+  "version": "0.2.1-0.26.1",
   "description": "Emerald Vault as NodeJS library",
   "main": "lib/index.js",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
@@ -26,6 +26,7 @@
   },
   "scripts": {
     "build:rs": "neon build --release",
+    "build:rs:electron": "node build-electron.js",
     "build:ts": "tsc",
     "build": "npm run clean && npm run build:rs && npm run build:ts",
     "jest": "jest",
@@ -35,15 +36,11 @@
     "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
     "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
     "unpack:all": "npm run unpack:0.26-basic && npm run unpack:0.26-book",
-    "install": "node-pre-gyp install --fallback-to-build=false || neon build --release",
+    "install": "node-pre-gyp install --fallback-to-build=false",
     "package": "node-pre-gyp package",
     "upload-binary": "node-pre-gyp package && node-pre-gyp-github publish"
   },
-  "dependencies": {
-    "neon-cli": "^0.3.1",
-    "node-pre-gyp": "amilajack/node-pre-gyp#neon-compat",
-    "node-pre-gyp-github": "^1.4.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "3.4.2",
     "@types/node": "12.0.0",
@@ -51,6 +48,12 @@
     "jest": "24.8.0",
     "@types/jest": "24.0.13",
     "ts-jest": "24.0.2",
-    "jest-serial-runner": "1.1.0"
+    "jest-serial-runner": "1.1.0",
+    "neon-cli": "0.3.1",
+    "node-gyp": "5.0.4",
+    "node-pre-gyp": "amilajack/node-pre-gyp#neon-compat",
+    "node-pre-gyp-github": "1.4.3",
+    "electron-rebuild": "1.8.6",
+    "electron-build-env": "0.2.0"
   }
 }
