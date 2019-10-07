@@ -39,6 +39,7 @@ install:
   - npm install
 
 script:
+  - npm run build:rs
   - npm test
   - npm run build:rs:electron
   # Publish when using 'publish binary' keywords
