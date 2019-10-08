@@ -38,8 +38,9 @@
     "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
     "unpack:all": "npm run unpack:0.26-basic && npm run unpack:0.26-book",
     "install": "node-pre-gyp install --fallback-to-build=false || exit 0",
-    "package": "node-pre-gyp package",
-    "upload-binary": "node-pre-gyp package && node-pre-gyp-github publish"
+    "package:node": "node-pre-gyp package",
+    "package:electron": "node-pre-gyp package --runtime=electron --target=4.1.0",
+    "upload-binary": "node-pre-gyp-github publish"
   },
   "dependencies": {},
   "devDependencies": {

@@ -1,6 +1,7 @@
 var build = require('electron-build-env');
 
 var opts = {
+    // also configured in package.json
     electron: "4.1.0"
 };
 
