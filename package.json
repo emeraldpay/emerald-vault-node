@@ -14,6 +14,7 @@
     "native/build.rs",
     "native/Cargo.lock",
     "native/Cargo.toml",
+    "native/index.node",
     "lib"
   ],
   "binary": {
