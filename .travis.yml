@@ -42,15 +42,15 @@ install:
   - npm install
 
 script:
-  - if [[ ${NODE_RUNTIME} -eq "node" ]];      npm run build:rs;            fi;
-  - if [[ ${NODE_RUNTIME} -eq "electron" ]];  npm run build:rs:electron;   fi;
+  - if [[ ${NODE_RUNTIME} -eq "node" ]]; then      npm run build:rs;            fi;
+  - if [[ ${NODE_RUNTIME} -eq "electron" ]]; then  npm run build:rs:electron;   fi;
 
   -  node-pre-gyp reveal
-  - if [[ ${NODE_RUNTIME} -eq "node" ]];      npm test;                    fi;
-  - if [[ ${NODE_RUNTIME} -eq "electron" ]];  npm run clean:rs;            fi;
+  - if [[ ${NODE_RUNTIME} -eq "node" ]]; then      npm test;                    fi;
+  - if [[ ${NODE_RUNTIME} -eq "electron" ]]; then  npm run clean:rs;            fi;
 
-  - if [[ ${NODE_RUNTIME} -eq "node" ]];      npm run package:node;        fi;
-  - if [[ ${NODE_RUNTIME} -eq "electron" ]];  npm run package:electron;    fi;
+  - if [[ ${NODE_RUNTIME} -eq "node" ]]; then      npm run package:node;        fi;
+  - if [[ ${NODE_RUNTIME} -eq "electron" ]]; then  npm run package:electron;    fi;
 
   # Publish when using 'publish binary' keywords
   - COMMIT_MESSAGE=$(git log --format=%B --no-merges -n 1 | tr -d '\n')
