@@ -31,17 +31,19 @@
     "build:ts": "tsc",
     "build": "npm run clean && npm run build:rs && npm run build:ts",
     "jest": "jest",
-    "test": "npm run clean:test && npm run unpack:all && jest",
+    "test": "npm run clean:test && npm run unpack && jest",
     "clean:test": "rimraf testdata/tmp-*",
     "clean:rs": "cd native && cargo clean",
-    "clean": "rimraf lib && npm run clean:test",
+    "clean:ts": "rimraf lib",
+    "clean": "npm run clean:ts && npm run clean:test && npm run clean:rs",
     "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
     "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
-    "unpack:all": "npm run unpack:0.26-basic && npm run unpack:0.26-book",
+    "unpack": "npm run unpack:0.26-basic && npm run unpack:0.26-book",
     "install": "node-pre-gyp install --fallback-to-build=false --update-binary || exit 0",
     "package:node": "node-pre-gyp package",
     "package:electron": "node-pre-gyp package --runtime=electron --target=4.1.0",
-    "upload-binary": "node-pre-gyp-github publish"
+    "upload-binary": "node-pre-gyp-github publish",
+    "prepublish": "npm run clean && npm run build && npm run test"
   },
   "dependencies": {},
   "devDependencies": {
