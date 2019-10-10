@@ -65,6 +65,24 @@ describe("Accounts", () => {
             });
 
         });
+
+        describe('Test vault 0.26 with Snappy compression', () => {
+
+            let vault;
+            beforeAll(() => {
+                vault = new EmeraldVaultNative({
+                    dir: "./testdata/vault-0.26-snappy"
+                });
+            });
+
+            test("list etc", () => {
+                let accounts = vault.listAccounts("etc");
+                expect(accounts.length).toBe(2);
+                expect(accounts[0].address).toBe("0x1e728c6d055380b69ac1c0fdc27425158621f109");
+                expect(accounts[1].address).toBe("0xca1c2e76f2122fdda9f97da0c4e37674727645cc");
+            });
+
+        });
     });
 
     describe("Export", () => {

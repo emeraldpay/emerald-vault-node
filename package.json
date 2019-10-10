@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-node",
-  "version": "0.2.2-0.26.1",
+  "version": "0.2.2-0.26.2",
   "description": "Emerald Vault as NodeJS library",
   "main": "lib/index.js",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
@@ -38,7 +38,8 @@
     "clean": "npm run clean:ts && npm run clean:test && npm run clean:rs",
     "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
     "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
-    "unpack": "npm run unpack:0.26-basic && npm run unpack:0.26-book",
+    "unpack:0.26-snappy": "rimraf testdata/vault-0.26-snappy && unzip testdata/vault-0.26-snappy.zip -d testdata",
+    "unpack": "npm run unpack:0.26-basic && npm run unpack:0.26-book && npm run unpack:0.26-snappy",
     "install": "node-pre-gyp install --fallback-to-build=false --update-binary || exit 0",
     "package:node": "node-pre-gyp package",
     "package:electron": "node-pre-gyp package --runtime=electron --target=4.1.0",
