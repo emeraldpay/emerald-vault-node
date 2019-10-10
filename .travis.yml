@@ -15,6 +15,7 @@ cache:
     - $HOME/.cargo
     - $TRAVIS_BUILD_DIR/native/target
     - $TRAVIS_BUILD_DIR/node_modules
+    - $TRAVIS_BUILD_DIR/cargo-cache
 
 addons:
   apt:
@@ -26,6 +27,7 @@ env:
     - PATH="$HOME/.cargo/bin:$PATH"
     - RUSTFLAGS="-C target-feature=+crt-static"
     - RUST_BACKTRACE=1
+    - CARGO_TARGET_DIR=$TRAVIS_BUILD_DIR/cargo-cache
   matrix:
     - NODE_RUNTIME=electron
     - NODE_RUNTIME=node

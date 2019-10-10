@@ -6,3 +6,5 @@ native/artifacts.json
 **/.DS_Store
 **/*.iml
 lib/
+cargo-cache/
+build/
