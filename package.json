@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-node",
-  "version": "0.2.2-0.26.2",
+  "version": "0.2.3-0.26.2",
   "description": "Emerald Vault as NodeJS library",
   "main": "lib/index.js",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
@@ -44,7 +44,7 @@
     "package:node": "node-pre-gyp package",
     "package:electron": "node-pre-gyp package --runtime=electron --target=4.1.0",
     "upload-binary": "node-pre-gyp-github publish",
-    "prepublish": "npm run clean && npm run build && npm run test"
+    "prepublishOnly": "npm run clean && npm run build && npm run test"
   },
   "dependencies": {},
   "devDependencies": {
