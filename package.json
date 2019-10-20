@@ -15,7 +15,8 @@
     "native/Cargo.lock",
     "native/Cargo.toml",
     "native/index.node",
-    "lib"
+    "lib",
+    "build-electron.js"
   ],
   "binary": {
     "module_name": "index",
