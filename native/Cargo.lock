@@ -475,8 +475,8 @@ version = "0.2.3-0.26.2"
 dependencies = [
  "emerald-vault-core 0.26.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "neon 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "neon-build 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "neon 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "neon-build 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.98 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1111,23 +1111,36 @@ dependencies = [
 
 [[package]]
 name = "neon"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cslice 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "neon-build 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "neon-runtime 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "neon-build 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "neon-runtime 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "neon-build"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "neon-sys 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "neon-runtime"
-version = "0.3.1"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "cfg-if 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "neon-sys 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "neon-sys"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cc 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2589,9 +2602,10 @@ dependencies = [
 "checksum mio-uds 0.6.7 (registry+https://github.com/rust-lang/crates.io-index)" = "966257a94e196b11bb43aca423754d87429960a768de9414f3691d6957abf125"
 "checksum miow 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8c1f2f3b1cf331de6896aabf6e9d55dca90356cc9960cca7eaaf408a355ae919"
 "checksum native-tls 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "4b2df1a4c22fd44a62147fd8f13dd0f95c9d8ca7b2610299b2a2f9cf8964274e"
-"checksum neon 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1e31f51b1d63dab769f884517d1765956e46215522d2b14069438e7dcb21c6d3"
-"checksum neon-build 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ea89bb3c6c47c7c90f93b185a7ea65d8af2cce588d698dd4a2a75b2c914e5ece"
-"checksum neon-runtime 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c6d7bf4fae649d246afa85de88435ea0db21e83e8c7a54d25e3f63b5bdbb4bf2"
+"checksum neon 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e36688ff345d73371ea798eaddf55dbc71e0fb5be55c3b0bfa0ec96e4ccc149d"
+"checksum neon-build 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "aab4cda46d85abda9d5f99243cc8cdd8b0d01243ba64c08bfd4b691b3b54ea60"
+"checksum neon-runtime 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ae48375911892dec492dc4ddd43b6684d5c00cda0cdc74666788e376ad68273c"
+"checksum neon-sys 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c9e6fb0db3d50b7a11732a5f4793513751e78b5cb3e7f372d727015e0caa6078"
 "checksum net2 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)" = "42550d9fb7b6684a6d404d9fa7250c2eb2646df731d1c06afc06dcee9e1bcf88"
 "checksum nodrop 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)" = "2f9667ddcc6cc8a43afc9b7917599d7216aa09c463919ea32c59ed6cac8bc945"
 "checksum nom 4.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2ad2a91a8e869eeb30b9cb3119ae87773a8f4ae617f41b1eb9c154b2905f7bd6"
