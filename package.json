@@ -33,17 +33,14 @@
     "build": "npm run clean && npm run build:rs && npm run build:ts",
     "jest": "jest",
     "test": "npm run clean:test && npm run unpack && jest",
-    "clean:test": "rimraf testdata/tmp-*",
+    "clean:test": "rimraf testdata/tmp-* && rimraf testdata/vault-0.26-basic && rimraf testdata/vault-0.26-book && rimraf testdata/vault-0.26-snappy",
     "clean:rs": "cd native && cargo clean",
     "clean:ts": "rimraf lib",
     "clean": "npm run clean:ts && npm run clean:test && npm run clean:rs",
-    "unpack:0.26-basic": "rimraf testdata/vault-0.26-basic && unzip testdata/vault-0.26-basic.zip -d testdata",
-    "unpack:0.26-book": "rimraf testdata/vault-0.26-book && unzip testdata/vault-0.26-book.zip -d testdata",
-    "unpack:0.26-snappy": "rimraf testdata/vault-0.26-snappy && unzip testdata/vault-0.26-snappy.zip -d testdata",
-    "unpack": "npm run unpack:0.26-basic && npm run unpack:0.26-book && npm run unpack:0.26-snappy",
-    "install": "node-pre-gyp install --fallback-to-build=false --update-binary || exit 0",
+    "unpack": "node prepare-tests.js",
+    "install-binary": "node-pre-gyp install --fallback-to-build=false --update-binary",
     "package:node": "node-pre-gyp package",
-    "package:electron": "node-pre-gyp package --runtime=electron --target=4.1.0",
+    "package:electron": "node-pre-gyp package --runtime=electron --target=7.0.0",
     "upload-binary": "node-pre-gyp-github publish",
     "prepublishOnly": "npm run clean && npm run build && npm run test"
   },
@@ -57,9 +54,10 @@
     "ts-jest": "24.0.2",
     "jest-serial-runner": "1.1.0",
     "neon-cli": "0.3.2",
-    "node-gyp": "5.0.4",
+    "node-gyp": "6.0.0",
     "node-pre-gyp": "amilajack/node-pre-gyp#neon-compat",
     "node-pre-gyp-github": "1.4.3",
-    "electron-build-env": "0.2.0"
+    "electron-build-env": "0.2.0",
+    "unzipper": "0.10.5"
   }
 }
