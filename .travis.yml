@@ -6,9 +6,7 @@ os:
 language: node_js
 
 node_js:
-  - node
-  - 11
-  - 10
+  - 12
 
 cache:
   directories:
