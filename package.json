@@ -38,7 +38,7 @@
     "clean:ts": "rimraf lib",
     "clean": "npm run clean:ts && npm run clean:test && npm run clean:rs",
     "unpack": "node prepare-tests.js",
-    "install": "node-pre-gyp install --fallback-to-build=false --update-binary || exit 0",
+    "install-binary": "node-pre-gyp install --fallback-to-build=false --update-binary",
     "package:node": "node-pre-gyp package",
     "package:electron": "node-pre-gyp package --runtime=electron --target=4.1.0",
     "upload-binary": "node-pre-gyp-github publish",
