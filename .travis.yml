@@ -40,13 +40,21 @@ install:
   - npm install
 
 script:
+  # Build Rust
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      npm run build:rs;            fi;
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run build:rs:electron;   fi;
 
+  # Show details about node module
   -  node-pre-gyp reveal
-  - if [[ ${NODE_RUNTIME} == "node" ]]; then      npm test;                    fi;
+
+  # Run tests
+  - if [[ ${NODE_RUNTIME} == "node" ]]; then      npm run test;                fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run test:electron;       fi;
+
+  # Cleanup to avoid putting temp files into resulting package
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run clean:rs;            fi;
 
+  # Package for pre-gyp
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      npm run package:node;        fi;
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run package:electron;    fi;
 
