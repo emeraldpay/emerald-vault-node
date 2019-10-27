@@ -27,6 +27,11 @@ export class EmeraldVaultNative {
         return addon.importPk(opts, JSON.stringify(data)).address;
     }
 
+    exportPk(chain: string, address: string, password: string): string {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.exportPk(opts, address, password);
+    }
+
     exportAccount(chain: string, address: string): any {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return JSON.parse(addon.exportAccount(opts, address));

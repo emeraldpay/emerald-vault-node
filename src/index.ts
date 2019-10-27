@@ -1,4 +1,4 @@
 export {EmeraldVaultNative} from './EmeraldVaultNative';
-export {Account, ImportMnemonic, UnsignedTx, AddressBookItem, Update} from './types';
+export {Account, ImportMnemonic, UnsignedTx, AddressBookItem, Update, ImportPrivateKey} from './types';
 
 

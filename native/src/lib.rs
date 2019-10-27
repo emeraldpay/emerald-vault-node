@@ -117,6 +117,21 @@ fn export_account(mut cx: FunctionContext) -> JsResult<JsString> {
     Ok(value_js)
 }
 
+fn export_pk(mut cx: FunctionContext) -> JsResult<JsString> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = Vault::new(cfg);
+
+    let address = cx.argument::<JsString>(1).expect("Address is not provided").value();
+    let address = Address::from_str(address.as_str()).expect("Invalid address");
+    let password = cx.argument::<JsString>(2).expect("Password is not provided").value();
+
+    let kf= vault.get(&address);
+    let pk = kf.decrypt_key(password.as_str()).expect("Invalid password");
+
+    let result = cx.string(format!("0x{}", hex::encode(pk.0)));
+    Ok(result)
+}
+
 fn update_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = Vault::new(cfg);
@@ -313,6 +328,7 @@ register_module!(mut cx, {
     cx.export_function("removeAccount", remove_account).expect("removeAccount not exported");
 
     cx.export_function("importPk", import_pk).expect("importPk not exported");
+    cx.export_function("exportPk", export_pk).expect("exportPk not exported");
 
     cx.export_function("signTx", sign_tx).expect("signTx not exported");
 

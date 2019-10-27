@@ -165,7 +165,7 @@ describe("Accounts", () => {
             });
         });
 
-        test("import 6412c428", () => {
+        test("import scrypt - 6412c428", () => {
             let data = {
                 "version": 3,
                 "id": "305f4853-80af-4fa6-8619-6f285e83cf28",
@@ -192,7 +192,7 @@ describe("Accounts", () => {
             expect(address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
         });
 
-        test("import c2d7cf95", () => {
+        test("import scrypt - c2d7cf95", () => {
             // https://theethereum.wiki/w/index.php/Accounts,_Addresses,_Public_And_Private_Keys,_And_Tokens
             let data = {
                 "address":"c2d7cf95645d33006175b78989035c7c9061d3f9",
@@ -220,7 +220,35 @@ describe("Accounts", () => {
             expect(address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
         });
 
-        test("import c2d7cf95", () => {
+        //TODO
+        xtest("import scrypt - no address", () => {
+            // https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
+            let data = {
+                "crypto" : {
+                    "cipher" : "aes-128-ctr",
+                    "cipherparams" : {
+                        "iv" : "83dbcc02d8ccb40e466191a123791e0e"
+                    },
+                    "ciphertext" : "d172bf743a674da9cdad04534d56926ef8358534d458fffccd4e6ad2fbde479c",
+                    "kdf" : "scrypt",
+                    "kdfparams" : {
+                        "dklen" : 32,
+                        "n" : 262144,
+                        "p" : 8,
+                        "r" : 1,
+                        "salt" : "ab0c7876052600dd703518d6fc3fe8984592145b591fc8fb5c6d43190334ba19"
+                    },
+                    "mac" : "2103ac29920d71da29f15d75b4a16dbe95cfd7ff8faea1056c33131d846e3097"
+                },
+                "id" : "3198bc9c-6672-5ab3-d995-4942343ae5b6",
+                "version" : 3
+            };
+
+            let address = vault.importAccount("morden", data);
+            expect(address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+        });
+
+        test("import pbkdf2 - c2d7cf95", () => {
             //https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
             let data = {
                 "address": "008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
@@ -317,6 +345,87 @@ describe("Accounts", () => {
             expect(tx1).toBe("0xf8758085098bca5a008301d8a894041b7ca652aa25e5be5d2053d7c7f96b5f7563d488033674060180c00088015819598910581026a0ad3bf903d8bb63f3dd467ba8edde3a990931b5f560dc478aeb57c77853c4c696a0536f01724eabeb68479429691e1a3d19e683f01b3f85d49b3bbd3c758ad597b0");
         });
 
+    });
+
+    describe("Export PK", () => {
+        let vault;
+        beforeAll(() => {
+            vault = new EmeraldVaultNative({
+                dir: "./testdata/tmp-export-pk"
+            });
+        });
+
+        test("import and export pk, 0xfac192ce", () => {
+            let data = {
+                pk: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                password: "test"
+            };
+            let address = vault.importPk("eth", data);
+            let pk = vault.exportPk("eth", address, "test");
+
+            expect(pk).toBe("0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd");
+        });
+
+        test("import and export pbkdf2", () => {
+            // https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
+            let data = {
+                "address": "008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
+                "crypto" : {
+                    "cipher" : "aes-128-ctr",
+                    "cipherparams" : {
+                        "iv" : "6087dab2f9fdbbfaddc31a909735c1e6"
+                    },
+                    "ciphertext" : "5318b4d5bcd28de64ee5559e671353e16f075ecae9f99c7a79a38af5f869aa46",
+                    "kdf" : "pbkdf2",
+                    "kdfparams" : {
+                        "c" : 262144,
+                        "dklen" : 32,
+                        "prf" : "hmac-sha256",
+                        "salt" : "ae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd"
+                    },
+                    "mac" : "517ead924a9d0dc3124507e3393d175ce3ff7c1e96529c6c555ce9e51205e9b2"
+                },
+                "id" : "3198bc9c-6672-5ab3-d995-4942343ae5b6",
+                "version" : 3
+            };
+
+            let address = vault.importAccount("etc", data);
+
+            let pk = vault.exportPk("etc", "008aeeda4d805471df9b2a5b0f38a0c3bcba786b", "testpassword");
+
+            expect(pk).toBe("0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d");
+        });
+
+        test("import and export scrypt", () => {
+            let data = {
+                "version": 3,
+                "id": "1d098815-15b2-42da-9bd6-e549396a3a4d",
+                "address": "3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
+                "name": "",
+                "description": "",
+                "visible": true,
+                "crypto": {
+                    "cipher": "aes-128-ctr",
+                    "cipherparams": {"iv": "07d2a1660d8d02f0dbf55578044bb2b7"},
+                    "ciphertext": "91cc591b18f6a9b115555990db18f647ed828dad30cdf7e3493e2eb0a1f80514",
+                    "kdf": "scrypt",
+                    "kdfparams": {
+                        "dklen": 32,
+                        "salt": "8c20d18ae12d11128aad057e37dd840a695b60c22ef020fae1827308a6bdf485",
+                        "n": 1024,
+                        "r": 8,
+                        "p": 1
+                    },
+                    "mac": "a37f95a2e5726c45c88153dad4d88b58acf72655c173bf2f0f0444a3b42b4790"
+                }
+            };
+
+            let address = vault.importAccount("eth", data);
+
+            let pk = vault.exportPk("eth", "3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3", "testtest");
+
+            expect(pk).toBe("0xad901ebb27a07ca54ffe797b24f602bdd600f300283c02a0b58b7c0567f12234");
+        });
     });
 
     describe("Remove", () => {
