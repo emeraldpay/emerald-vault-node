@@ -1,4 +1,4 @@
-import {Config, Account, UnsignedTx, Update, ImportMnemonic, AddressBookItem} from './types';
+import {Config, Account, UnsignedTx, Update, ImportMnemonic, AddressBookItem, ImportPrivateKey} from './types';
 var addon = require('../native');
 
 export class EmeraldVaultNative {
@@ -20,6 +20,11 @@ export class EmeraldVaultNative {
     importAccount(chain: string, data: any): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.importAccount(opts, JSON.stringify(data)).address;
+    }
+
+    importPk(chain: string, data: ImportPrivateKey): string {
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.importPk(opts, JSON.stringify(data)).address;
     }
 
     exportAccount(chain: string, address: string): any {

@@ -38,3 +38,10 @@ export type AddressBookItem = {
     description?: string,
     name?: string
 }
+
+export type ImportPrivateKey = {
+    name?: string | null,
+    description?: string | null,
+    pk: string,
+    password: string
+}

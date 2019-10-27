@@ -18,6 +18,9 @@ use emerald_rs::{
     rpc::common::{
         SignTxTransaction
     },
+    core::{
+        PrivateKey, PRIVATE_KEY_BYTES
+    },
     keystore::{
         KeyFile, CryptoType, KdfDepthLevel, Kdf, os_random
     },
@@ -57,6 +60,44 @@ fn import_account(mut cx: FunctionContext) -> JsResult<JsObject> {
     let id_handle = cx.string(pk.uuid.to_string());
     result.set(&mut cx, "id", id_handle).expect("Failed to set id");
     let addr_handle = cx.string("0x".to_owned() + pk.address.to_hex().as_str());
+    result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
+
+    Ok(result)
+}
+
+fn import_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = Vault::new(cfg);
+
+    let raw = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
+    let pk_data: ImportPrivateKey = serde_json::from_str::<ImportPrivateKey>(raw.as_str())
+        .expect("Invalid JSON");
+    let pk_hex = pk_data.pk;
+    if pk_hex.len() != (PRIVATE_KEY_BYTES * 2 + 2) && pk_hex.starts_with("0x")
+        && pk_hex.len() != PRIVATE_KEY_BYTES * 2  && !pk_hex.starts_with("0x"){
+        panic!("Invalid PrivateKey string")
+    }
+    let pk_hex = if pk_hex.starts_with("0x") {
+        pk_hex.split_at(2).1
+    } else {
+        pk_hex.as_str()
+    };
+    let pk_bytes = hex::decode(&pk_hex)
+        .expect("PrivateKey is not in hex");
+
+    let pk = PrivateKey::try_from(&pk_bytes.as_slice()).expect("Invalid PrivateKey");
+
+    let mut rng = os_random();
+    let key_file = KeyFile::new_custom(pk, pk_data.password.as_str(),
+                                       Kdf::from(KdfDepthLevel::Normal), &mut rng,
+                                       pk_data.name, pk_data.description)
+        .expect("Failed to create KeyFile for input data");
+    vault.put(&key_file);
+
+    let result = JsObject::new(&mut cx);
+    let id_handle = cx.string(key_file.uuid.to_string());
+    result.set(&mut cx, "id", id_handle).expect("Failed to set id");
+    let addr_handle = cx.string("0x".to_owned() + key_file.address.to_hex().as_str());
     result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
 
     Ok(result)
@@ -270,6 +311,8 @@ register_module!(mut cx, {
     cx.export_function("exportAccount", export_account).expect("exportAccount not exported");
     cx.export_function("updateAccount", update_account).expect("updateAccount not exported");
     cx.export_function("removeAccount", remove_account).expect("removeAccount not exported");
+
+    cx.export_function("importPk", import_pk).expect("importPk not exported");
 
     cx.export_function("signTx", sign_tx).expect("signTx not exported");
 
