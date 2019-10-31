@@ -341,6 +341,7 @@ register_module!(mut cx, {
     cx.export_function("removeFromAddressBook", remove_address_book).expect("removeFromAddressBook not exported");
 
     cx.export_function("ledger_isConnected", seeds::is_connected).expect("ledger_isConnected not exported");
+    cx.export_function("ledger_listAddresses", seeds::list_addresses).expect("ledger_listAddresses not exported");
 
 
     Ok(())

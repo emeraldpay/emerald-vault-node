@@ -21,6 +21,6 @@ export class Seed {
 
     // TODO use seedId
     listAddresses(blockchain: BlockchainType, hdpath: string[]): {[key: string]: string} {
-        throw Error("NOT IMPLEMENTED");
+        return addon.ledger_listAddresses(blockchain, hdpath);
     }
 }
