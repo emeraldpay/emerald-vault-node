@@ -9,6 +9,7 @@ extern crate serde_derive;
 
 mod accounts;
 mod access;
+mod seeds;
 
 use neon::prelude::*;
 use accounts::*;
@@ -338,6 +339,9 @@ register_module!(mut cx, {
     cx.export_function("listAddressBook", list_address_book).expect("listAddressBook not exported");
     cx.export_function("addToAddressBook", add_address_book).expect("addToAddressBook not exported");
     cx.export_function("removeFromAddressBook", remove_address_book).expect("removeFromAddressBook not exported");
+
+    cx.export_function("ledger_isConnected", seeds::is_connected).expect("ledger_isConnected not exported");
+
 
     Ok(())
 });
