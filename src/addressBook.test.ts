@@ -1,6 +1,7 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
-describe("Address Book", () => {
+// disabled MIGRATE_V3
+xdescribe("Address Book", () => {
     describe('Test vault 0.26 book', () => {
 
         let vault;

@@ -1,6 +1,7 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
-describe('Test signining', () => {
+// disabled MIGRATE_V3
+xdescribe('Test signining vault 0.26', () => {
 
     let vault;
     beforeAll(() => {

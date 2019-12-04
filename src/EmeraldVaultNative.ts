@@ -9,7 +9,7 @@ export class EmeraldVaultNative {
     }
 
     vaultVersion(): string {
-        return "0.26.0"
+        return "0.27.0"
     }
 
     listAccounts(chain: string): Array<Account> {
@@ -62,17 +62,23 @@ export class EmeraldVaultNative {
     }
 
     listAddressBook(chain: string): AddressBookItem[] {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.listAddressBook(opts);
+        // disabled MIGRATE_V3
+        return [];
+        // let opts = Object.assign({}, this.conf, {chain: chain});
+        // return addon.listAddressBook(opts);
     }
 
     addToAddressBook(chain: string, item: AddressBookItem): boolean {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.addToAddressBook(opts, JSON.stringify(item));
+        // disabled MIGRATE_V3
+        return false;
+        // let opts = Object.assign({}, this.conf, {chain: chain});
+        // return addon.addToAddressBook(opts, JSON.stringify(item));
     }
 
     removeFromAddressBook(chain: string, address: string): boolean {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.removeFromAddressBook(opts, address);
+        // disabled MIGRATE_V3
+        return false;
+        // let opts = Object.assign({}, this.conf, {chain: chain});
+        // return addon.removeFromAddressBook(opts, address);
     }
 }

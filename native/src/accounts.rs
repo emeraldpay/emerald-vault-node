@@ -9,21 +9,6 @@ pub struct AccountData {
     pub hardware: bool
 }
 
-#[derive(Deserialize)]
-pub struct UpdateAccount {
-    #[serde(default)]
-    pub name: Option<String>,
-    pub description: Option<String>
-}
-
-#[derive(Deserialize)]
-pub struct ImportPrivateKey {
-    pub pk: String,
-    pub password: String,
-    pub name: Option<String>,
-    pub description: Option<String>
-}
-
 impl From<&AccountInfo> for AccountData {
 
     fn from(src: &AccountInfo) -> Self {
