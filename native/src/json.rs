@@ -1,5 +1,5 @@
 use std::convert::TryInto;
-use emerald_rs::{Transaction, to_even_str, trim_hex, to_u64, to_arr, align_bytes, Address};
+use emerald_vault_core::{Transaction, to_even_str, trim_hex, to_u64, to_arr, align_bytes, Address};
 use hex::FromHex;
 
 #[derive(Debug, Copy, Clone)]

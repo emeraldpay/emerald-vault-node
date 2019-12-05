@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate neon;
-extern crate emerald_rs;
+extern crate emerald_vault_core;
+extern crate emerald_vault_migrate;
 extern crate uuid;
 extern crate hex;
 extern crate serde_json;
@@ -14,9 +15,9 @@ mod seeds;
 
 use neon::prelude::*;
 use accounts::*;
-use access::{VaultConfig, WrappedVault};
+use access::{VaultConfig, WrappedVault, MigrationConfig};
 use json::{UnsignedTx, ImportPrivateKey, UpdateAccount, NewMnemonicAccount};
-use emerald_rs::{
+use emerald_vault_core::{
     Address,
     Transaction,
     trim_hex,
@@ -295,6 +296,15 @@ fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
 //    Ok(result)
 //}
 
+fn auto_migrate(mut cx: FunctionContext) -> JsResult<JsArray> {
+    let cfg = MigrationConfig::get_config(&mut cx);
+    emerald_vault_migrate::auto_migrate(cfg.dir.clone(), cfg.dir.clone());
+
+    //TODO
+    let result = JsArray::new(&mut cx, 0 as u32);
+    Ok(result)
+}
+
 register_module!(mut cx, {
     cx.export_function("listAccounts", list_accounts).expect("listAccounts not exported");
     cx.export_function("importAccount", import_account).expect("importAccount not exported");
@@ -317,6 +327,8 @@ register_module!(mut cx, {
 
     cx.export_function("ledger_isConnected", seeds::is_connected).expect("ledger_isConnected not exported");
     cx.export_function("ledger_listAddresses", seeds::list_addresses).expect("ledger_listAddresses not exported");
+
+    cx.export_function("auto_migrate", auto_migrate).expect("auto_migrate not exported");
 
 
     Ok(())

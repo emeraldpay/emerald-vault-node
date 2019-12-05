@@ -1,5 +1,5 @@
 use neon::prelude::*;
-use emerald_rs::storage::AccountInfo;
+use emerald_vault_core::storage::AccountInfo;
 
 pub struct AccountData {
     pub address: String,

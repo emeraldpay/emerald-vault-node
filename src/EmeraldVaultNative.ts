@@ -8,6 +8,11 @@ export class EmeraldVaultNative {
         this.conf = conf || {};
     }
 
+    autoMigrate() {
+        let opts = Object.assign({}, this.conf);
+        addon.auto_migrate(opts);
+    }
+
     vaultVersion(): string {
         return "0.27.0"
     }

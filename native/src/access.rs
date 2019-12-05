@@ -1,14 +1,20 @@
-use emerald_rs::storage::{ AccountInfo, default_path};
-use emerald_rs::core::chains::{Blockchain, EthereumChainId};
-use emerald_rs::keystore::KeyFile;
-use emerald_rs::{Address};
-use emerald_rs::storage::{
-    error::VaultError,
-    vault::{
-        VaultStorage, VaultAccess
+use emerald_vault_core::{
+    core::chains::{Blockchain, EthereumChainId},
+    storage::{AccountInfo, default_path},
+    Address,
+    storage::{
+        error::VaultError,
+        vault::{
+            VaultStorage, VaultAccess
+        }
+    },
+    convert::ethereum::EthereumJsonV3File,
+    convert::proto::{
+        types::HasUuid,
+        wallet::{AddressType, Wallet, WalletAccount},
+        pk::PrivateKeyHolder
     }
 };
-use emerald_rs::convert::ethereum::EthereumJsonV3File;
 
 use std::path::{Path};
 use neon::prelude::{FunctionContext, JsString, JsObject};
@@ -17,17 +23,16 @@ use std::str::FromStr;
 use neon::types::{JsNull, JsUndefined,};
 use neon::handle::Handle;
 use uuid::Uuid;
-use emerald_rs::convert::proto::{
-    types::HasUuid,
-    wallet::{AddressType, Wallet, WalletAccount},
-    pk::PrivateKeyHolder
-};
 use std::convert::TryFrom;
 
 pub struct VaultConfig {
     pub chain: EthereumChainId,
     pub dir: String,
     pub show_hidden: bool
+}
+
+pub struct MigrationConfig {
+    pub dir: String,
 }
 
 fn get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
@@ -68,6 +73,19 @@ impl VaultConfig {
         let vault = VaultStorage::create(dir)
             .expect("Vault is not created");
         vault
+    }
+}
+
+impl MigrationConfig {
+    pub fn get_config(cx: &mut FunctionContext) -> MigrationConfig {
+        let config = cx.argument::<JsObject>(0).unwrap();
+        let dir = match get_str(cx, &config, "dir") {
+            Some(val) => val,
+            None => default_path().to_str().expect("No default path for current OS").to_string()
+        };
+        return MigrationConfig {
+            dir: dir.to_string()
+        }
     }
 }
 
