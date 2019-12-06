@@ -67,23 +67,17 @@ export class EmeraldVaultNative {
     }
 
     listAddressBook(chain: string): AddressBookItem[] {
-        // disabled MIGRATE_V3
-        return [];
-        // let opts = Object.assign({}, this.conf, {chain: chain});
-        // return addon.listAddressBook(opts);
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.listAddressBook(opts);
     }
 
     addToAddressBook(chain: string, item: AddressBookItem): boolean {
-        // disabled MIGRATE_V3
-        return false;
-        // let opts = Object.assign({}, this.conf, {chain: chain});
-        // return addon.addToAddressBook(opts, JSON.stringify(item));
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.addToAddressBook(opts, JSON.stringify(item));
     }
 
     removeFromAddressBook(chain: string, address: string): boolean {
-        // disabled MIGRATE_V3
-        return false;
-        // let opts = Object.assign({}, this.conf, {chain: chain});
-        // return addon.removeFromAddressBook(opts, address);
+        let opts = Object.assign({}, this.conf, {chain: chain});
+        return addon.removeFromAddressBook(opts, address);
     }
 }

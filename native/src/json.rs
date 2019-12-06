@@ -1,6 +1,19 @@
 use std::convert::TryInto;
-use emerald_vault_core::{Transaction, to_even_str, trim_hex, to_u64, to_arr, align_bytes, Address};
+use emerald_vault_core::{
+    Transaction,
+    to_even_str,
+    trim_hex,
+    to_u64,
+    to_arr,
+    align_bytes,
+    Address,
+    storage::addressbook::AddressBookmark,
+    convert::proto::book::{BookmarkDetails, AddressRef},
+    core::chains::EthereumChainId,
+    core::chains::Blockchain
+};
 use hex::FromHex;
+use uuid::Uuid;
 
 #[derive(Debug, Copy, Clone)]
 pub enum JsonError {
@@ -57,6 +70,13 @@ pub struct NewMnemonicAccount {
     pub hd_path: String,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct NewAddressBookItem {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub address: Address
+}
+
 impl TryInto<Transaction> for UnsignedTx {
     type Error = JsonError;
 
@@ -81,5 +101,19 @@ impl TryInto<Transaction> for UnsignedTx {
         };
 
         Ok(result)
+    }
+}
+
+impl NewAddressBookItem {
+    pub fn into_bookmark(self, blockchain: Blockchain) -> AddressBookmark {
+        AddressBookmark {
+            id: Uuid::new_v4(),
+            details: BookmarkDetails {
+                blockchains: vec![blockchain],
+                label: self.name,
+                description: self.description,
+                address: AddressRef::EthereumAddress(self.address)
+            }
+        }
     }
 }

@@ -24,6 +24,9 @@ use neon::types::{JsNull, JsUndefined,};
 use neon::handle::Handle;
 use uuid::Uuid;
 use std::convert::TryFrom;
+use emerald_vault_core::storage::addressbook::AddressBookmark;
+use json::NewAddressBookItem;
+use emerald_vault_core::convert::proto::book::AddressRef;
 
 pub struct VaultConfig {
     pub chain: EthereumChainId,
@@ -213,6 +216,43 @@ impl WrappedVault {
             .expect("Previous wallet not removed");
         storage.keys().remove(&wallet.accounts.first().unwrap().get_id())
             .expect("Wallet not created");
+    }
+
+    pub fn list_addressbook(&self) -> Vec<AddressBookmark> {
+        let storage = &self.cfg.get_storage();
+        let all = storage.addressbook().get_all().expect("Addressbook unavailable");
+        let exp_blockchain = Blockchain::try_from(self.cfg.chain).expect("Unsupported blockchain");
+
+        let for_chain = all.iter()
+            .filter(|b| b.details.blockchains.contains(&exp_blockchain))
+            .map(|b| b.clone())
+            .collect();
+
+        for_chain
+    }
+
+    pub fn add_to_addressbook(&self, item: NewAddressBookItem) -> bool {
+        let storage = &self.cfg.get_storage();
+        let blockchain = Blockchain::try_from(self.cfg.chain).expect("Unsupported blockchain");
+        storage.addressbook().add(item.into_bookmark(blockchain)).is_ok()
+    }
+
+    pub fn remove_addressbook_by_addr(&self, address: &Address) -> bool {
+        let storage = &self.cfg.get_storage();
+
+        let list = self.list_addressbook();
+        let found = list.iter().find(|x| match x.details.address {
+            AddressRef::EthereumAddress(a) => a == *address
+        });
+
+        if found.is_some() {
+            match storage.addressbook().remove(&found.unwrap().id) {
+                Ok(r) => r,
+                Err(_) => false
+            }
+        } else {
+            false
+        }
     }
 
 }

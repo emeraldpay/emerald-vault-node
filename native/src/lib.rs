@@ -16,7 +16,7 @@ mod seeds;
 use neon::prelude::*;
 use accounts::*;
 use access::{VaultConfig, WrappedVault, MigrationConfig};
-use json::{UnsignedTx, ImportPrivateKey, UpdateAccount, NewMnemonicAccount};
+use json::{UnsignedTx, ImportPrivateKey, UpdateAccount, NewMnemonicAccount, NewAddressBookItem};
 use emerald_vault_core::{
     Address,
     Transaction,
@@ -39,6 +39,8 @@ use emerald_vault_core::{
 };
 use std::str::FromStr;
 use std::convert::{TryFrom, TryInto};
+use emerald_vault_core::convert::proto::book::AddressRef;
+use emerald_vault_core::storage::vault::VaultAccess;
 
 fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
     let cfg = VaultConfig::get_config(&mut cx);
@@ -222,79 +224,74 @@ fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(result)
 }
 
-// disabled MIGRATE_V3
-//fn list_address_book(mut cx: FunctionContext) -> JsResult<JsArray> {
-//    let cfg = VaultConfig::get_config(&mut cx);
-//    let chain_code = cfg.chain.clone();
-//    let storage = cfg.get_storage();
-//
-//    let storage = storage.get_addressbook(chain_code.get_code().as_str())
-//        .expect("Unable to access address book");
-//    let list = storage.list();
-//    let result = JsArray::new(&mut cx, list.len() as u32);
-//    for (i, e) in list.iter().enumerate() {
-//        let book_js = JsObject::new(&mut cx);
-//        let handle = cx.string(e.get("address")
-//            .expect("Address not set").as_str()
-//            .expect("Address is not string"));
-//        book_js.set(&mut cx, "address", handle)
-//            .expect("Failed to set address");
-//        match e.get("name") {
-//            Some(val) => {
-//                let val = cx.string(val.as_str()
-//                    .expect("Expect string for the name field"));;
-//                book_js.set(&mut cx, "name", val)
-//                    .expect("Failed to set name");
-//            },
-//            None => {}
-//        };
-//        match e.get("description") {
-//            Some(val) => {
-//                let val = cx.string(val.as_str()
-//                    .expect("Expect string for the description field"));
-//                book_js.set(&mut cx, "description", val)
-//                    .expect("Failed to set description");
-//            },
-//            None => {}
-//        };
-//
-//        result.set(&mut cx, i as u32, book_js).unwrap();
-//    };
-//    Ok(result)
-//}
-//
-//fn add_address_book(mut cx: FunctionContext) -> JsResult<JsBoolean> {
-//    let cfg = VaultConfig::get_config(&mut cx);
-//    let chain_code = cfg.chain.clone();
-//    let storage = cfg.get_storage();
-//
-//    let storage = storage.get_addressbook(chain_code.get_code().as_str())
-//        .expect("Unable to access address book");
-//
-//    let add_js = cx.argument::<JsString>(1)
-//        .expect("Address Book item not provided").value();
-//    let item = serde_json::from_str::<serde_json::Value>(add_js.as_str())
-//        .expect("Invalid input JSON");
-//    storage.add(&item).expect("Failed to add to Address Book");
-//
-//    let result = cx.boolean(true);
-//    Ok(result)
-//}
-//
-//fn remove_address_book(mut cx: FunctionContext) -> JsResult<JsBoolean> {
-//    let cfg = VaultConfig::get_config(&mut cx);
-//    let chain_code = cfg.chain.clone();
-//    let storage = cfg.get_storage();
-//
-//    let storage = storage.get_addressbook(chain_code.get_code().as_str())
-//        .expect("Unable to access address book");
-//    let address = cx.argument::<JsString>(1).expect("Address no provided").value();
-//    let address = Address::from_str(address.as_str()).expect("Invalid address");
-//    storage.delete(&serde_json::Value::String(address.to_string())).expect("Failed to remove from Address Book");
-//
-//    let result = cx.boolean(true);
-//    Ok(result)
-//}
+fn list_address_book(mut cx: FunctionContext) -> JsResult<JsArray> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let list = vault.list_addressbook();
+
+    let result = JsArray::new(&mut cx, list.len() as u32);
+    for (i, e) in list.iter().enumerate() {
+        let book_js = JsObject::new(&mut cx);
+
+        match &e.details.address {
+            AddressRef::EthereumAddress(address) => {
+                let handle = cx.string(address.to_string());
+                book_js.set(&mut cx, "address", handle)
+                    .expect("Failed to set address");
+            }
+        }
+        match &e.details.label {
+            Some(val) => {
+                let val = cx.string(val.as_str());
+                book_js.set(&mut cx, "name", val)
+                    .expect("Failed to set name");
+            },
+            None => {}
+        };
+        match &e.details.description {
+            Some(val) => {
+                let val = cx.string(val.as_str());
+                book_js.set(&mut cx, "description", val)
+                    .expect("Failed to set description");
+            },
+            None => {}
+        };
+
+        result.set(&mut cx, i as u32, book_js).unwrap();
+    };
+    Ok(result)
+}
+
+fn add_address_book(mut cx: FunctionContext) -> JsResult<JsBoolean> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let chain_code = cfg.chain.clone();
+    let vault = WrappedVault::new(cfg);
+
+
+    let add_js = cx.argument::<JsString>(1)
+        .expect("Address Book item not provided").value();
+    let item = serde_json::from_str::<NewAddressBookItem>(add_js.as_str())
+        .expect("Invalid input JSON");
+    let result = vault.add_to_addressbook(item);
+
+    let result = cx.boolean(result);
+    Ok(result)
+}
+
+fn remove_address_book(mut cx: FunctionContext) -> JsResult<JsBoolean> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let chain_code = cfg.chain.clone();
+    let vault = WrappedVault::new(cfg);
+
+    let address = cx.argument::<JsString>(1).expect("Address no provided").value();
+    let address = Address::from_str(address.as_str()).expect("Invalid address");
+
+    let removed = vault.remove_addressbook_by_addr(&address);
+
+    let result = cx.boolean(removed);
+    Ok(result)
+}
 
 fn auto_migrate(mut cx: FunctionContext) -> JsResult<JsArray> {
     let cfg = MigrationConfig::get_config(&mut cx);
@@ -320,10 +317,9 @@ register_module!(mut cx, {
     cx.export_function("importMnemonic", import_mnemonic).expect("importMnemonic not exported");
     cx.export_function("generateMnemonic", generate_mnemonic).expect("generateMnemonic not exported");
 
-// disabled MIGRATE_V3
-//    cx.export_function("listAddressBook", list_address_book).expect("listAddressBook not exported");
-//    cx.export_function("addToAddressBook", add_address_book).expect("addToAddressBook not exported");
-//    cx.export_function("removeFromAddressBook", remove_address_book).expect("removeFromAddressBook not exported");
+    cx.export_function("listAddressBook", list_address_book).expect("listAddressBook not exported");
+    cx.export_function("addToAddressBook", add_address_book).expect("addToAddressBook not exported");
+    cx.export_function("removeFromAddressBook", remove_address_book).expect("removeFromAddressBook not exported");
 
     cx.export_function("ledger_isConnected", seeds::is_connected).expect("ledger_isConnected not exported");
     cx.export_function("ledger_listAddresses", seeds::list_addresses).expect("ledger_listAddresses not exported");
