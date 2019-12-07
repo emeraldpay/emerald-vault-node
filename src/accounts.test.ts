@@ -4,6 +4,39 @@ describe("Accounts", () => {
 
     describe("List", () => {
 
+        describe('Test vault 0.10.1 migrate', () => {
+
+            let vault;
+            beforeAll(() => {
+                vault = new EmeraldVaultNative({
+                    dir: "./testdata/vault-0.10.1-migrate"
+                });
+                vault.autoMigrate();
+            });
+
+            test("list eth", () => {
+                let accounts = vault.listAccounts("eth");
+                expect(accounts.length).toBe(0);
+            });
+
+            test("list etc", () => {
+                let accounts = vault.listAccounts("etc");
+                expect(accounts.length).toBe(2);
+                expect(accounts[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(accounts[1].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+            });
+
+            test("list kovan", () => {
+                let accounts = vault.listAccounts("kovan");
+                expect(accounts.length).toBe(0);
+            });
+
+            test("list morden", () => {
+                let accounts = vault.listAccounts("morden");
+                expect(accounts.length).toBe(0);
+            });
+        });
+
         describe('Test vault 0.26 basic', () => {
 
             let vault;
