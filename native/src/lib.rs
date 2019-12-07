@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate neon;
-extern crate emerald_vault_core;
-extern crate emerald_vault_migrate;
+extern crate emerald_vault;
 extern crate uuid;
 extern crate hex;
 extern crate serde_json;
@@ -17,7 +16,7 @@ use neon::prelude::*;
 use accounts::*;
 use access::{VaultConfig, WrappedVault, MigrationConfig};
 use json::{UnsignedTx, ImportPrivateKey, UpdateAccount, NewMnemonicAccount, NewAddressBookItem};
-use emerald_vault_core::{
+use emerald_vault::{
     Address,
     Transaction,
     trim_hex,
@@ -28,19 +27,19 @@ use emerald_vault_core::{
         KeyFile, CryptoType, KdfDepthLevel, Kdf, os_random
     },
     convert::ethereum::{
-      EthereumJsonV3File
+        EthereumJsonV3File
     },
     util::{
         ToHex
     },
     mnemonic::{
         Mnemonic, HDPath, Language, generate_key, MnemonicSize
-    }
+    },
+    convert::proto::book::AddressRef,
+    storage::vault::VaultAccess
 };
 use std::str::FromStr;
 use std::convert::{TryFrom, TryInto};
-use emerald_vault_core::convert::proto::book::AddressRef;
-use emerald_vault_core::storage::vault::VaultAccess;
 
 fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
     let cfg = VaultConfig::get_config(&mut cx);
@@ -295,7 +294,7 @@ fn remove_address_book(mut cx: FunctionContext) -> JsResult<JsBoolean> {
 
 fn auto_migrate(mut cx: FunctionContext) -> JsResult<JsArray> {
     let cfg = MigrationConfig::get_config(&mut cx);
-    emerald_vault_migrate::auto_migrate(cfg.dir.clone(), cfg.dir.clone());
+    emerald_vault::migration::auto_migrate(cfg.dir.clone());
 
     //TODO
     let result = JsArray::new(&mut cx, 0 as u32);

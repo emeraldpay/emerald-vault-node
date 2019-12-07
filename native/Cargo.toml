@@ -15,10 +15,9 @@ neon-build = "0.3.2"
 
 [dependencies]
 neon = "0.3.2"
-#emerald-vault-core = "0.27.0"
-emerald_vault_core = { path = "../../emerald-rs/emerald-core" }
-#emerald-vault-core = { git = "https://github.com/emeraldpay/emerald-vault", branch = "feat/storage-v3" }
-emerald_vault_migrate = { path = "../../emerald-rs/emerald-vault-migrate" }
+#emerald-vault = "0.27.0"
+emerald-vault = { path = "../../emerald-rs" }
+#emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "feat/storage-v3" }
 uuid = { version = "0.6", features = ["serde", "v4"] }
 hex = "0.3.2"
 serde = "1.0"

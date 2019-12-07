@@ -1,5 +1,5 @@
 use std::convert::TryInto;
-use emerald_vault_core::{
+use emerald_vault::{
     Transaction,
     to_even_str,
     trim_hex,

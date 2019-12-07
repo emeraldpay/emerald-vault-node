@@ -1,5 +1,5 @@
 use neon::prelude::*;
-use emerald_vault_core::{
+use emerald_vault::{
     hdwallet::{
         WManager,
         bip32::{HDPath}

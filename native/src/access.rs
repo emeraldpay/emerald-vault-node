@@ -1,4 +1,4 @@
-use emerald_vault_core::{
+use emerald_vault::{
     core::chains::{Blockchain, EthereumChainId},
     storage::{AccountInfo, default_path},
     Address,
@@ -13,7 +13,9 @@ use emerald_vault_core::{
         types::HasUuid,
         wallet::{AddressType, Wallet, WalletAccount},
         pk::PrivateKeyHolder
-    }
+    },
+    storage::addressbook::AddressBookmark,
+    convert::proto::book::AddressRef
 };
 
 use std::path::{Path};
@@ -24,9 +26,7 @@ use neon::types::{JsNull, JsUndefined,};
 use neon::handle::Handle;
 use uuid::Uuid;
 use std::convert::TryFrom;
-use emerald_vault_core::storage::addressbook::AddressBookmark;
 use json::NewAddressBookItem;
-use emerald_vault_core::convert::proto::book::AddressRef;
 
 pub struct VaultConfig {
     pub chain: EthereumChainId,
