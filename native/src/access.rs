@@ -2,13 +2,13 @@ use emerald_vault::{
     core::chains::{Blockchain, EthereumChainId},
     Address,
     convert::{
-        proto::{
-            types::HasUuid,
-            wallet::{Wallet, WalletAccount, PKType},
-            pk::PrivateKeyHolder,
-            book::AddressRef
-        },
         json::keyfile::EthereumJsonV3File,
+    },
+    structs::{
+        types::HasUuid,
+        wallet::{Wallet, WalletAccount, PKType},
+        pk::PrivateKeyHolder,
+        book::AddressRef
     },
     storage::{
         addressbook::AddressBookmark,

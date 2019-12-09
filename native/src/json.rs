@@ -8,7 +8,7 @@ use emerald_vault::{
     align_bytes,
     Address,
     storage::addressbook::AddressBookmark,
-    convert::proto::book::{BookmarkDetails, AddressRef},
+    structs::book::{BookmarkDetails, AddressRef},
     core::chains::EthereumChainId,
     core::chains::Blockchain
 };

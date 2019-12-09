@@ -32,7 +32,7 @@ use emerald_vault::{
     mnemonic::{
         Mnemonic, HDPath, Language, generate_key, MnemonicSize
     },
-    convert::proto::book::AddressRef,
+    structs::book::AddressRef,
     storage::vault::VaultAccess
 };
 use std::str::FromStr;
