@@ -4,7 +4,7 @@ describe("Accounts", () => {
 
     describe("List", () => {
 
-        describe('Test vault 0.10.1 migrate', () => {
+        describe('Migrate vault 0.10.1', () => {
 
             let vault;
             beforeAll(() => {
@@ -20,10 +20,47 @@ describe("Accounts", () => {
             });
 
             test("list etc", () => {
-                let accounts = vault.listAccounts("etc");
+                let accounts = vault.listAccounts("etc")
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(2);
                 expect(accounts[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
                 expect(accounts[1].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+            });
+
+            test("list kovan", () => {
+                let accounts = vault.listAccounts("kovan");
+                expect(accounts.length).toBe(0);
+            });
+
+            test("list morden", () => {
+                let accounts = vault.listAccounts("morden");
+                expect(accounts.length).toBe(0);
+            });
+        });
+
+        describe('Migrate vault 0.26 with ledger', () => {
+
+            let vault;
+            beforeAll(() => {
+                vault = new EmeraldVaultNative({
+                    dir: "./testdata/vault-0.26-ledger"
+                });
+                vault.autoMigrate();
+            });
+
+            test("list eth", () => {
+                let accounts = vault.listAccounts("eth")
+                    .sort((a, b) => a.address.localeCompare(b.address));
+                expect(accounts.length).toBe(3);
+                expect(accounts[0].address).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
+                expect(accounts[1].address).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
+                expect(accounts[2].address).toBe("0xBD5222391BBB9F17484F2565455FB6610D9E145F".toLowerCase());
+            });
+
+            test("list etc", () => {
+                let accounts = vault.listAccounts("etc");
+                expect(accounts.length).toBe(1);
+                expect(accounts[0].address).toBe("0x5B30DE96FDF94AC6C5B4A8C243F991C649D66FA1".toLowerCase());
             });
 
             test("list kovan", () => {

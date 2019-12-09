@@ -1,21 +1,24 @@
 use emerald_vault::{
     core::chains::{Blockchain, EthereumChainId},
-    storage::{AccountInfo, default_path},
     Address,
+    convert::{
+        proto::{
+            types::HasUuid,
+            wallet::{Wallet, WalletAccount, PKType},
+            pk::PrivateKeyHolder,
+            book::AddressRef
+        },
+        json::keyfile::EthereumJsonV3File,
+    },
     storage::{
+        addressbook::AddressBookmark,
         error::VaultError,
         vault::{
             VaultStorage, VaultAccess
-        }
+        },
+        default_path,
+        keyfile::AccountInfo
     },
-    convert::ethereum::EthereumJsonV3File,
-    convert::proto::{
-        types::HasUuid,
-        wallet::{AddressType, Wallet, WalletAccount},
-        pk::PrivateKeyHolder
-    },
-    storage::addressbook::AddressBookmark,
-    convert::proto::book::AddressRef
 };
 
 use std::path::{Path};
@@ -95,9 +98,7 @@ impl MigrationConfig {
 fn find_account<'a>(w: &'a Wallet, addr: &Address, blockchain: Blockchain) -> Option<&'a WalletAccount> {
     w.accounts.iter()
         .find(|a| {
-            let address_match = match &a.address {
-                AddressType::Ethereum(e) => e.address.is_some() && e.address.unwrap() == *addr
-            };
+            let address_match = a.address == Some(*addr);
             address_match && a.blockchain == blockchain
         })
 }
@@ -187,9 +188,10 @@ impl WrappedVault {
 
         let wallet = wallet.expect("Account with specified address is not found");
         let account = find_account(&wallet, addr, self.get_blockchain()).unwrap();
-        let key = storage.keys().get(&account.get_id()).expect("Private Key not found");
-
-        key
+        match &account.key {
+            PKType::PrivateKeyRef(id) => storage.keys().get(id).expect("Private Key not found"),
+            PKType::SeedHd(_) => panic!("No private key for Seed")
+        }
     }
 
     pub fn get_wallet_address(&self, id: Uuid) -> Result<Address, VaultError> {
@@ -198,7 +200,8 @@ impl WrappedVault {
         match &wallet.accounts.first()
             .expect("Wallet without address")
             .address {
-            AddressType::Ethereum(e) => Ok(e.address.unwrap())
+            Some(e) => Ok(e.clone()),
+            None => Err(VaultError::IncorrectIdError)
         }
     }
 
@@ -214,8 +217,12 @@ impl WrappedVault {
 
         storage.wallets().remove(&wallet.id)
             .expect("Previous wallet not removed");
-        storage.keys().remove(&wallet.accounts.first().unwrap().get_id())
-            .expect("Wallet not created");
+        for acc in wallet.accounts {
+            match acc.key {
+                PKType::PrivateKeyRef(id) => { storage.keys().remove(&id); },
+                PKType::SeedHd(_) => {}
+            }
+        };
     }
 
     pub fn list_addressbook(&self) -> Vec<AddressBookmark> {

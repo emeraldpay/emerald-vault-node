@@ -36,7 +36,7 @@
     "jest:electron": "cross-env ELECTRON_RUN_AS_NODE=true ./node_modules/.bin/electron ./node_modules/jest/bin/jest.js",
     "test": "npm run clean:test && npm run unpack && npm run jest",
     "test:electron": "npm run clean:test && npm run unpack && npm run jest:electron",
-    "clean:test": "rimraf testdata/tmp-* && rimraf testdata/vault-0.26-basic && rimraf testdata/vault-0.26-book && rimraf testdata/vault-0.26-snappy && rimraf testdata/vault-0.10.1-migrate",
+    "clean:test": "rimraf testdata/tmp-* && rimraf testdata/vault-0.26-basic && rimraf testdata/vault-0.26-book && rimraf testdata/vault-0.26-snappy && rimraf testdata/vault-0.10.1-migrate && rimraf testdata/vault-0.26-ledger",
     "clean:rs": "cd native && cargo clean",
     "clean:ts": "rimraf lib",
     "clean": "npm run clean:ts && npm run clean:test && npm run clean:rs",

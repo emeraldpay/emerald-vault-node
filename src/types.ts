@@ -2,11 +2,19 @@ export type Config = {
     dir?: string | null
 }
 
+export type Uuid = string;
+
 export type Account = {
     address: string,
     name: string,
     description: string,
+    /**
+     * @deprecated
+     */
     hidden: boolean,
+    /**
+     * @deprecated
+     */
     hardware: boolean,
 }
 
@@ -44,4 +52,27 @@ export type ImportPrivateKey = {
     description?: string | null,
     pk: string,
     password: string
+}
+
+export type PKRef = {
+    pk_id: Uuid
+}
+
+export type SeedPKRef = {
+    seed_id: Uuid,
+    hdPath: string
+}
+
+export type EthereumAccount = {
+    id: number,
+    blockchain: number,
+    address: string,
+    pk: PKRef | SeedPKRef
+}
+
+export type Wallet = {
+    id: Uuid,
+    name: string,
+    description: string,
+    accounts: EthereumAccount[]
 }

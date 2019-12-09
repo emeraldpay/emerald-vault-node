@@ -23,10 +23,7 @@ use emerald_vault::{
     core::{
         PrivateKey, PRIVATE_KEY_BYTES
     },
-    keystore::{
-        KeyFile, CryptoType, KdfDepthLevel, Kdf, os_random
-    },
-    convert::ethereum::{
+    convert::json::keyfile::{
         EthereumJsonV3File
     },
     util::{
