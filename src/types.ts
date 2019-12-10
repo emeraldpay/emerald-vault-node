@@ -4,17 +4,14 @@ export type Config = {
 
 export type Uuid = string;
 
+/**
+ * @deprecated
+ */
 export type Account = {
     address: string,
     name: string,
     description: string,
-    /**
-     * @deprecated
-     */
     hidden: boolean,
-    /**
-     * @deprecated
-     */
     hardware: boolean,
 }
 
@@ -54,12 +51,17 @@ export type ImportPrivateKey = {
     password: string
 }
 
+export type AccountType = "pk" | "seed-hd";
+export type ImportPkType = "ethereum-json" | "raw-pk-hex";
+
 export type PKRef = {
-    pk_id: Uuid
+    type: AccountType,
+    keyId: Uuid
 }
 
 export type SeedPKRef = {
-    seed_id: Uuid,
+    type: AccountType,
+    seedId: Uuid,
     hdPath: string
 }
 
@@ -67,12 +69,49 @@ export type EthereumAccount = {
     id: number,
     blockchain: number,
     address: string,
-    pk: PKRef | SeedPKRef
+    key: PKRef | SeedPKRef | undefined
 }
+
+export type BitcoinAccount = {
+    id: number,
+    blockchain: number,
+    key: PKRef | SeedPKRef
+}
+
+export type WalletAccount = EthereumAccount | BitcoinAccount;
 
 export type Wallet = {
     id: Uuid,
-    name: string,
-    description: string,
-    accounts: EthereumAccount[]
+    name: string | undefined,
+    description: string | undefined,
+    accounts: WalletAccount[],
+}
+
+export function isEthereumAccount(acc: WalletAccount): acc is EthereumAccount {
+    return acc.blockchain === 100 || acc.blockchain === 101
+}
+
+export function isBitcoinAccount(acc: WalletAccount): acc is BitcoinAccount {
+    return false
+}
+
+export type AddAccount = {
+    blockchain: number,
+    type: ImportPkType,
+    key: string,
+    password?: string | undefined
+}
+
+export enum StatusCode {
+    UNKNOWN = 0,
+    NOT_IMPLEMENTED = 1
+}
+
+export type Status<T> = {
+    succeeded: boolean,
+    result: T | undefined,
+    error: {
+        code: StatusCode,
+        message: string
+    } | undefined
 }

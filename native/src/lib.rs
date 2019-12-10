@@ -1,11 +1,14 @@
 #[macro_use]
 extern crate neon;
+#[macro_use]
+extern crate neon_serde;
 extern crate emerald_vault;
 extern crate uuid;
 extern crate hex;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde;
 
 mod json;
 mod accounts;
@@ -13,9 +16,9 @@ mod access;
 mod seeds;
 
 use neon::prelude::*;
-use accounts::*;
-use access::{VaultConfig, WrappedVault, MigrationConfig};
-use json::{UnsignedTx, ImportPrivateKey, UpdateAccount, NewMnemonicAccount, NewAddressBookItem};
+use accounts::{AsJsObject, AccountData};
+use access::{VaultConfig, WrappedVault, MigrationConfig, get_str};
+use json::{UnsignedTx, ImportPrivateKey, UpdateAccount, NewMnemonicAccount, NewAddressBookItem, StatusResult, WalletJson, AddAccountJson};
 use emerald_vault::{
     Address,
     Transaction,
@@ -37,6 +40,7 @@ use emerald_vault::{
 };
 use std::str::FromStr;
 use std::convert::{TryFrom, TryInto};
+use uuid::Uuid;
 
 fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
     let cfg = VaultConfig::get_config(&mut cx);
@@ -50,6 +54,53 @@ fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
     }
 
     Ok(result)
+}
+
+fn list_wallets(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+    let wallets = vault.load_wallets();
+
+    let mut result = Vec::new();
+    for w in wallets {
+        result.push(WalletJson::from(w));
+    }
+
+    let status = StatusResult::Ok(result).as_json();
+
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
+}
+
+fn add_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let label = cx.argument::<JsString>(1)
+        .ok()
+        .map(|x| x.value());
+    let id = vault.create_wallet(label).expect("Wallet not created");
+
+    let status = StatusResult::Ok(id.to_string()).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
+}
+
+fn add_account_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let id = cx.argument::<JsString>(1).expect("Wallet id is not provided").value();
+    let id = Uuid::parse_str(id.as_str()).expect("Invalid UUID");
+    let json = cx.argument::<JsString>(2).expect("Input JSON is not provided").value();
+
+    let parsed: AddAccountJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+
+    let id = vault.create_account(id, parsed).expect("Account not created");
+
+    let status = StatusResult::Ok(id).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
 }
 
 fn import_account(mut cx: FunctionContext) -> JsResult<JsObject> {
@@ -172,7 +223,7 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
     let key = PrivateKey::try_from(key.as_slice()).expect("Invalid PrivateKey");
 
     let tr: Transaction = sign.try_into().expect("Invalid sign JSON");
-    let raw_tx = tr.to_signed_raw(key, chain_id).expect("Expect to sign a transaction");
+    let raw_tx = tr.to_signed_raw(key, chain_id.unwrap()).expect("Expect to sign a transaction");
     let raw_hex = format!("0x{}", raw_tx.to_hex());
 
     let value_js = cx.string(raw_hex);
@@ -299,6 +350,11 @@ fn auto_migrate(mut cx: FunctionContext) -> JsResult<JsArray> {
 }
 
 register_module!(mut cx, {
+    cx.export_function("wallets_list", list_wallets).expect("wallets_list not exported");
+    cx.export_function("wallets_add", add_wallet).expect("wallets_add not exported");
+    cx.export_function("wallets_addAccount", add_account_to_wallet).expect("wallets_addAccount not exported");
+
+
     cx.export_function("listAccounts", list_accounts).expect("listAccounts not exported");
     cx.export_function("importAccount", import_account).expect("importAccount not exported");
     cx.export_function("exportAccount", export_account).expect("exportAccount not exported");

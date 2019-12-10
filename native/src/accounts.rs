@@ -23,13 +23,13 @@ impl From<&AccountInfo> for AccountData {
 }
 
 pub trait AsJsObject {
-    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsObject>;
+    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue>;
 }
 
 
 impl AsJsObject for AccountData {
 
-    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsObject> {
+    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue> {
         let account_js = JsObject::new(cx);
 
         let address_handle = cx.string(&self.address);
@@ -43,6 +43,6 @@ impl AsJsObject for AccountData {
         let hardware_handle = cx.boolean(self.hardware);
         account_js.set(cx, "hardware", hardware_handle).unwrap();
 
-        return account_js
+        return account_js.as_value(cx)
     }
 }

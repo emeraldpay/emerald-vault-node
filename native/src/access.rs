@@ -1,25 +1,19 @@
-use emerald_vault::{
-    core::chains::{Blockchain, EthereumChainId},
-    Address,
-    convert::{
-        json::keyfile::EthereumJsonV3File,
+use emerald_vault::{core::chains::{Blockchain, EthereumChainId}, Address, convert::{
+    json::keyfile::EthereumJsonV3File,
+}, structs::{
+    types::HasUuid,
+    wallet::{Wallet, WalletAccount, PKType},
+    pk::PrivateKeyHolder,
+    book::AddressRef
+}, storage::{
+    addressbook::AddressBookmark,
+    error::VaultError,
+    vault::{
+        VaultStorage, VaultAccess
     },
-    structs::{
-        types::HasUuid,
-        wallet::{Wallet, WalletAccount, PKType},
-        pk::PrivateKeyHolder,
-        book::AddressRef
-    },
-    storage::{
-        addressbook::AddressBookmark,
-        error::VaultError,
-        vault::{
-            VaultStorage, VaultAccess
-        },
-        default_path,
-        keyfile::AccountInfo
-    },
-};
+    default_path,
+    keyfile::AccountInfo
+}, trim_hex};
 
 use std::path::{Path};
 use neon::prelude::{FunctionContext, JsString, JsObject};
@@ -29,10 +23,10 @@ use neon::types::{JsNull, JsUndefined,};
 use neon::handle::Handle;
 use uuid::Uuid;
 use std::convert::TryFrom;
-use json::NewAddressBookItem;
+use json::{NewAddressBookItem, AddAccountJson, AddAccountType};
 
 pub struct VaultConfig {
-    pub chain: EthereumChainId,
+    pub chain: Option<EthereumChainId>,
     pub dir: String,
     pub show_hidden: bool
 }
@@ -41,7 +35,7 @@ pub struct MigrationConfig {
     pub dir: String,
 }
 
-fn get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
+pub fn get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
     match obj.get(cx, name) {
         Ok(val) => {
             if val.is_a::<JsNull>() {
@@ -64,11 +58,14 @@ impl VaultConfig {
             Some(val) => val,
             None => default_path().to_str().expect("No default path for current OS").to_string()
         };
-        let chain = config.get(cx, "chain").unwrap().downcast::<JsString>()
-            .expect("Chain is not provided")
-            .value();
+
+        let chain = match get_str(cx, &config,"chain") {
+            Some(chain) => Some(EthereumChainId::from_str(chain.as_str()).expect("Invalid chain")),
+            None => None
+        };
+
         return VaultConfig {
-            chain: EthereumChainId::from_str(chain.as_str()).expect("Invalid chain"),
+            chain,
             dir: dir.to_string(),
             show_hidden: false
         }
@@ -114,10 +111,10 @@ impl WrappedVault {
     }
 
     fn get_blockchain(&self) -> Blockchain {
-        Blockchain::try_from(self.cfg.chain).expect("Unsupported chain")
+        Blockchain::try_from(self.cfg.chain.unwrap()).expect("Unsupported chain")
     }
 
-    fn load_wallets(&self) -> Vec<Wallet> {
+    pub fn load_wallets(&self) -> Vec<Wallet> {
         let storage = &self.cfg.get_storage();
         let wallets: Vec<Wallet> = storage.wallets().list().expect("Wallets are not loaded")
             .iter()
@@ -127,6 +124,39 @@ impl WrappedVault {
             .map(|w| w.unwrap())
             .collect();
         wallets
+    }
+
+    pub fn create_wallet(&self, label: Option<String>) -> Result<Uuid, VaultError> {
+        let storage = &self.cfg.get_storage();
+        let id = Uuid::new_v4();
+        storage.wallets().add(Wallet {
+            id: id.clone(),
+            label,
+            accounts: vec![]
+        }).map(|_| id)
+    }
+
+    pub fn create_account(&self, wallet_id: Uuid, account: AddAccountJson) -> Result<u32, VaultError> {
+        let blockchain = Blockchain::try_from(account.blockchain)?;
+        let storage = &self.cfg.get_storage();
+        let result = match account.key_value {
+            AddAccountType::EthereumJson(json) => {
+                let json = EthereumJsonV3File::try_from(json)?;
+                let id = storage.add_account(wallet_id)
+                    .ethereum(&json, blockchain)?;
+                id
+            },
+            AddAccountType::RawHex(hex) => {
+                if account.password.is_none() {
+                    return panic!("Password is required".to_string())
+                }
+                let hex = trim_hex(hex.as_str());
+                let hex = hex::decode(hex)?;
+                storage.add_account(wallet_id)
+                    .raw_pk(hex, account.password.unwrap().as_str(), blockchain)?
+            }
+        };
+        Ok(result)
     }
 
     pub fn list_accounts(&self) -> Vec<AccountInfo> {
@@ -228,7 +258,7 @@ impl WrappedVault {
     pub fn list_addressbook(&self) -> Vec<AddressBookmark> {
         let storage = &self.cfg.get_storage();
         let all = storage.addressbook().get_all().expect("Addressbook unavailable");
-        let exp_blockchain = Blockchain::try_from(self.cfg.chain).expect("Unsupported blockchain");
+        let exp_blockchain = self.get_blockchain();
 
         let for_chain = all.iter()
             .filter(|b| b.details.blockchains.contains(&exp_blockchain))
@@ -240,7 +270,7 @@ impl WrappedVault {
 
     pub fn add_to_addressbook(&self, item: NewAddressBookItem) -> bool {
         let storage = &self.cfg.get_storage();
-        let blockchain = Blockchain::try_from(self.cfg.chain).expect("Unsupported blockchain");
+        let blockchain = self.get_blockchain();
         storage.addressbook().add(item.into_bookmark(blockchain)).is_ok()
     }
 

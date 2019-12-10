@@ -513,7 +513,7 @@ describe("Accounts", () => {
 
         test("errors for invalid address", () => {
             expect(() => {
-                vault.removeAccount("eth", "55ea99137b60dc0bd642d020TTTT");
+                vault.removeAccount_old("eth", "55ea99137b60dc0bd642d020TTTT");
             }).toThrow()
         });
 
@@ -544,7 +544,7 @@ describe("Accounts", () => {
             let exists = vault.listAccounts("etc").some((it) => it.address == "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
             expect(exists).toBeTruthy();
 
-            vault.removeAccount("etc", "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            vault.removeAccount_old("etc", "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
             exists = vault.listAccounts("etc").some((it) => it.address == "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
             expect(exists).toBeFalsy();
         });
@@ -579,7 +579,7 @@ describe("Accounts", () => {
             exists = vault.listAccounts("eth").some((it) => it.address == "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
             expect(exists).toBeTruthy();
 
-            vault.removeAccount("etc", "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            vault.removeAccount_old("etc", "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
             exists = vault.listAccounts("etc").some((it) => it.address == "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
             expect(exists).toBeFalsy();
             exists = vault.listAccounts("eth").some((it) => it.address == "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
