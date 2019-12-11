@@ -24,6 +24,8 @@ use neon::handle::Handle;
 use uuid::Uuid;
 use std::convert::TryFrom;
 use json::{NewAddressBookItem, AddAccountJson, AddAccountType};
+use emerald_vault::structs::seed::Seed;
+use emerald_vault::hdwallet::bip32::HDPath;
 
 pub struct VaultConfig {
     pub chain: Option<EthereumChainId>,
@@ -101,7 +103,7 @@ fn find_account<'a>(w: &'a Wallet, addr: &Address, blockchain: Blockchain) -> Op
 }
 
 pub struct WrappedVault {
-    cfg: VaultConfig
+    pub cfg: VaultConfig
 }
 
 impl WrappedVault {
@@ -154,6 +156,14 @@ impl WrappedVault {
                 let hex = hex::decode(hex)?;
                 storage.add_account(wallet_id)
                     .raw_pk(hex, account.password.unwrap().as_str(), blockchain)?
+            }
+            AddAccountType::HdPath(hd) => {
+                storage.add_account(wallet_id)
+                    .seed_hd(Uuid::from_str(hd.seed_id.as_str())?,
+                             HDPath::try_from(hd.hd_path.as_str())?,
+                             blockchain,
+                             Some(hd.password),
+                             None)?
             }
         };
         Ok(result)

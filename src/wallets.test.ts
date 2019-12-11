@@ -1,6 +1,7 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
 import * as selector from "./selectors";
 import {AddAccount} from "./types";
+import {tempPath} from "./commons.test";
 
 describe("Wallets", () => {
 
@@ -48,9 +49,8 @@ describe("Wallets", () => {
         describe("Import Ethereum", () => {
             let vault: EmeraldVaultNative;
             beforeEach(() => {
-                const seq = new Date().getTime();
                 vault = new EmeraldVaultNative({
-                    dir: `./testdata/tmp-wallet-import-${seq}`
+                    dir: tempPath("wallet-import")
                 });
             });
 
@@ -118,6 +118,34 @@ describe("Wallets", () => {
             });
 
             test("Create and import 2 keys", () => {
+                let id = vault.addWallet("Test 3");
+                let acc1: AddAccount = {
+                    blockchain: 100,
+                    type: "raw-pk-hex",
+                    key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                    password: "test1"
+                };
+                let result1 = vault.addAccount(id, acc1);
+                let acc2: AddAccount = {
+                    blockchain: 101,
+                    type: "raw-pk-hex",
+                    key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
+                    password: "test2"
+                };
+                let result2 = vault.addAccount(id, acc2);
+
+                expect(result1).toBe(0);
+                expect(result2).toBe(1);
+
+                let wallet = selector.getWallet(vault.listWallets(), id);
+                expect(wallet.accounts.length).toBe(2);
+                expect(selector.getEthereumAccounts(wallet)[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+                expect(selector.getEthereumAccounts(wallet)[0].blockchain).toBe(100);
+                expect(selector.getEthereumAccounts(wallet)[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+                expect(selector.getEthereumAccounts(wallet)[1].blockchain).toBe(101);
+            });
+
+            test("Create and import from seed", () => {
                 let id = vault.addWallet("Test 3");
                 let acc1: AddAccount = {
                     blockchain: 100,

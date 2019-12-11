@@ -1,4 +1,5 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
+import {tempPath} from "./commons.test";
 
 describe("Address Book", () => {
     describe('Test vault 0.26 book', () => {
@@ -56,9 +57,8 @@ describe("Address Book", () => {
 
         let vault;
         beforeAll(() => {
-            const seq = new Date().getTime();
             vault = new EmeraldVaultNative({
-                dir: `./testdata/tmp-book-add-${seq}`
+                dir: tempPath("book-add")
             });
         });
 
@@ -78,9 +78,8 @@ describe("Address Book", () => {
 
         let vault;
         beforeAll(() => {
-            const seq = new Date().getTime();
             vault = new EmeraldVaultNative({
-                dir: `./testdata/tmp-book-delete-${seq}`
+                dir: tempPath("book-delete")
             });
         });
 

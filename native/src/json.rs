@@ -23,6 +23,7 @@ use emerald_vault::structs::wallet::{Wallet, WalletAccount};
 use serde::{Serialize, Serializer};
 use accounts::AsJsObject;
 use neon::prelude::{Context, Handle, JsObject, Object, JsArray, Value, JsValue};
+use emerald_vault::structs::seed::{Seed, SeedSource};
 
 #[derive(Debug, Copy, Clone)]
 pub enum JsonError {
@@ -151,7 +152,54 @@ pub enum AddAccountType {
     #[serde(rename = "ethereum-json")]
     EthereumJson(String),
     #[serde(rename = "raw-pk-hex")]
-    RawHex(String)
+    RawHex(String),
+    #[serde(rename = "hd-path")]
+    HdPath(SeedAccount)
+}
+
+#[derive(Deserialize, Clone)]
+pub struct SeedAccount {
+    #[serde(rename = "seedId")]
+    pub seed_id: String,
+    #[serde(rename = "hdPath")]
+    pub hd_path: String,
+    pub password: String,
+    pub address: Option<String>
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SeedJson {
+    pub id: String,
+    pub seed_type: SeedType,
+    pub is_available: bool
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum SeedType {
+    #[serde(rename = "ledger")]
+    Ledger,
+    #[serde(rename = "bytes")]
+    Bytes
+}
+
+#[derive(Deserialize, Clone)]
+pub struct SeedDefinitionJson {
+    #[serde(flatten)]
+    pub seed_type: SeedDefinitionType,
+    pub password: Option<String>
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(tag = "type", content = "value")]
+pub enum SeedDefinitionType {
+    #[serde(rename = "mnemonic")]
+    Mnemonic(MnemonicSeedJson)
+}
+
+#[derive(Deserialize, Clone)]
+pub struct MnemonicSeedJson {
+    pub value: String,
+    pub password: Option<String>
 }
 
 impl <T> From<Result<T, VaultError>> for StatusResult<T> {
@@ -250,59 +298,18 @@ impl<T> AsJsObject for StatusResult<T> where T: AsJsObject {
     }
 }
 
-//impl <T> AsJsObject for Vec<T> where T: AsJsObject {
-//    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue> {
-//        let js = JsArray::new(cx, self.len() as u32);
-//
-//        for (i, item) in self.iter().enumerate() {
-//            let value = item.as_js_object(cx);
-//            js.set(cx, i as u32, value).unwrap();
-//        }
-//
-//        js.as_value(cx)
-//    }
-//}
-//
-//impl AsJsObject for WalletAccountJson {
-//    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue> {
-//        let mut js = JsObject::new(cx);
-//
-//        match self.address {
-//            Some(address) => {
-//                let handle = cx.string(address.to_string());
-//                js.set(cx, "address", handle).unwrap();
-//            },
-//            None => {}
-//        }
-//
-//        let handle = cx.number(self.blockchain as u32);
-//        js.set(cx, "blockchain", handle).unwrap();
-//
-//        js.as_value(cx)
-//    }
-//}
-//
-//impl AsJsObject for WalletJson {
-//    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue> {
-//        let mut js = JsObject::new(cx);
-//
-//        let handle = cx.string(&self.id);
-//        js.set(cx, "id", handle).unwrap();
-//
-//        if self.name.is_some() {
-//            let handle = cx.string(self.name.clone().unwrap());
-//            js.set(cx, "name", handle).unwrap();
-//        }
-//
-//        let accounts = JsArray::new(cx, self.accounts.len() as u32);
-//
-//        for (i, account) in self.accounts.iter().enumerate() {
-//            let value = account.as_js_object(cx);
-//            accounts.set(cx, i as u32, value).unwrap();
-//        }
-//
-//        js.set(cx, "accounts", accounts).unwrap();
-//
-//        js.as_value(cx)
-//    }
-//}
+impl From<Seed> for SeedJson {
+    fn from(value: Seed) -> Self {
+        SeedJson {
+            id: value.id.to_string(),
+            seed_type: match value.source {
+                SeedSource::Bytes(_) => SeedType::Bytes,
+                SeedSource::Ledger(_) => SeedType::Ledger,
+            },
+            is_available: match value.source {
+                SeedSource::Bytes(_) => true,
+                SeedSource::Ledger(_) => false, //TODO
+            }
+        }
+    }
+}

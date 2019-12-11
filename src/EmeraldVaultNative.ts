@@ -12,6 +12,7 @@ import {
     Uuid,
     Wallet
 } from './types';
+import {Seed} from "./Seed";
 
 var addon = require('../native');
 
@@ -38,6 +39,10 @@ export class EmeraldVaultNative {
 
     constructor(conf?: Config | undefined) {
         this.conf = conf || {};
+    }
+
+    seeds(): Seed {
+        return new Seed(this.conf);
     }
 
     autoMigrate() {

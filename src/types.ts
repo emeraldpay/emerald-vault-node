@@ -52,7 +52,7 @@ export type ImportPrivateKey = {
 }
 
 export type AccountType = "pk" | "seed-hd";
-export type ImportPkType = "ethereum-json" | "raw-pk-hex";
+export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path";
 
 export type PKRef = {
     type: AccountType,
@@ -98,8 +98,14 @@ export function isBitcoinAccount(acc: WalletAccount): acc is BitcoinAccount {
 export type AddAccount = {
     blockchain: number,
     type: ImportPkType,
-    key: string,
-    password?: string | undefined
+    key: string | SeedAccount,
+    password?: string
+}
+
+export type SeedAccount = {
+    seedId: Uuid,
+    hdPath: string,
+    password: string
 }
 
 export enum StatusCode {

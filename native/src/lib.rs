@@ -376,6 +376,9 @@ register_module!(mut cx, {
     cx.export_function("ledger_isConnected", seeds::is_connected).expect("ledger_isConnected not exported");
     cx.export_function("ledger_listAddresses", seeds::list_addresses).expect("ledger_listAddresses not exported");
 
+    cx.export_function("seed_add", seeds::add).expect("seed_add not exported");
+    cx.export_function("seed_list", seeds::list).expect("seed_list not exported");
+
     cx.export_function("auto_migrate", auto_migrate).expect("auto_migrate not exported");
 
 
