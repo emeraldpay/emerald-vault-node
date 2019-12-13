@@ -127,6 +127,7 @@ impl <T> StatusResult<T> where T: Clone {
 
 #[derive(Serialize, Clone)]
 pub struct WalletAccountJson {
+    pub id: usize,
     pub blockchain: u32,
     pub address: Option<String>,
 }
@@ -215,6 +216,7 @@ impl From<Wallet> for WalletJson {
     fn from(wallet: Wallet) -> Self {
         let accounts: Vec<WalletAccountJson> = wallet.accounts.iter()
             .map(|a| WalletAccountJson {
+                id: a.id,
                 blockchain: a.blockchain as u32,
                 address: a.address.map(|v| v.to_string())
             })

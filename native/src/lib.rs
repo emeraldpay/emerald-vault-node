@@ -14,6 +14,7 @@ mod json;
 mod accounts;
 mod access;
 mod seeds;
+mod sign;
 
 use neon::prelude::*;
 use accounts::{AsJsObject, AccountData};
@@ -207,30 +208,6 @@ fn remove_account(mut cx: FunctionContext) -> JsResult<JsBoolean> {
     Ok(result)
 }
 
-fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
-    let chain_id = cfg.chain;
-    let vault = WrappedVault::new(cfg);
-
-    let sign_js = cx.argument::<JsString>(1).unwrap().value();
-    let sign = serde_json::from_str::<UnsignedTx>(sign_js.as_str())
-        .expect("Invalid sign JSON");
-
-    let pass = cx.argument::<JsString>(2).unwrap().value();
-    let address = Address::from_str(sign.from.as_str()).expect("Invalid from address");
-    let key = vault.get(&address);
-    let key = key.decrypt(pass.as_str()).expect("Invalid password");
-    let key = PrivateKey::try_from(key.as_slice()).expect("Invalid PrivateKey");
-
-    let tr: Transaction = sign.try_into().expect("Invalid sign JSON");
-    let raw_tx = tr.to_signed_raw(key, chain_id.unwrap()).expect("Expect to sign a transaction");
-    let raw_hex = format!("0x{}", raw_tx.to_hex());
-
-    let value_js = cx.string(raw_hex);
-
-    Ok(value_js)
-}
-
 fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
     let size = cx.argument::<JsNumber>(0)
         .expect("Mnemonic size is not provided").value() as usize;
@@ -364,7 +341,7 @@ register_module!(mut cx, {
     cx.export_function("importPk", import_pk).expect("importPk not exported");
     cx.export_function("exportPk", export_pk).expect("exportPk not exported");
 
-    cx.export_function("signTx", sign_tx).expect("signTx not exported");
+    cx.export_function("sign_tx", sign::sign_tx).expect("sign_txTx not exported");
 
     cx.export_function("importMnemonic", import_mnemonic).expect("importMnemonic not exported");
     cx.export_function("generateMnemonic", generate_mnemonic).expect("generateMnemonic not exported");

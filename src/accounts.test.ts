@@ -1,4 +1,5 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
+import {EthereumAccount} from "./types";
 
 describe("Accounts", () => {
 
@@ -360,14 +361,18 @@ describe("Accounts", () => {
         });
 
         test("import 0xfac192ce", () => {
-            let data = {
-                pk: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                password: "test"
-            };
-            let address = vault.importPk("eth", data);
-            expect(address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+            let walletId = vault.addWallet("import 1");
+            let accountId = vault.addAccount(walletId, {
+               type: "raw-pk-hex",
+               blockchain: 100,
+               key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+               password: "test"
+            });
+            let wallet = vault.getWallet(walletId);
+            let account = wallet.accounts[0] as EthereumAccount;
+            expect(account.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
 
-            let tx1 = vault.signTx("eth", {
+            let tx1 = vault.signTx(walletId, accountId,{
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 to: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
                 gas: "0x5208",
@@ -380,14 +385,18 @@ describe("Accounts", () => {
         });
 
         test("import 0xfac192ce - no prefix", () => {
-            let data = {
-                pk: "fac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+            let walletId = vault.addWallet("import 1");
+            let accountId = vault.addAccount(walletId, {
+                type: "raw-pk-hex",
+                blockchain: 100,
+                key: "fac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
-            };
-            let address = vault.importPk("eth", data);
-            expect(address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+            });
+            let wallet = vault.getWallet(walletId);
+            let account = wallet.accounts[0] as EthereumAccount;
+            expect(account.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
 
-            let tx1 = vault.signTx("eth", {
+            let tx1 = vault.signTx(walletId, accountId,{
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 to: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
                 gas: "0x5208",
@@ -399,15 +408,19 @@ describe("Accounts", () => {
             expect(tx1).toBe("0xf86c8085098bca5a0082520894008aeeda4d805471df9b2a5b0f38a0c3bcba786b88a688906bd8b000008025a04da6c6e9d6f3179f624b189e70115e4b30d98c396c517da0ca8a33e36719fd1aa0495f151d4229aa79f4b8213096f56ae430cf093d66efc72ef48997f1d44d5ba3");
         });
 
-        test("import 0xfac192ce", () => {
-            let data = {
-                pk: "0xf06d69cdc7da0faffb1008270bca38f5e31891a3a773950e6d0fea48a7188551",
+        test("import 0xf06d69cd, sign with data", () => {
+            let walletId = vault.addWallet("import 1");
+            let accountId = vault.addAccount(walletId, {
+                type: "raw-pk-hex",
+                blockchain: 100,
+                key: "0xf06d69cdc7da0faffb1008270bca38f5e31891a3a773950e6d0fea48a7188551",
                 password: "test"
-            };
-            let address = vault.importPk("eth", data);
-            expect(address).toBe("0xdb365e2b984128f5d187dbc8df1f947aa6e03361");
+            });
+            let wallet = vault.getWallet(walletId);
+            let account = wallet.accounts[0] as EthereumAccount;
+            expect(account.address).toBe("0xdb365e2b984128f5d187dbc8df1f947aa6e03361");
 
-            let tx1 = vault.signTx("eth", {
+            let tx1 = vault.signTx(walletId, accountId, {
                 from: "0xdb365e2b984128f5d187dbc8df1f947aa6e03361",
                 to: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 gas: "0x1D8A8",

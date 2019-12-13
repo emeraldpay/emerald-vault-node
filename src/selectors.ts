@@ -6,7 +6,7 @@ export function getEthereumAccounts(wallet: Wallet): EthereumAccount[] {
 }
 
 export function findAccount(wallet: Wallet, address: string): WalletAccount | undefined {
-    return this.wallet.accounts.find((a) => {
+    return wallet.accounts.find((a) => {
         if (isEthereumAccount(a)) {
             return a.address === address;
         }
@@ -16,4 +16,10 @@ export function findAccount(wallet: Wallet, address: string): WalletAccount | un
 
 export function getWallet(wallets: Wallet[], id: Uuid): Wallet | undefined {
     return wallets.find((w) => w.id == id)
+}
+
+export function findWalletByAddress(wallets: Wallet[], address: string): Wallet | undefined {
+    return wallets.find((wallet) =>
+        wallet.accounts.some((a) => isEthereumAccount(a) && a.address === address)
+    )
 }

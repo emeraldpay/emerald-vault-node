@@ -13,6 +13,7 @@ import {
     Wallet
 } from './types';
 import {Seed} from "./Seed";
+import * as selectors from './selectors';
 
 var addon = require('../native');
 
@@ -58,6 +59,14 @@ export class EmeraldVaultNative {
         return status.result
     }
 
+    getWallet(id: Uuid): Wallet | undefined {
+        let status: Status<Wallet[]> = addon.wallets_list(this.conf);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return selectors.getWallet(status.result, id)
+    }
+
     addWallet(title: string | undefined): Uuid {
         let status: Status<Uuid> = addon.wallets_add(this.conf, title);
         if (!status.succeeded) {
@@ -78,10 +87,17 @@ export class EmeraldVaultNative {
         return status.result
     }
 
-    removeAccount(walletId: Uuid, accountId: number): Status<void> {
-        return statusFail(StatusCode.NOT_IMPLEMENTED, "NOT IMPLEMENTED");
+    removeAccount(walletId: Uuid, accountId: number) {
+        throw Error("NOT IMPLEMENTED");
     }
 
+    signTx(walletId: Uuid, accountId: number, tx: UnsignedTx, password?: string): string {
+        let status: Status<string> = addon.sign_tx(this.conf, walletId, accountId, JSON.stringify(tx), password);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return "0x" + status.result;
+    }
 
 
     vaultVersion(): string {
@@ -142,14 +158,6 @@ export class EmeraldVaultNative {
     removeAccount_old(chain: string, address: string): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.removeAccount(opts, address);
-    }
-
-    /**
-     * @deprecated
-     */
-    signTx(chain: string, tx: UnsignedTx, password: string): string {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.signTx(opts, JSON.stringify(tx), password);
     }
 
     /**
