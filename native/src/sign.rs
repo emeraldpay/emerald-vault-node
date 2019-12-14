@@ -1,11 +1,64 @@
-use neon::prelude::{FunctionContext, JsResult, JsString, Context, JsNumber, JsObject};
-use access::{VaultConfig, WrappedVault};
-use json::{UnsignedTx, StatusResult};
-use emerald_vault::{Address, PrivateKey, Transaction, ToHex};
-use std::str::FromStr;
 use std::convert::TryInto;
+use std::str::FromStr;
+
+use hex::FromHex;
+use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString};
 use uuid::Uuid;
-use emerald_vault::structs::wallet::PKType;
+
+use access::{VaultConfig, WrappedVault};
+use emerald_vault::{
+    Address,
+    align_bytes,
+    to_arr,
+    to_even_str,
+    to_u64,
+    Transaction,
+    trim_hex
+};
+use json::{JsonError, StatusResult};
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct UnsignedTx {
+    pub from: String,
+    pub to: String,
+    pub gas: String,
+    #[serde(rename = "gasPrice")]
+    pub gas_price: String,
+    #[serde(default)]
+    pub value: String,
+    #[serde(default)]
+    pub data: String,
+    pub nonce: String,
+    #[serde(default)]
+    pub passphrase: Option<String>,
+}
+
+impl TryInto<Transaction> for UnsignedTx {
+    type Error = JsonError;
+
+    fn try_into(self) -> Result<Transaction, Self::Error> {
+        let gas_price = to_even_str(trim_hex(self.gas_price.as_str()));
+        let value = to_even_str(trim_hex(self.value.as_str()));
+        let gas_limit = to_even_str(trim_hex(self.gas.as_str()));
+
+        let gas_limit = Vec::from_hex(gas_limit)?;
+        let gas_price = Vec::from_hex(gas_price)?;
+        let value = Vec::from_hex(value)?;
+        let nonce = Vec::from_hex(to_even_str(trim_hex(self.nonce.as_str())))?;
+        let data = to_even_str(trim_hex(self.data.as_str()));
+
+        let result = Transaction {
+            nonce: to_u64(&nonce),
+            gas_price: to_arr(&align_bytes(&gas_price, 32)),
+            gas_limit: to_u64(&gas_limit),
+            to: self.to.as_str().parse::<Address>().ok(),
+            value: to_arr(&align_bytes(&value, 32)),
+            data: Vec::from_hex(data)?,
+        };
+
+        Ok(result)
+    }
+}
 
 impl WrappedVault {
 

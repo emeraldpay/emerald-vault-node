@@ -48,7 +48,7 @@ export class EmeraldVaultNative {
 
     autoMigrate() {
         let opts = Object.assign({}, this.conf);
-        addon.auto_migrate(opts);
+        addon.admin_migrate(opts);
     }
 
     listWallets(): Wallet[] {
@@ -75,8 +75,8 @@ export class EmeraldVaultNative {
         return status.result
     }
 
-    removeWallet(walletId: Uuid): Status<void> {
-        return statusFail(StatusCode.NOT_IMPLEMENTED, "NOT IMPLEMENTED");
+    removeWallet(walletId: Uuid) {
+        throw Error("NOT IMPLEMENTED");
     }
 
     addAccount(walletId: Uuid, account: AddAccount): number {
@@ -109,7 +109,7 @@ export class EmeraldVaultNative {
      */
     listAccounts(chain: string): Array<Account> {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.listAccounts(opts);
+        return addon.accounts_list(opts);
     }
 
     /**
@@ -117,7 +117,7 @@ export class EmeraldVaultNative {
      */
     importAccount(chain: string, data: any): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.importAccount(opts, JSON.stringify(data)).address;
+        return addon.accounts_import(opts, JSON.stringify(data)).address;
     }
 
     /**
@@ -125,7 +125,7 @@ export class EmeraldVaultNative {
      */
     importPk(chain: string, data: ImportPrivateKey): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.importPk(opts, JSON.stringify(data)).address;
+        return addon.accounts_importPk(opts, JSON.stringify(data)).address;
     }
 
     /**
@@ -133,7 +133,7 @@ export class EmeraldVaultNative {
      */
     exportPk(chain: string, address: string, password: string): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.exportPk(opts, address, password);
+        return addon.accounts_exportPk(opts, address, password);
     }
 
     /**
@@ -141,7 +141,7 @@ export class EmeraldVaultNative {
      */
     exportAccount(chain: string, address: string): any {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return JSON.parse(addon.exportAccount(opts, address));
+        return JSON.parse(addon.accounts_export(opts, address));
     }
 
     /**
@@ -149,7 +149,7 @@ export class EmeraldVaultNative {
      */
     updateAccount(chain: string, address: string, update: Update): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.updateAccount(opts, address, JSON.stringify(update));
+        return addon.accounts_update(opts, address, JSON.stringify(update));
     }
 
     /**
@@ -157,7 +157,7 @@ export class EmeraldVaultNative {
      */
     removeAccount_old(chain: string, address: string): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.removeAccount(opts, address);
+        return addon.accounts_remove(opts, address);
     }
 
     /**
@@ -165,25 +165,37 @@ export class EmeraldVaultNative {
      */
     importMnemonic(chain: string, mnemonic: ImportMnemonic): string {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.importMnemonic(opts, JSON.stringify(mnemonic)).address;
+        return addon.accounts_importMnemonic(opts, JSON.stringify(mnemonic)).address;
     }
 
     generateMnemonic(size: number): string {
-        return addon.generateMnemonic(size);
+        return addon.seed_generateMnemonic(size);
     }
 
     listAddressBook(chain: string): AddressBookItem[] {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.listAddressBook(opts);
+        let status: Status<AddressBookItem[]> = addon.addrbook_list(opts);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
     }
 
     addToAddressBook(chain: string, item: AddressBookItem): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.addToAddressBook(opts, JSON.stringify(item));
+        let status: Status<boolean> = addon.addrbook_add(opts, JSON.stringify(item));
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
     }
 
     removeFromAddressBook(chain: string, address: string): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.removeFromAddressBook(opts, address);
+        let status: Status<boolean> = addon.addrbook_remove(opts, address);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
     }
 }

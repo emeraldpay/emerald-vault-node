@@ -5,6 +5,3 @@ export function tempPath(prefix: string) {
     seq++;
     return `./testdata/tmp-${prefix}-${ts}-${seq}`;
 }
-
-// test suite must contain at least one test
-xdescribe("ignore", () => { xtest("ignore", () => {})});

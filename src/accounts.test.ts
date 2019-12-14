@@ -1,5 +1,7 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
 import {EthereumAccount} from "./types";
+import * as selectors from './selectors';
+import {tempPath} from "./commons_test";
 
 describe("Accounts", () => {
 
@@ -7,7 +9,7 @@ describe("Accounts", () => {
 
         describe('Migrate vault 0.10.1', () => {
 
-            let vault;
+            let vault: EmeraldVaultNative;
             beforeAll(() => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.10.1-migrate"
@@ -16,12 +18,14 @@ describe("Accounts", () => {
             });
 
             test("list eth", () => {
-                let accounts = vault.listAccounts("eth");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 100);
                 expect(accounts.length).toBe(0);
             });
 
             test("list etc", () => {
-                let accounts = vault.listAccounts("etc")
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 101)
                     .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(2);
                 expect(accounts[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
@@ -29,12 +33,16 @@ describe("Accounts", () => {
             });
 
             test("list kovan", () => {
-                let accounts = vault.listAccounts("kovan");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10002)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(0);
             });
 
             test("list morden", () => {
-                let accounts = vault.listAccounts("morden");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10001)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(0);
             });
         });
@@ -50,8 +58,10 @@ describe("Accounts", () => {
             });
 
             test("list eth", () => {
-                let accounts = vault.listAccounts("eth")
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 100)
                     .sort((a, b) => a.address.localeCompare(b.address));
+
                 expect(accounts.length).toBe(3);
                 expect(accounts[0].address).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
                 expect(accounts[1].address).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
@@ -59,18 +69,23 @@ describe("Accounts", () => {
             });
 
             test("list etc", () => {
-                let accounts = vault.listAccounts("etc");
-                expect(accounts.length).toBe(1);
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 101)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts[0].address).toBe("0x5B30DE96FDF94AC6C5B4A8C243F991C649D66FA1".toLowerCase());
             });
 
             test("list kovan", () => {
-                let accounts = vault.listAccounts("kovan");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10002)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(0);
             });
 
             test("list morden", () => {
-                let accounts = vault.listAccounts("morden");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10001)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(0);
             });
         });
@@ -86,28 +101,37 @@ describe("Accounts", () => {
             });
 
             test("list eth", () => {
-                let accounts = vault.listAccounts("eth")
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 100)
                     .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(2);
                 expect(accounts[0].address).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(accounts[0].name).toBe("foo bar");
-                // expect(accounts[0].description).toBe("teßt account #1");
                 expect(accounts[1].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+
+                let account = selectors.findWalletByAddress(wallets,"0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(account.name).toBe("foo bar");
+                // expect(accounts[0].description).toBe("teßt account #1");
             });
 
             test("list etc", () => {
-                let accounts = vault.listAccounts("etc");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 101)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(1);
                 expect(accounts[0].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
             });
 
             test("list kovan", () => {
-                let accounts = vault.listAccounts("kovan");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10002)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(0);
             });
 
             test("list morden", () => {
-                let accounts = vault.listAccounts("morden");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10001)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(0);
             });
         });
@@ -120,20 +144,28 @@ describe("Accounts", () => {
             });
 
             test("list etc", () => {
-                let accounts = vault.listAccounts("etc");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 100)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 console.log("accounts", accounts);
             });
 
             test("list eth", () => {
-                let accounts = vault.listAccounts("eth");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 101)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 console.log("accounts", accounts);
             });
             test("list morden", () => {
-                let accounts = vault.listAccounts("morden");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10002)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 console.log("accounts", accounts);
             });
             test("list kovan", () => {
-                let accounts = vault.listAccounts("kovan");
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 10001)
+                    .sort((a, b) => a.address.localeCompare(b.address));
                 console.log("accounts", accounts);
             });
 
@@ -150,7 +182,8 @@ describe("Accounts", () => {
             });
 
             test("list etc", () => {
-                let accounts = vault.listAccounts("etc")
+                let wallets = vault.listWallets();
+                let accounts = selectors.accountsByBlockchain(wallets, 101)
                     .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(2);
                 expect(accounts[0].address).toBe("0x1e728c6d055380b69ac1c0fdc27425158621f109");
@@ -517,16 +550,16 @@ describe("Accounts", () => {
     });
 
     describe("Remove", () => {
-        let vault;
+        let vault: EmeraldVaultNative;
         beforeAll(() => {
             vault = new EmeraldVaultNative({
-                dir: "./testdata/tmp-remove"
+                dir: tempPath("remove")
             });
         });
 
         test("errors for invalid address", () => {
             expect(() => {
-                vault.removeAccount_old("eth", "55ea99137b60dc0bd642d020TTTT");
+                vault.removeWallet("3198bc9c-6672-5ab3-d995-4942343ae5b6");
             }).toThrow()
         });
 
@@ -552,14 +585,26 @@ describe("Accounts", () => {
                 "version" : 3
             };
 
-            vault.importAccount("etc", data);
+            let walletId = vault.addWallet("test 1");
+            let accountId = vault.addAccount(walletId, {
+                type: "ethereum-json",
+                key: JSON.stringify(data),
+                blockchain: 101
+            });
 
-            let exists = vault.listAccounts("etc").some((it) => it.address == "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
-            expect(exists).toBeTruthy();
+            let wallet = vault.getWallet(walletId);
+
+            expect(wallet).toBeDefined();
+            expect(wallet.accounts.length).toBe(1);
+            expect(wallet.accounts[0].blockchain).toBe(101);
+            let account = wallet.accounts[0] as EthereumAccount;
+            expect(account.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
 
             vault.removeAccount_old("etc", "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
-            exists = vault.listAccounts("etc").some((it) => it.address == "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
-            expect(exists).toBeFalsy();
+
+            let wallet2 = vault.getWallet(walletId);
+            expect(wallet2).toBeUndefined();
+//            expect(wallet2.accounts.length).toBe(0);
         });
 
         test("doesn't delete on another chain", () => {

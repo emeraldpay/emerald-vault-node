@@ -1,24 +1,80 @@
 use neon::prelude::*;
+use uuid::Uuid;
+
+use access::{VaultConfig, WrappedVault};
 use emerald_vault::{
+    Address,
     hdwallet::{
-        WManager,
-        bip32::{HDPath}
+        bip32::HDPath, WManager
     },
     mnemonic::{
-        Mnemonic, Language, generate_key
+        generate_key,
+        Language,
+        Mnemonic,
+        MnemonicSize
     },
-    Address
+    storage::error::VaultError,
+    structs::{
+        crypto::Encrypted,
+        seed::{LedgerSource, Seed, SeedSource}
+    },
 };
-use access::{VaultConfig, WrappedVault};
-use json::{SeedJson, StatusResult, SeedDefinitionJson, SeedDefinitionType};
-use emerald_vault::storage::error::VaultError;
-use uuid::Uuid;
-use emerald_vault::structs::seed::{Seed, SeedSource, LedgerSource};
-use emerald_vault::structs::crypto::Encrypted;
+use json::StatusResult;
 
 struct HDPathAddress {
     address: Address,
     hd_path: String
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SeedJson {
+    pub id: String,
+    pub seed_type: SeedType,
+    pub is_available: bool
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum SeedType {
+    #[serde(rename = "ledger")]
+    Ledger,
+    #[serde(rename = "bytes")]
+    Bytes
+}
+
+#[derive(Deserialize, Clone)]
+pub struct SeedDefinitionJson {
+    #[serde(flatten)]
+    pub seed_type: SeedDefinitionType,
+    pub password: Option<String>
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(tag = "type", content = "value")]
+pub enum SeedDefinitionType {
+    #[serde(rename = "mnemonic")]
+    Mnemonic(MnemonicSeedJson)
+}
+
+#[derive(Deserialize, Clone)]
+pub struct MnemonicSeedJson {
+    pub value: String,
+    pub password: Option<String>
+}
+
+impl From<Seed> for SeedJson {
+    fn from(value: Seed) -> Self {
+        SeedJson {
+            id: value.id.to_string(),
+            seed_type: match value.source {
+                SeedSource::Bytes(_) => SeedType::Bytes,
+                SeedSource::Ledger(_) => SeedType::Ledger,
+            },
+            is_available: match value.source {
+                SeedSource::Bytes(_) => true,
+                SeedSource::Ledger(_) => false, //TODO
+            }
+        }
+    }
 }
 
 fn list_ledger_address(hd_path_all: Vec<String>) -> Vec<HDPathAddress> {
@@ -59,115 +115,6 @@ fn list_mnemonic_address(hd_path_all: Vec<String>, mnemonic: Mnemonic, password:
     }
     result
 }
-
-//enum Seed {
-//    Reference(SeedReference),
-//    Definition(SeedDefinition)
-//}
-//
-//struct SeedReference {
-//    id: String
-//}
-//
-//struct SeedDefinition {
-//    value: SeedDefinitionValue,
-//}
-//
-//enum SeedDefinitionValue {
-//    Mnemonic(MnemonicSeed),
-//    Ledger
-//}
-//
-//struct MnemonicSeed {
-//    value: String,
-//    password: Option<String>
-//}
-
-//trait FromJs<T>: Sized {
-//    fn from_js(cx: &mut FunctionContext, js: &T) -> Self;
-//}
-
-//impl<'a> FromJs<Handle<'a, JsObject>> for MnemonicSeed {
-//    fn from_js(cx: &mut FunctionContext, js: &Handle<'a, JsObject>) -> Self {
-//        match js.get(cx, "mnemonic") {
-//            Ok(m) => {
-//                let obj: Handle<JsObject> = m.downcast::<JsObject>()
-//                    .expect("Mnemonic is not a valid object");
-//
-//                let words = obj.get(cx, "value")
-//                    .expect("Words are not set")
-//                    .downcast::<JsString>()
-//                    .expect("Mnemonic is not a string")
-//                    .value();
-//
-//                let password = match obj.get(cx, "password") {
-//                    Ok(v) => {
-//                        if v.is_a::<JsString>() {
-//                            let s = v.downcast::<JsString>().expect("Password is unreachable").value();
-//                            if s.is_empty() {
-//                                None
-//                            } else {
-//                                Some(s)
-//                            }
-//                        } else {
-//                            None
-//                        }
-//                    },
-//                    Err(_) => None
-//                };
-//
-//                MnemonicSeed {
-//                    value: words,
-//                    password: password
-//                }
-//            },
-//            Err(_) => panic!("Mneminic is not set")
-//        }
-//    }
-//}
-//
-//impl<'a> FromJs<Handle<'a, JsObject>> for SeedDefinition {
-//    fn from_js(cx: &mut FunctionContext, js: &Handle<'a, JsObject>) -> Self {
-//        let seed_type = js.get(cx, "type")
-//            .expect("Seed type is not set")
-//            .downcast::<JsString>()
-//            .expect("Seed type is not a string")
-//            .value();
-//        match seed_type.as_str() {
-//            "mnemonic" => SeedDefinition {
-//                value: SeedDefinitionValue::Mnemonic(MnemonicSeed::from_js(cx, js))
-//            },
-//            "ledger" => SeedDefinition {
-//                value: SeedDefinitionValue::Ledger
-//            },
-//            _ => panic!("Unsupported seed type")
-//        }
-//    }
-//}
-//
-//impl<'a> FromJs<Handle<'a, JsObject>> for Seed {
-//    fn from_js(cx: &mut FunctionContext, js: &Handle<'a, JsObject>) -> Self {
-//        match js.get(cx, "id") {
-//            Ok(id) => {
-//                if id.is_a::<JsUndefined>() || id.is_a::<JsNull>() {
-//                    Seed::Definition(SeedDefinition::from_js(cx, js))
-//                } else {
-//                    Seed::Reference(
-//                        SeedReference { id: id.downcast::<JsString>().expect("Id is not a string").value() }
-//                    )
-//                }
-//            },
-//            Err(_) => {
-//                Seed::Definition(SeedDefinition::from_js(cx, js))
-//            }
-//        }
-//    }
-//}
-
-
-//fn list_seed(mut cx: FunctionContext) -> JsResult<JsArray> {
-//
-//}
 
 pub fn is_connected(mut cx: FunctionContext) -> JsResult<JsBoolean> {
     let id = HDPath::try_from("m/44'/60'/0'/0'/0").expect("Failed to create address");
@@ -237,6 +184,19 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
     Ok(js_value.downcast().unwrap())
+}
+
+pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
+    let size = cx.argument::<JsNumber>(0)
+        .expect("Mnemonic size is not provided").value() as usize;
+
+    let size = MnemonicSize::from_length(size).expect("Invalid mnemonic size");
+    let mnemonic = Mnemonic::new(Language::English, size).expect("Failed to generate mnemonic");
+    let sentence = mnemonic.sentence();
+
+    let value_js = cx.string(sentence);
+
+    Ok(value_js)
 }
 
 impl WrappedVault {

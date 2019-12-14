@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
-import {tempPath} from "./commons.test";
+import {tempPath} from "./commons_test";
 
 describe("Address Book", () => {
     describe('Test vault 0.26 book', () => {
@@ -21,8 +21,8 @@ describe("Address Book", () => {
             expect(accounts[0].description).toBe("тест");
 
             expect(accounts[1].address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase());
-            expect(accounts[1].name).toBeUndefined();
-            expect(accounts[1].description).toBeUndefined();
+            expect(accounts[1].name).toBeNull();
+            expect(accounts[1].description).toBeNull();
         });
 
         test("list etc", () => {
@@ -70,7 +70,7 @@ describe("Address Book", () => {
             expect(accounts.length).toBe(1);
             expect(accounts[0].address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase());
             expect(accounts[0].name).toBe("test 1");
-            expect(accounts[0].description).toBeUndefined();
+            expect(accounts[0].description).toBeNull();
         });
     });
 

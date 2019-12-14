@@ -23,3 +23,14 @@ export function findWalletByAddress(wallets: Wallet[], address: string): Wallet 
         wallet.accounts.some((a) => isEthereumAccount(a) && a.address === address)
     )
 }
+
+export function accountsByBlockchain(wallets: Wallet[], blockchain: number): EthereumAccount[] {
+    let result = [];
+    wallets
+        .forEach((w) =>
+            w.accounts
+                .filter((acc) => acc.blockchain === blockchain)
+                .forEach((acc) => result.push(acc as EthereumAccount))
+        );
+    return result
+}

@@ -1,6 +1,6 @@
 import { Seed, SeedDefinition } from './Seed';
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
-import {tempPath} from "./commons.test";
+import {tempPath} from "./commons_test";
 import {AddAccount, EthereumAccount, SeedPKRef} from "./types";
 import * as selector from "./selectors";
 

@@ -15,7 +15,7 @@ export {
     Seed,
     BlockchainType,
     SeedType, SeedDefinition,
-    SeedRef, SeedDescription,
+    SeedDescription,
     MnemonicSeed, LedgerSeed, RawSeed
 } from './Seed';
 
