@@ -196,22 +196,17 @@ describe("Accounts", () => {
     describe("Export", () => {
         describe('Test export JSON', () => {
 
-            let vault;
+            let vault: EmeraldVaultNative;
             beforeAll(() => {
                 vault = new EmeraldVaultNative({
-                    dir: "./testdata/tmp-export-json"
+                    dir: tempPath("export-json")
                 });
             });
 
             test("errors for unknown account", () => {
+                let walletId = vault.addWallet("test");
                 expect(() => {
-                    vault.exportAccount("eth", "55ea99137b60dc0bd642d020f6cd112c428fc029");
-                }).toThrow()
-            });
-
-            test("errors for invalid address", () => {
-                expect(() => {
-                    vault.exportAccount("eth", "55ea99137b60dc0bd642d020TTTT");
+                    vault.exportAccount(walletId, 0);
                 }).toThrow()
             });
 
@@ -238,17 +233,23 @@ describe("Accounts", () => {
                         "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
                     }
                 };
-                vault.importAccount("eth", data);
+                let walletId = vault.addWallet("test");
+                let accountIt = vault.addAccount(walletId, {
+                    blockchain: 100,
+                    type: "ethereum-json",
+                    key: JSON.stringify(data)
+                });
 
-                let current = vault.exportAccount("eth", "6412c428fc02902d137b60dc0bd0f6cd1255ea99");
-                expect(current.name).toBe("Hello");
+                let current = vault.exportAccount(walletId, accountIt);
+                expect(current).toBeDefined();
+                expect(current.address).toBe("6412c428fc02902d137b60dc0bd0f6cd1255ea99")
             });
 
         });
 
         describe('Test export from vault-0.26', () => {
 
-            let vault;
+            let vault: EmeraldVaultNative;
             beforeAll(() => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.26-basic"
@@ -257,10 +258,15 @@ describe("Accounts", () => {
             });
 
             test("export 6412c428", () => {
-                let current = vault.exportAccount("eth", "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                let wallets = vault.listWallets();
+                let wallet = selectors.findWalletByAddress(wallets, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(wallet).toBeDefined();
+                expect(wallet.name).toBe("foo bar");
+                let account = selectors.findAccountByAddress(wallets, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(account).toBeDefined();
+
+                let current = vault.exportAccount(wallet.id, account.id, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
                 expect(current.address).toBe("3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(current.name).toBe("foo bar");
-                // expect(current.description).toBe("teßt account #1");
             });
 
         });
@@ -469,10 +475,10 @@ describe("Accounts", () => {
     });
 
     describe("Export PK", () => {
-        let vault;
+        let vault: EmeraldVaultNative;
         beforeAll(() => {
             vault = new EmeraldVaultNative({
-                dir: "./testdata/tmp-export-pk"
+                dir: tempPath("export-pk")
             });
         });
 
@@ -481,8 +487,14 @@ describe("Accounts", () => {
                 pk: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
             };
-            let address = vault.importPk("eth", data);
-            let pk = vault.exportPk("eth", address, "test");
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "raw-pk-hex",
+                key: data.pk,
+                password: data.password
+            });
+            let pk = vault.exportPk(walletId, accountId, "test");
 
             expect(pk).toBe("0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd");
         });
@@ -509,10 +521,14 @@ describe("Accounts", () => {
                 "id" : "3198bc9c-6672-5ab3-d995-4942343ae5b6",
                 "version" : 3
             };
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "ethereum-json",
+                key: JSON.stringify(data)
+            });
 
-            let address = vault.importAccount("etc", data);
-
-            let pk = vault.exportPk("etc", "008aeeda4d805471df9b2a5b0f38a0c3bcba786b", "testpassword");
+            let pk = vault.exportPk(walletId, accountId, "testpassword");
 
             expect(pk).toBe("0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d");
         });
@@ -541,9 +557,14 @@ describe("Accounts", () => {
                 }
             };
 
-            let address = vault.importAccount("eth", data);
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "ethereum-json",
+                key: JSON.stringify(data)
+            });
 
-            let pk = vault.exportPk("eth", "3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3", "testtest");
+            let pk = vault.exportPk(walletId, accountId, "testtest");
 
             expect(pk).toBe("0xad901ebb27a07ca54ffe797b24f602bdd600f300283c02a0b58b7c0567f12234");
         });
@@ -645,163 +666,4 @@ describe("Accounts", () => {
         })
     });
 
-    describe("Update", () => {
-        let vault;
-        beforeAll(() => {
-            vault = new EmeraldVaultNative({
-                dir: "./testdata/tmp-update"
-            });
-        });
-
-        test("errors for unknown account", () => {
-            expect(() => {
-                vault.updateAccount("eth", "55ea99137b60dc0bd642d020f6cd112c428fc029", {name: "hello"});
-            }).toThrow()
-        });
-
-        test("errors for invalid address", () => {
-            expect(() => {
-                vault.updateAccount("eth", "55ea99137b60dc0bd642d020TTTT", {name: "hello"});
-            }).toThrow()
-        });
-
-        // disabled MIGRATE_V3 - description is not available
-        xtest("update name and description", () => {
-            let data = {
-                "version": 3,
-                "id": "305f4853-80af-4fa6-8619-6f285e83cf28",
-                "address": "6412c428fc02902d137b60dc0bd0f6cd1255ea99",
-                "visible": true,
-                "crypto": {
-                    "cipher": "aes-128-ctr",
-                    "cipherparams": {"iv": "e4610fb26bd43fa17d1f5df7a415f084"},
-                    "ciphertext": "dc50ab7bf07c2a793206683397fb15e5da0295cf89396169273c3f49093e8863",
-                    "kdf": "scrypt",
-                    "kdfparams": {
-                        "dklen": 32,
-                        "salt": "86c6a8857563b57be9e16ad7a3f3714f80b714bcf9da32a2788d695a194f3275",
-                        "n": 1024,
-                        "r": 8,
-                        "p": 1
-                    },
-                    "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
-                }
-            };
-            vault.importAccount("eth", data);
-
-            let created = vault.exportAccount("eth", "6412c428fc02902d137b60dc0bd0f6cd1255ea99");
-            console.log("loaded", created);
-            expect(created.name).toBeNull();
-            expect(created.description).toBeNull();
-
-            vault.updateAccount("eth","6412c428fc02902d137b60dc0bd0f6cd1255ea99", {name: "Hello", description: "World!"} );
-
-            let updated = vault.exportAccount("eth", "6412c428fc02902d137b60dc0bd0f6cd1255ea99");
-            expect(updated.name).toBe("Hello");
-            expect(updated.description).toBe("world!");
-        });
-
-        test("update name only", () => {
-            let data = {
-                "version": 3,
-                "id": "305f4853-80af-4fa6-8619-6f285e83cf28",
-                "address": "902d137b60dc0bd0f6cd1255ea996412c428fc02",
-                "visible": true,
-                "crypto": {
-                    "cipher": "aes-128-ctr",
-                    "cipherparams": {"iv": "e4610fb26bd43fa17d1f5df7a415f084"},
-                    "ciphertext": "dc50ab7bf07c2a793206683397fb15e5da0295cf89396169273c3f49093e8863",
-                    "kdf": "scrypt",
-                    "kdfparams": {
-                        "dklen": 32,
-                        "salt": "86c6a8857563b57be9e16ad7a3f3714f80b714bcf9da32a2788d695a194f3275",
-                        "n": 1024,
-                        "r": 8,
-                        "p": 1
-                    },
-                    "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
-                }
-            };
-            vault.importAccount("eth", data);
-
-            let created = vault.exportAccount("eth", "902d137b60dc0bd0f6cd1255ea996412c428fc02");
-            expect(created.name).toBeNull();
-            expect(created.description).toBeNull();
-
-            vault.updateAccount("eth","902d137b60dc0bd0f6cd1255ea996412c428fc02", {name: "Hello"} );
-
-            let updated = vault.exportAccount("eth", "902d137b60dc0bd0f6cd1255ea996412c428fc02");
-            expect(updated.name).toBe("Hello");
-            expect(updated.description).toBeNull();
-        });
-
-        // disabled MIGRATE_V3 - description is not available
-        xtest("update description only", () => {
-            let data = {
-                "version": 3,
-                "id": "305f4853-80af-4fa6-8619-6f285e83cf28",
-                "address": "0f6cd1255ea996412c428fc02902d137b60dc0bd",
-                "visible": true,
-                "crypto": {
-                    "cipher": "aes-128-ctr",
-                    "cipherparams": {"iv": "e4610fb26bd43fa17d1f5df7a415f084"},
-                    "ciphertext": "dc50ab7bf07c2a793206683397fb15e5da0295cf89396169273c3f49093e8863",
-                    "kdf": "scrypt",
-                    "kdfparams": {
-                        "dklen": 32,
-                        "salt": "86c6a8857563b57be9e16ad7a3f3714f80b714bcf9da32a2788d695a194f3275",
-                        "n": 1024,
-                        "r": 8,
-                        "p": 1
-                    },
-                    "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
-                }
-            };
-            vault.importAccount("eth", data);
-
-            let created = vault.exportAccount("eth", "0f6cd1255ea996412c428fc02902d137b60dc0bd");
-            expect(created.name).toBeNull();
-            expect(created.description).toBeNull();
-
-            vault.updateAccount("eth","0f6cd1255ea996412c428fc02902d137b60dc0bd", {description: "Worldddd"} );
-
-            let updated = vault.exportAccount("eth", "0f6cd1255ea996412c428fc02902d137b60dc0bd");
-            expect(updated.name).toBeNull();
-            expect(updated.description).toBe("worldddd");
-        });
-
-        test("update twice", () => {
-            let data = {
-                "version": 3,
-                "id": "305f4853-80af-4fa6-8619-6f285e83cf28",
-                "address": "12c428fc02902d137b60dc0bd0f6cd1255ea9964",
-                "visible": true,
-                "crypto": {
-                    "cipher": "aes-128-ctr",
-                    "cipherparams": {"iv": "e4610fb26bd43fa17d1f5df7a415f084"},
-                    "ciphertext": "dc50ab7bf07c2a793206683397fb15e5da0295cf89396169273c3f49093e8863",
-                    "kdf": "scrypt",
-                    "kdfparams": {
-                        "dklen": 32,
-                        "salt": "86c6a8857563b57be9e16ad7a3f3714f80b714bcf9da32a2788d695a194f3275",
-                        "n": 1024,
-                        "r": 8,
-                        "p": 1
-                    },
-                    "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
-                }
-            };
-            vault.importAccount("eth", data);
-
-            let created = vault.exportAccount("eth", "12c428fc02902d137b60dc0bd0f6cd1255ea9964");
-            expect(created.name).toBeNull();
-            expect(created.description).toBeNull();
-
-            vault.updateAccount("eth","12c428fc02902d137b60dc0bd0f6cd1255ea9964", {name: "Worldddd"} );
-            vault.updateAccount("eth","12c428fc02902d137b60dc0bd0f6cd1255ea9964", {name: "hello"} );
-
-            let updated = vault.exportAccount("eth", "12c428fc02902d137b60dc0bd0f6cd1255ea9964");
-            expect(updated.name).toBe("hello");
-        });
-    });
 });

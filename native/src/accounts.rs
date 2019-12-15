@@ -5,22 +5,14 @@ use neon::prelude::*;
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault};
-use emerald_vault::{
-    Address,
-    convert::json::keyfile::EthereumJsonV3File,
-    core::chains::Blockchain,
-    mnemonic::{generate_key, HDPath, Language, Mnemonic},
-    storage::{
-        error::VaultError,
-        keyfile::AccountInfo
-    },
-    structs::{
-        pk::PrivateKeyHolder,
-        wallet::{PKType, Wallet, WalletAccount}
-    },
-    trim_hex
-};
-use json::AsJsObject;
+use emerald_vault::{Address, convert::json::keyfile::EthereumJsonV3File, core::chains::Blockchain, mnemonic::{generate_key, HDPath, Language, Mnemonic}, storage::{
+    error::VaultError,
+    keyfile::AccountInfo
+}, structs::{
+    pk::PrivateKeyHolder,
+    wallet::{PKType, Wallet, WalletAccount}
+}, trim_hex, PrivateKey, ToHex};
+use json::{AsJsObject, StatusResult};
 
 pub struct AccountData {
     pub address: String,
@@ -139,17 +131,20 @@ impl WrappedVault {
         id
     }
 
-    fn get(&self, addr: &Address) -> PrivateKeyHolder {
+    fn export_pk(&self, wallet_id: Uuid, account_id: usize, password: String) -> PrivateKey {
         let storage = &self.cfg.get_storage();
 
-        let wallet = self.get_wallet_by_addr(addr);
+        let wallet = storage.wallets().get(&wallet_id).expect("Wallet doesn't exit");
+        let account = wallet.get_account(account_id).expect("Account doesn't exist");
+        account.export_pk(password, storage).expect("PrivateKey unavailable")
+    }
 
-        let wallet = wallet.expect("Account with specified address is not found");
-        let account = WrappedVault::find_account(&wallet, addr, self.get_blockchain()).unwrap();
-        match &account.key {
-            PKType::PrivateKeyRef(id) => storage.keys().get(&id).expect("Private Key not found"),
-            PKType::SeedHd(_) => panic!("No private key for Seed")
-        }
+    fn export_web3(&self, wallet_id: Uuid, account_id: usize, password: Option<String>) -> EthereumJsonV3File {
+        let storage = &self.cfg.get_storage();
+
+        let wallet = storage.wallets().get(&wallet_id).expect("Wallet doesn't exit");
+        let account = wallet.get_account(account_id).expect("Account doesn't exist");
+        account.export_web3(password, storage).expect("PrivateKey unavailable")
     }
 }
 
@@ -230,35 +225,47 @@ pub fn import_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(result)
 }
 
-pub fn export(mut cx: FunctionContext) -> JsResult<JsString> {
+pub fn export(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let address_js = cx.argument::<JsString>(1).unwrap().value();
-    let address = Address::from_str(address_js.as_str()).expect("Invalid address");
+    let wallet_id = cx.argument::<JsString>(1).expect("wallet_id not provided").value();
+    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+    let account_id = cx.argument::<JsNumber>(2).expect("account_id not provided").value() as usize;
 
-    let wallet = vault.get_wallet_by_addr(&address).expect("Wallet not found");
-    let pk = vault.get(&address);
-    let json = EthereumJsonV3File::from_wallet(&wallet, &pk).expect("JSON not created");
-    let value = serde_json::to_value(&json).expect("Failed to encode JSON");
-    let value_js = cx.string(format!("{}", value));
+    let password = match cx.argument_opt(3) {
+        None => None,
+        Some(v) => if v.is_a::<JsString>() {
+            match v.downcast::<JsString>() {
+                Ok(v) => Some(v.value()),
+                Err(_) => None
+            }
+        } else {
+            None
+        }
+    };
 
-    Ok(value_js)
+    let pk = vault.export_web3(wallet_id, account_id, password);
+    let result = serde_json::to_string_pretty(&pk).expect("Failed to convert to JSON");
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+    Ok(js_value.downcast().unwrap())
 }
 
-pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsString> {
+pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let address = cx.argument::<JsString>(1).expect("Address is not provided").value();
-    let address = Address::from_str(address.as_str()).expect("Invalid address");
-    let password = cx.argument::<JsString>(2).expect("Password is not provided").value();
+    let wallet_id = cx.argument::<JsString>(1).expect("wallet_id not provided").value();
+    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+    let account_id = cx.argument::<JsNumber>(2).expect("account_id not provided").value() as usize;
+    let password = cx.argument::<JsString>(3).expect("Password is not provided").value();
 
-    let kf= vault.get(&address);
-    let pk = kf.decrypt(password.as_str()).expect("Invalid password");
-
-    let result = cx.string(format!("0x{}", hex::encode(pk)));
-    Ok(result)
+    let pk = vault.export_pk(wallet_id, account_id, password);
+    let result = format!("0x{}", pk.to_hex());
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+    Ok(js_value.downcast().unwrap())
 }
 
 pub fn update(mut cx: FunctionContext) -> JsResult<JsBoolean> {

@@ -1,4 +1,5 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
+import * as selector from './selectors';
 
 describe("Mnemonic", () => {
 
@@ -61,7 +62,7 @@ describe("Mnemonic", () => {
     // reference: https://iancoleman.io/bip39/#english
     describe('Test import mnemonic', () => {
 
-        let vault;
+        let vault: EmeraldVaultNative;
         beforeAll(() => {
             vault = new EmeraldVaultNative({
                 dir: "./testdata/tmp-import-mnemonic"
@@ -109,9 +110,10 @@ describe("Mnemonic", () => {
             };
             let address = vault.importMnemonic("eth", data);
             expect(address).toEqual("0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1".toLowerCase());
-            let current = vault.exportAccount("eth", "D4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1");
-            // console.log("key", current);
-            expect(current.id).toBeDefined();
+
+            let wallets = vault.listWallets();
+            let account = selector.findAccountByAddress(wallets, "0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1");
+            expect(account).toBeDefined();
         });
 
         test("import f78a3c9 for ETC", () => {
@@ -122,9 +124,11 @@ describe("Mnemonic", () => {
             };
             let address = vault.importMnemonic("etc", data);
             expect(address).toEqual("0xcA1c2E76F2122fddA9f97da0C4e37674727645cc".toLowerCase());
-            let current = vault.exportAccount("etc", "0xcA1c2E76F2122fddA9f97da0C4e37674727645cc");
-            // console.log("key", current);
-            expect(current.id).toBeDefined();
+
+            let wallets = vault.listWallets();
+            let account = selector.findAccountByAddress(wallets, "0xcA1c2E76F2122fddA9f97da0C4e37674727645cc");
+            expect(account).toBeDefined();
+
         });
 
         test("import 12 words mnemonic", () => {
@@ -135,8 +139,12 @@ describe("Mnemonic", () => {
             };
             let address = vault.importMnemonic("eth", data);
             expect(address).toEqual("0xaCeA13E5eB2120c2B42E0EdA0642d846Fa740F51".toLowerCase());
-            let current = vault.exportAccount("eth", "0xaCeA13E5eB2120c2B42E0EdA0642d846Fa740F51");
-            expect(current.id).toBeDefined();
+
+
+            let wallets = vault.listWallets();
+            let account = selector.findAccountByAddress(wallets, "0xaCeA13E5eB2120c2B42E0EdA0642d846Fa740F51");
+            expect(account).toBeDefined();
+
         });
 
         test("import 18 words mnemonic", () => {
@@ -147,8 +155,11 @@ describe("Mnemonic", () => {
             };
             let address = vault.importMnemonic("eth", data);
             expect(address).toEqual("0x1E728c6d055380b69ac1c0fDC27425158621f109".toLowerCase());
-            let current = vault.exportAccount("eth", "0x1E728c6d055380b69ac1c0fDC27425158621f109");
-            expect(current.id).toBeDefined();
+
+            let wallets = vault.listWallets();
+            let account = selector.findAccountByAddress(wallets, "0x1E728c6d055380b69ac1c0fDC27425158621f109");
+            expect(account).toBeDefined();
+
         });
 
         test("import 21 words mnemonic", () => {
@@ -159,8 +170,11 @@ describe("Mnemonic", () => {
             };
             let address = vault.importMnemonic("eth", data);
             expect(address).toEqual("0x61bfe74D742679902E0Ed88385A1272a9922FFb5".toLowerCase());
-            let current = vault.exportAccount("eth", "0x61bfe74D742679902E0Ed88385A1272a9922FFb5");
-            expect(current.id).toBeDefined();
+
+            let wallets = vault.listWallets();
+            let account = selector.findAccountByAddress(wallets, "0x61bfe74D742679902E0Ed88385A1272a9922FFb5");
+            expect(account).toBeDefined();
+
         });
 
         test("import 24 words mnemonic", () => {
@@ -171,8 +185,11 @@ describe("Mnemonic", () => {
             };
             let address = vault.importMnemonic("eth", data);
             expect(address).toEqual("0x928560FaEe442342F703dabf04BC98460314B1C8".toLowerCase());
-            let current = vault.exportAccount("eth", "0x928560FaEe442342F703dabf04BC98460314B1C8");
-            expect(current.id).toBeDefined();
+
+            let wallets = vault.listWallets();
+            let account = selector.findAccountByAddress(wallets, "0x928560FaEe442342F703dabf04BC98460314B1C8");
+            expect(account).toBeDefined();
+
         });
 
     });

@@ -19,9 +19,19 @@ export function getWallet(wallets: Wallet[], id: Uuid): Wallet | undefined {
 }
 
 export function findWalletByAddress(wallets: Wallet[], address: string): Wallet | undefined {
+    address = address.toLowerCase();
     return wallets.find((wallet) =>
-        wallet.accounts.some((a) => isEthereumAccount(a) && a.address === address)
+        wallet.accounts.some((a) => isEthereumAccount(a) && a.address.toLowerCase() === address)
     )
+}
+
+export function findAccountByAddress(wallets: Wallet[], address: string): WalletAccount | undefined {
+    address = address.toLowerCase();
+    let wallet = findWalletByAddress(wallets, address);
+    if (wallet) {
+        return wallet.accounts.find((a) => (a as EthereumAccount).address.toLowerCase() == address);
+    }
+    return undefined;
 }
 
 export function accountsByBlockchain(wallets: Wallet[], blockchain: number): EthereumAccount[] {

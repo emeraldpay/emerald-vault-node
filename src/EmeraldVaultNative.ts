@@ -99,6 +99,13 @@ export class EmeraldVaultNative {
         return "0x" + status.result;
     }
 
+    exportPk(walletId: Uuid, accountId: number, password: string): string {
+        let status: Status<string> = addon.accounts_exportPk(this.conf, walletId, accountId, password);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result;
+    }
 
     vaultVersion(): string {
         return "0.27.0"
@@ -128,20 +135,12 @@ export class EmeraldVaultNative {
         return addon.accounts_importPk(opts, JSON.stringify(data)).address;
     }
 
-    /**
-     * @deprecated
-     */
-    exportPk(chain: string, address: string, password: string): string {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.accounts_exportPk(opts, address, password);
-    }
-
-    /**
-     * @deprecated
-     */
-    exportAccount(chain: string, address: string): any {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return JSON.parse(addon.accounts_export(opts, address));
+    exportAccount(walletId: Uuid, accountId: number, password?: string): any {
+        let status: Status<string> = addon.accounts_export(this.conf, walletId, accountId, password);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return JSON.parse(status.result);
     }
 
     /**
