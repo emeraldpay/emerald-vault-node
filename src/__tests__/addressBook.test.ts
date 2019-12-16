@@ -1,5 +1,5 @@
-import {EmeraldVaultNative} from "./EmeraldVaultNative";
-import {tempPath} from "./commons_test";
+import {EmeraldVaultNative} from "../EmeraldVaultNative";
+import {tempPath} from "./_commons";
 
 describe("Address Book", () => {
     describe('Test vault 0.26 book', () => {

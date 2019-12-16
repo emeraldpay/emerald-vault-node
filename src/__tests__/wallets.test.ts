@@ -1,7 +1,7 @@
-import {EmeraldVaultNative} from "./EmeraldVaultNative";
-import * as selector from "./selectors";
-import {AddAccount} from "./types";
-import {tempPath} from "./commons_test";
+import {EmeraldVaultNative} from "../EmeraldVaultNative";
+import * as selector from "../selectors";
+import {AddAccount} from "../types";
+import {tempPath} from "./_commons";
 
 describe("Wallets", () => {
 

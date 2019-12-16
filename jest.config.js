@@ -3,11 +3,12 @@ module.exports = {
   testEnvironment: 'node',
   testPathIgnorePatterns: [
     "<rootDir>/lib/",
-    "<rootDir>/node_modules/"
+    "<rootDir>/node_modules/",
+    "__tests__/_commons"
   ],
   coverageDirectory: "./coverage/",
   collectCoverageFrom: [
     "src/**/*.ts"
   ],
-  runner: 'jest-serial-runner'
+  runner: 'jest-serial-runner',
 };

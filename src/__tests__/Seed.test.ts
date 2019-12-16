@@ -1,8 +1,8 @@
-import { Seed, SeedDefinition } from './Seed';
-import {EmeraldVaultNative} from "./EmeraldVaultNative";
-import {tempPath} from "./commons_test";
-import {AddAccount, EthereumAccount, SeedPKRef} from "./types";
-import * as selector from "./selectors";
+import { Seed, SeedDefinition } from '../Seed';
+import {EmeraldVaultNative} from "../EmeraldVaultNative";
+import {tempPath} from "./_commons";
+import {AddAccount, EthereumAccount, SeedPKRef} from "../types";
+import * as selector from "../selectors";
 
 const should_exist = process.env.EMERALD_TEST_LEDGER === 'true';
 

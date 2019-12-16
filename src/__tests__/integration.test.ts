@@ -1,4 +1,4 @@
-import {EmeraldVaultNative} from "./EmeraldVaultNative";
+import {EmeraldVaultNative} from "../EmeraldVaultNative";
 
 describe('Multiple clients', () => {
 

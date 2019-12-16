@@ -1,5 +1,5 @@
-import {EmeraldVaultNative} from "./EmeraldVaultNative";
-import * as selector from './selectors';
+import {EmeraldVaultNative} from "../EmeraldVaultNative";
+import * as selector from '../selectors';
 
 describe("Mnemonic", () => {
 

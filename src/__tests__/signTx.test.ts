@@ -1,6 +1,6 @@
-import {EmeraldVaultNative} from "./EmeraldVaultNative";
-import * as selectors from './selectors';
-import {tempPath} from "./commons_test";
+import {EmeraldVaultNative} from "../EmeraldVaultNative";
+import * as selectors from '../selectors';
+import {tempPath} from "./_commons";
 
 
 describe("Sign transaction", () => {

@@ -16,7 +16,8 @@
     "native/Cargo.lock",
     "native/Cargo.toml",
     "native/index.node",
-    "lib",
+    "lib/*.ts",
+    "lib/*.js",
     "build-electron.js"
   ],
   "binary": {
