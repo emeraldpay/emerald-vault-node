@@ -25,6 +25,7 @@ register_module!(mut cx, {
     cx.export_function("wallets_list", wallets::list).expect("wallets_list not exported");
     cx.export_function("wallets_add", wallets::add).expect("wallets_add not exported");
     cx.export_function("wallets_addAccount", wallets::add_account_to_wallet).expect("wallets_addAccount not exported");
+    cx.export_function("wallets_updateLabel", wallets::update_label).expect("wallets_updateLabel not exported");
 
 
     cx.export_function("accounts_list", accounts::list).expect("accounts_list not exported");

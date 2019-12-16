@@ -67,8 +67,16 @@ export class EmeraldVaultNative {
         return selectors.getWallet(status.result, id)
     }
 
-    addWallet(title: string | undefined): Uuid {
-        let status: Status<Uuid> = addon.wallets_add(this.conf, title);
+    addWallet(label: string | undefined): Uuid {
+        let status: Status<Uuid> = addon.wallets_add(this.conf, label);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
+    }
+
+    setWalletLabel(walletId: Uuid, label: string): boolean {
+        let status: Status<boolean> = addon.wallets_updateLabel(this.conf, walletId, label);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }

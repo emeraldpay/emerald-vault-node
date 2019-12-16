@@ -4,7 +4,7 @@ use std::str::FromStr;
 use neon::prelude::{FunctionContext, JsObject, JsResult, JsString};
 use uuid::Uuid;
 
-use access::{VaultConfig, WrappedVault};
+use access::{VaultConfig, WrappedVault, args_get_str};
 use emerald_vault::{
     convert::{
         json::keyfile::EthereumJsonV3File
@@ -125,6 +125,14 @@ impl WrappedVault {
         storage.wallets().update(wallet)?;
         Ok(())
     }
+
+    pub fn set_title(&self, wallet_id: Uuid, title: Option<String>) -> Result<(), VaultError> {
+        let storage = &self.cfg.get_storage();
+        let mut wallet = storage.wallets().get(&wallet_id)?;
+        wallet.label = title;
+        storage.wallets().update(wallet)?;
+        Ok(())
+    }
 }
 
 pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
@@ -172,4 +180,19 @@ pub fn add_account_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
     let status = StatusResult::Ok(id).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())
+}
+
+pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let id = cx.argument::<JsString>(1).expect("Wallet id is not provided").value();
+    let id = Uuid::parse_str(id.as_str()).expect("Invalid UUID");
+
+    let title = args_get_str(&mut cx, 2);
+    let result = vault.set_title(id, title).is_ok();
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
+
 }

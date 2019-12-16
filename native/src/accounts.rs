@@ -4,7 +4,7 @@ use std::str::FromStr;
 use neon::prelude::*;
 use uuid::Uuid;
 
-use access::{VaultConfig, WrappedVault};
+use access::{VaultConfig, WrappedVault, args_get_str};
 use emerald_vault::{Address, convert::json::keyfile::EthereumJsonV3File, core::chains::Blockchain, mnemonic::{generate_key, HDPath, Language, Mnemonic}, storage::{
     error::VaultError,
     keyfile::AccountInfo
@@ -233,17 +233,7 @@ pub fn export(mut cx: FunctionContext) -> JsResult<JsObject> {
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
     let account_id = cx.argument::<JsNumber>(2).expect("account_id not provided").value() as usize;
 
-    let password = match cx.argument_opt(3) {
-        None => None,
-        Some(v) => if v.is_a::<JsString>() {
-            match v.downcast::<JsString>() {
-                Ok(v) => Some(v.value()),
-                Err(_) => None
-            }
-        } else {
-            None
-        }
-    };
+    let password = args_get_str(&mut cx, 3);
 
     let pk = vault.export_web3(wallet_id, account_id, password);
     let result = serde_json::to_string_pretty(&pk).expect("Failed to convert to JSON");

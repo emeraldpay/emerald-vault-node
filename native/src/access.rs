@@ -32,7 +32,7 @@ pub struct MigrationConfig {
     pub dir: String,
 }
 
-pub fn get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
+pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
     match obj.get(cx, name) {
         Ok(val) => {
             if val.is_a::<JsNull>() {
@@ -47,16 +47,30 @@ pub fn get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> 
     }
 }
 
+pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
+    match cx.argument_opt(pos) {
+        None => None,
+        Some(v) => if v.is_a::<JsString>() {
+            match v.downcast::<JsString>() {
+                Ok(v) => Some(v.value()),
+                Err(_) => None
+            }
+        } else {
+            None
+        }
+    }
+}
+
 impl VaultConfig {
 
     pub fn get_config(cx: &mut FunctionContext) -> VaultConfig {
         let config = cx.argument::<JsObject>(0).unwrap();
-        let dir = match get_str(cx, &config, "dir") {
+        let dir = match obj_get_str(cx, &config, "dir") {
             Some(val) => val,
             None => default_path().to_str().expect("No default path for current OS").to_string()
         };
 
-        let chain = match get_str(cx, &config,"chain") {
+        let chain = match obj_get_str(cx, &config, "chain") {
             Some(chain) => Some(EthereumChainId::from_str(chain.as_str()).expect("Invalid chain")),
             None => None
         };
@@ -79,7 +93,7 @@ impl VaultConfig {
 impl MigrationConfig {
     pub fn get_config(cx: &mut FunctionContext) -> MigrationConfig {
         let config = cx.argument::<JsObject>(0).unwrap();
-        let dir = match get_str(cx, &config, "dir") {
+        let dir = match obj_get_str(cx, &config, "dir") {
             Some(val) => val,
             None => default_path().to_str().expect("No default path for current OS").to_string()
         };

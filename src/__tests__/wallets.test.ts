@@ -175,4 +175,34 @@ describe("Wallets", () => {
         });
 
     });
+
+    describe("Update wallet", () => {
+        let vault: EmeraldVaultNative;
+        beforeEach(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("wallet-update")
+            });
+        });
+
+        test("Update label", () => {
+
+            let walletId = vault.addWallet("test 1");
+            let wallet1 = vault.getWallet(walletId);
+
+            expect(wallet1.name).toBe("test 1");
+
+            vault.setWalletLabel(walletId, "Test 2");
+            let wallet2 = vault.getWallet(walletId);
+            expect(wallet2.name).toBe("Test 2");
+
+            vault.setWalletLabel(walletId, "");
+            let wallet3 = vault.getWallet(walletId);
+            expect(wallet3.name).toBeNull();
+
+            vault.setWalletLabel(walletId, null);
+            let wallet4 = vault.getWallet(walletId);
+            expect(wallet4.name).toBeNull();
+        })
+
+    });
 });
