@@ -96,7 +96,11 @@ export class EmeraldVaultNative {
     }
 
     removeAccount(walletId: Uuid, accountId: number) {
-        throw Error("NOT IMPLEMENTED");
+        let status: Status<boolean> = addon.wallets_removeAccount(this.conf, walletId, accountId);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
     }
 
     signTx(walletId: Uuid, accountId: number, tx: UnsignedTx, password?: string): string {
@@ -119,13 +123,6 @@ export class EmeraldVaultNative {
         return "0.27.0"
     }
 
-    /**
-     * @deprecated
-     */
-    listAccounts(chain: string): Array<Account> {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.accounts_list(opts);
-    }
 
     /**
      * @deprecated
@@ -157,14 +154,6 @@ export class EmeraldVaultNative {
     updateAccount(chain: string, address: string, update: Update): boolean {
         let opts = Object.assign({}, this.conf, {chain: chain});
         return addon.accounts_update(opts, address, JSON.stringify(update));
-    }
-
-    /**
-     * @deprecated
-     */
-    removeAccount_old(chain: string, address: string): boolean {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.accounts_remove(opts, address);
     }
 
     /**

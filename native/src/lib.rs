@@ -26,13 +26,12 @@ register_module!(mut cx, {
     cx.export_function("wallets_add", wallets::add).expect("wallets_add not exported");
     cx.export_function("wallets_addAccount", wallets::add_account_to_wallet).expect("wallets_addAccount not exported");
     cx.export_function("wallets_updateLabel", wallets::update_label).expect("wallets_updateLabel not exported");
-
+    cx.export_function("wallets_removeAccount", wallets::remove_account).expect("wallets_removeAccount not exported");
 
     cx.export_function("accounts_list", accounts::list).expect("accounts_list not exported");
     cx.export_function("accounts_import", accounts::import_ethereum).expect("accounts_import not exported");
     cx.export_function("accounts_export", accounts::export).expect("accounts_export not exported");
     cx.export_function("accounts_update", accounts::update).expect("accounts_update not exported");
-    cx.export_function("accounts_remove", accounts::remove).expect("accounts_remove not exported");
 
     cx.export_function("accounts_importPk", accounts::import_pk).expect("accounts_importPk not exported");
     cx.export_function("accounts_exportPk", accounts::export_pk).expect("accounts_exportPk not exported");

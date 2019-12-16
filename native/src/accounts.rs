@@ -279,17 +279,6 @@ pub fn update(mut cx: FunctionContext) -> JsResult<JsBoolean> {
     Ok(result)
 }
 
-pub fn remove(mut cx: FunctionContext) -> JsResult<JsBoolean> {
-    let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
-
-    let address_str = cx.argument::<JsString>(1).unwrap().value();
-    let address = Address::from_str(address_str.as_str()).expect("Invalid address");
-    vault.remove_wallet(&address);
-    let result = cx.boolean(true);
-    Ok(result)
-}
-
 pub fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);

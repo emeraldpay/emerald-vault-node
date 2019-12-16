@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use neon::prelude::{FunctionContext, JsObject, JsResult, JsString};
+use neon::prelude::{FunctionContext, JsObject, JsResult, JsString, JsNumber};
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault, args_get_str};
@@ -77,6 +77,22 @@ impl From<Wallet> for WalletJson {
     }
 }
 
+fn read_wallet_id(cx: &mut FunctionContext, pos: i32) -> Uuid {
+    let wallet_id = cx.argument::<JsString>(pos).expect("wallet_id is not provided").value();
+    let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
+    wallet_id
+}
+
+fn read_wallet_and_account_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usize) {
+    let wallet_id = cx.argument::<JsString>(pos).expect("wallet_id is not provided").value();
+    let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
+
+    let account_id = cx.argument::<JsNumber>(pos + 1).expect("account_id is not provided").value();
+    let account_id = account_id as usize;
+
+    (wallet_id, account_id)
+}
+
 impl WrappedVault {
 
     fn create_wallet(&self, label: Option<String>) -> Result<Uuid, VaultError> {
@@ -126,12 +142,23 @@ impl WrappedVault {
         Ok(())
     }
 
-    pub fn set_title(&self, wallet_id: Uuid, title: Option<String>) -> Result<(), VaultError> {
+    fn set_title(&self, wallet_id: Uuid, title: Option<String>) -> Result<(), VaultError> {
         let storage = &self.cfg.get_storage();
         let mut wallet = storage.wallets().get(&wallet_id)?;
         wallet.label = title;
         storage.wallets().update(wallet)?;
         Ok(())
+    }
+
+    fn remove_account(&self, wallet_id: Uuid, account_id: usize) -> Result<bool, VaultError> {
+        let storage = &self.cfg.get_storage();
+        let mut wallet = storage.wallets().get(&wallet_id)?;
+        let index = wallet.accounts.iter().position(|a| a.id == account_id);
+        if index.is_none() {
+            return Ok(false)
+        }
+        wallet.accounts.remove(index.unwrap());
+        storage.wallets().update(wallet)
     }
 }
 
@@ -169,13 +196,12 @@ pub fn add_account_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let id = cx.argument::<JsString>(1).expect("Wallet id is not provided").value();
-    let id = Uuid::parse_str(id.as_str()).expect("Invalid UUID");
+    let wallet_id =read_wallet_id(&mut cx, 1);
     let json = cx.argument::<JsString>(2).expect("Input JSON is not provided").value();
 
     let parsed: AddAccountJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
-    let id = vault.create_account(id, parsed).expect("Account not created");
+    let id = vault.create_account(wallet_id, parsed).expect("Account not created");
 
     let status = StatusResult::Ok(id).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
@@ -186,13 +212,23 @@ pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let id = cx.argument::<JsString>(1).expect("Wallet id is not provided").value();
-    let id = Uuid::parse_str(id.as_str()).expect("Invalid UUID");
+    let wallet_id =read_wallet_id(&mut cx, 1);
 
     let title = args_get_str(&mut cx, 2);
-    let result = vault.set_title(id, title).is_ok();
+    let result = vault.set_title(wallet_id, title).is_ok();
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())
+}
 
+pub fn remove_account(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let (wallet_id, account_id) = read_wallet_and_account_ids(&mut cx, 1);
+
+    let result = vault.remove_account(wallet_id, account_id).expect("Not deleted");
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
 }
