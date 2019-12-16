@@ -42,6 +42,10 @@ export class EmeraldVaultNative {
         this.conf = conf || {};
     }
 
+    vaultVersion(): string {
+        return "0.27.0"
+    }
+
     seeds(): Seed {
         return new Seed(this.conf);
     }
@@ -119,27 +123,6 @@ export class EmeraldVaultNative {
         return status.result;
     }
 
-    vaultVersion(): string {
-        return "0.27.0"
-    }
-
-
-    /**
-     * @deprecated
-     */
-    importAccount(chain: string, data: any): string {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.accounts_import(opts, JSON.stringify(data)).address;
-    }
-
-    /**
-     * @deprecated
-     */
-    importPk(chain: string, data: ImportPrivateKey): string {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.accounts_importPk(opts, JSON.stringify(data)).address;
-    }
-
     exportAccount(walletId: Uuid, accountId: number, password?: string): any {
         let status: Status<string> = addon.accounts_export(this.conf, walletId, accountId, password);
         if (!status.succeeded) {
@@ -148,24 +131,12 @@ export class EmeraldVaultNative {
         return JSON.parse(status.result);
     }
 
-    /**
-     * @deprecated
-     */
-    updateAccount(chain: string, address: string, update: Update): boolean {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.accounts_update(opts, address, JSON.stringify(update));
-    }
-
-    /**
-     * @deprecated
-     */
-    importMnemonic(chain: string, mnemonic: ImportMnemonic): string {
-        let opts = Object.assign({}, this.conf, {chain: chain});
-        return addon.accounts_importMnemonic(opts, JSON.stringify(mnemonic)).address;
-    }
-
     generateMnemonic(size: number): string {
-        return addon.seed_generateMnemonic(size);
+        let status: Status<string> = addon.seed_generateMnemonic(size);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
     }
 
     listAddressBook(chain: string): AddressBookItem[] {

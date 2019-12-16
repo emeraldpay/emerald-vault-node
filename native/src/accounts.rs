@@ -148,42 +148,6 @@ impl WrappedVault {
     }
 }
 
-
-impl AsJsObject for AccountData {
-
-    fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue> {
-        let account_js = JsObject::new(cx);
-
-        let address_handle = cx.string(&self.address);
-        account_js.set(cx, "address", address_handle).unwrap();
-        let name_handle = cx.string(&self.name);
-        account_js.set(cx, "name", name_handle).unwrap();
-        let description_handle = cx.string(&self.description);
-        account_js.set(cx, "description", description_handle).unwrap();
-        let hidden_handle = cx.boolean(self.hidden);
-        account_js.set(cx, "hidden", hidden_handle).unwrap();
-        let hardware_handle = cx.boolean(self.hardware);
-        account_js.set(cx, "hardware", hardware_handle).unwrap();
-
-        return account_js.as_value(cx)
-    }
-}
-
-
-pub fn list(mut cx: FunctionContext) -> JsResult<JsArray> {
-    let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
-    let accounts = vault.list_accounts();
-
-    let result = JsArray::new(&mut cx, accounts.len() as u32);
-    for (i, e) in accounts.iter().map(|acc| AccountData::from(acc)).enumerate() {
-        let account_js = e.as_js_object(&mut cx);
-        result.set(&mut cx, i as u32, account_js).unwrap();
-    }
-
-    Ok(result)
-}
-
 pub fn import_ethereum(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
@@ -202,28 +166,6 @@ pub fn import_ethereum(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(result)
 }
 
-pub fn import_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
-
-    let raw = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
-    let pk_data: ImportPrivateKey = serde_json::from_str::<ImportPrivateKey>(raw.as_str())
-        .expect("Invalid JSON");
-    let pk_bytes = hex::decode(trim_hex(pk_data.pk.as_str()))
-        .expect("PrivateKey is not in hex");
-
-    let id = vault.import_pk(pk_bytes, &pk_data.password, pk_data.name);
-    let address = vault.get_wallet_address(id).expect("Address not initialized");
-
-    let result = JsObject::new(&mut cx);
-    let id_handle = cx.string(id.to_string());
-    result.set(&mut cx, "id", id_handle).expect("Failed to set id");
-
-    let addr_handle = cx.string(address.to_string());
-    result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
-
-    Ok(result)
-}
 
 pub fn export(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
@@ -256,27 +198,6 @@ pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
     Ok(js_value.downcast().unwrap())
-}
-
-pub fn update(mut cx: FunctionContext) -> JsResult<JsBoolean> {
-    let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
-
-    let address_str = cx.argument::<JsString>(1).unwrap().value();
-    let address = Address::from_str(address_str.as_str()).expect("Invalid address");
-    let wallet = vault.get_wallet_by_addr(&address);
-    let mut wallet = wallet.expect("No wallet for specified address");
-
-    let update_js = cx.argument::<JsString>(2).unwrap().value();
-    let update = serde_json::from_str::<UpdateAccount>(update_js.as_str())
-        .expect("Invalid update JSON");
-
-    wallet.label = update.name.or(wallet.label);
-//    kf.description = update.description.or(kf.description);
-    vault.update(wallet).expect("Not saved");
-
-    let result = cx.boolean(true);
-    Ok(result)
 }
 
 pub fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {

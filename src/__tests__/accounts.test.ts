@@ -273,7 +273,7 @@ describe("Accounts", () => {
     });
 
     describe("Import JSON", () => {
-        let vault;
+        let vault: EmeraldVaultNative;
         beforeAll(() => {
             vault = new EmeraldVaultNative({
                 dir: "./testdata/tmp-import-json"
@@ -303,8 +303,17 @@ describe("Accounts", () => {
                     "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
                 }
             };
-            let address = vault.importAccount("eth", data);
-            expect(address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
+
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "ethereum-json",
+                key: JSON.stringify(data)
+            });
+
+            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
+
+            expect(account.address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
         });
 
         test("import scrypt - c2d7cf95", () => {
@@ -331,8 +340,15 @@ describe("Accounts", () => {
                 "version":3
             };
 
-            let address = vault.importAccount("morden", data);
-            expect(address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 101,
+                type: "ethereum-json",
+                key: JSON.stringify(data)
+            });
+
+            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
+            expect(account.address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
         });
 
         //TODO
@@ -359,8 +375,16 @@ describe("Accounts", () => {
                 "version" : 3
             };
 
-            let address = vault.importAccount("morden", data);
-            expect(address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "ethereum-json",
+                key: JSON.stringify(data)
+            });
+
+            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
+
+            expect(account.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
         });
 
         test("import pbkdf2 - c2d7cf95", () => {
@@ -386,8 +410,15 @@ describe("Accounts", () => {
                 "version" : 3
             };
 
-            let address = vault.importAccount("etc", data);
-            expect(address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 101,
+                type: "ethereum-json",
+                key: JSON.stringify(data)
+            });
+
+            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
+            expect(account.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
         })
     });
 

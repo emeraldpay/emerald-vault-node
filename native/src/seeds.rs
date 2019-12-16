@@ -20,6 +20,7 @@ use emerald_vault::{
     },
 };
 use json::StatusResult;
+use emerald_vault::util::optional::none_if_empty;
 
 struct HDPathAddress {
     address: Address,
@@ -72,6 +73,18 @@ impl From<Seed> for SeedJson {
             is_available: match value.source {
                 SeedSource::Bytes(_) => true,
                 SeedSource::Ledger(_) => false, //TODO
+            }
+        }
+    }
+}
+
+impl SeedDefinitionJson {
+    fn clean(self) -> Self {
+        SeedDefinitionJson {
+            seed_type: self.seed_type,
+            password: match self.password {
+                None => None,
+                Some(s) => none_if_empty(s.as_str())
             }
         }
     }
@@ -167,6 +180,7 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
 
     let json = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
     let parsed: SeedDefinitionJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    let parsed = parsed.clean();
 
     let result = vault.add_seed(parsed).expect("Seed not added");
 
@@ -186,7 +200,7 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(js_value.downcast().unwrap())
 }
 
-pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
+pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     let size = cx.argument::<JsNumber>(0)
         .expect("Mnemonic size is not provided").value() as usize;
 
@@ -194,9 +208,9 @@ pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
     let mnemonic = Mnemonic::new(Language::English, size).expect("Failed to generate mnemonic");
     let sentence = mnemonic.sentence();
 
-    let value_js = cx.string(sentence);
-
-    Ok(value_js)
+    let status = StatusResult::Ok(sentence).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+    Ok(js_value.downcast().unwrap())
 }
 
 impl WrappedVault {
