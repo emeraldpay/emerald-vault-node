@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import * as selectors from '../selectors';
+import {VaultSelectors as selectors} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 
@@ -170,7 +170,7 @@ describe("Sign transaction", () => {
             };
 
             let walletId = vault.addWallet("test sign 2");
-            let seedId = vault.seeds().import({
+            let seedId = vault.importSeed({
                 type: "mnemonic",
                 value: {
                     value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"

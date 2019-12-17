@@ -1,7 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import * as selector from '../selectors';
 import {tempPath} from "./_commons";
-import {EthereumAccount} from "../types";
+import {EthereumAccount, VaultSelectors as selectors} from "@emeraldpay/emerald-vault-core";
 
 describe("Mnemonic", () => {
 
@@ -78,7 +77,7 @@ describe("Mnemonic", () => {
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify"
             };
             expect(() => {
-                vault.seeds().import({
+                vault.importSeed({
                     type: "mnemonic",
                     password: data.password,
                     value: {
@@ -95,7 +94,7 @@ describe("Mnemonic", () => {
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
             };
             expect(() => {
-                let seedId = vault.seeds().import({
+                let seedId = vault.importSeed({
                     type: "mnemonic",
                     password: data.password,
                     value: {
@@ -123,7 +122,7 @@ describe("Mnemonic", () => {
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
             };
             expect(() => {
-                let seedId = vault.seeds().import({
+                let seedId = vault.importSeed({
                     type: "mnemonic",
                     password: data.password,
                     value: {
@@ -140,7 +139,7 @@ describe("Mnemonic", () => {
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
             };
 
-            let seedId = vault.seeds().import({
+            let seedId = vault.importSeed({
                type: "mnemonic",
                password: data.password,
                value: {
@@ -171,7 +170,7 @@ describe("Mnemonic", () => {
                 mnemonic: "lift pledge combine cat olive divert ice fetch other typical idle idea insane friend false"
             };
 
-            let seedId = vault.seeds().import({
+            let seedId = vault.importSeed({
                 type: "mnemonic",
                 password: data.password,
                 value: {
@@ -202,7 +201,7 @@ describe("Mnemonic", () => {
                 mnemonic: "cave math raven foam maze humble leave razor bonus merit leisure rough"
             };
 
-            let seedId = vault.seeds().import({
+            let seedId = vault.importSeed({
                 type: "mnemonic",
                 password: data.password,
                 value: {
@@ -233,7 +232,7 @@ describe("Mnemonic", () => {
                 mnemonic: "below bird fossil menu slab chalk glow attitude work mammal orphan rose music holiday magic weather beef midnight"
             };
 
-            let seedId = vault.seeds().import({
+            let seedId = vault.importSeed({
                 type: "mnemonic",
                 password: data.password,
                 value: {
@@ -265,7 +264,7 @@ describe("Mnemonic", () => {
                 mnemonic: "around force sponsor slender upper cheese gas smile guard similar dog rival select gate fit load upper spread wolf magic marble"
             };
 
-            let seedId = vault.seeds().import({
+            let seedId = vault.importSeed({
                 type: "mnemonic",
                 password: data.password,
                 value: {
@@ -297,7 +296,7 @@ describe("Mnemonic", () => {
                 mnemonic: "erode youth impose rhythm best obey virtual general essay convince visit truck blanket lucky lizard stadium display hip market hello alley orient parrot blanket"
             };
 
-            let seedId = vault.seeds().import({
+            let seedId = vault.importSeed({
                 type: "mnemonic",
                 password: data.password,
                 value: {

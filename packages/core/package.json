@@ -1,0 +1,37 @@
+{
+  "name": "@emeraldpay/emerald-vault-core",
+  "version": "0.5.0-0.27.0",
+  "description": "Emerald Vault Core data types",
+  "author": "Igor Artamonov <splix@emeraldpay.io>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emeraldpay/emerald-vault-node.git"
+  },
+  "types": "lib/index.d.ts",
+  "main": "lib/index.js",
+  "files": [
+    "lib/*.ts",
+    "lib/*.js"
+  ],
+  "scripts": {
+    "build:ts": "tsc",
+    "build": "npm run clean && npm run build:rs && npm run build:ts",
+    "jest": "jest",
+    "jest:electron": "cross-env ELECTRON_RUN_AS_NODE=true ./node_modules/.bin/electron ./node_modules/jest/bin/jest.js",
+    "test": "npm run jest",
+    "test:electron": "npm run clean:test && npm run unpack && npm run jest:electron",
+    "clean:ts": "rimraf lib",
+    "clean": "npm run clean:ts",
+    "prepublishOnly": "npm run clean && npm run build && npm run test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^3.4.2",
+    "rimraf": "^2.6.3",
+    "jest": "24.8.0",
+    "@types/jest": "24.0.13",
+    "ts-jest": "24.0.2",
+    "jest-serial-runner": "1.1.0"
+  }
+}

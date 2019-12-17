@@ -1,0 +1,3 @@
+export {EmeraldVaultNative} from './EmeraldVaultNative';
+
+

@@ -1,14 +1,19 @@
-import { Seed, SeedDefinition } from '../Seed';
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {AddAccount, EthereumAccount, SeedPKRef} from "../types";
-import * as selector from "../selectors";
+import {AddAccount, EthereumAccount, SeedDefinition, VaultSelectors as selectors} from "@emeraldpay/emerald-vault-core";
 
 const should_exist = process.env.EMERALD_TEST_LEDGER === 'true';
 
 describe("Seeds", () => {
     describe('Use ledger', () => {
-        const seed = new Seed();
+        let vault: EmeraldVaultNative;
+        beforeAll(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("seed")
+            });
+            vault.autoMigrate();
+        });
+        
         const type: SeedDefinition = {
             type: "ledger",
             value: "any"
@@ -16,7 +21,7 @@ describe("Seeds", () => {
 
         describe('Ledger connection', () => {
             test("When connected", () => {
-                const act = seed.isAvailable(type);
+                const act = vault.isSeedAvailable(type);
                 expect(act).toBe(should_exist);
             });
 
@@ -30,7 +35,7 @@ describe("Seeds", () => {
                     console.warn("Ignore Ledger tests");
                     return;
                 }
-                const act = seed.listAddresses(type, "ethereum", [
+                const act = vault.listSeedAddresses(type, "ethereum", [
                     "m/44'/60'/0'/0/0",
                     "m/44'/60'/0'/0/1",
                     "m/44'/60'/0'/0/2",
@@ -45,8 +50,16 @@ describe("Seeds", () => {
     });
 
     describe("List addresses without import", () => {
+        let vault: EmeraldVaultNative;
+        beforeAll(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("seed")
+            });
+            vault.autoMigrate();
+        });
+
         describe('24 words', () => {
-            const seed = new Seed();
+
             const type: SeedDefinition = {
                 type: "mnemonic",
                 value: {
@@ -56,7 +69,7 @@ describe("Seeds", () => {
 
             describe('Check connection', () => {
                 test("Always connected", () => {
-                    const act = seed.isAvailable(type);
+                    const act = vault.isSeedAvailable(type);
                     expect(act).toBeTruthy();
                 });
             });
@@ -65,7 +78,7 @@ describe("Seeds", () => {
             describe('List addresses', () => {
 
                 test("List ethereum", () => {
-                    const act = seed.listAddresses(type, "ethereum", [
+                    const act = vault.listSeedAddresses(type, "ethereum", [
                         "m/44'/60'/0'/0/0",
                         "m/44'/60'/0'/0/1",
                         "m/44'/60'/0'/0/2",
@@ -88,7 +101,6 @@ describe("Seeds", () => {
         });
 
         describe('24 words with password', () => {
-            const seed = new Seed();
             const type: SeedDefinition = {
                 type: "mnemonic",
                 value: {
@@ -99,7 +111,7 @@ describe("Seeds", () => {
 
             describe('Check connection', () => {
                 test("Always connected", () => {
-                    const act = seed.isAvailable(type);
+                    const act = vault.isSeedAvailable(type);
                     expect(act).toBeTruthy();
                 });
             });
@@ -107,7 +119,7 @@ describe("Seeds", () => {
             describe('List addresses', () => {
 
                 test("List ethereum", () => {
-                    const act = seed.listAddresses(type, "ethereum", [
+                    const act = vault.listSeedAddresses(type, "ethereum", [
                         "m/44'/60'/0'/0/0",
                         "m/44'/60'/0'/0/1",
                         "m/44'/60'/0'/0/2",
@@ -122,7 +134,6 @@ describe("Seeds", () => {
         });
 
         describe('21 words', () => {
-            const seed = new Seed();
             const type: SeedDefinition = {
                 type: "mnemonic",
                 value: {
@@ -134,7 +145,7 @@ describe("Seeds", () => {
             describe('List addresses', () => {
 
                 test("List ethereum", () => {
-                    const act = seed.listAddresses(type, "ethereum", [
+                    const act = vault.listSeedAddresses(type, "ethereum", [
                         "m/44'/61'/1'/0/0",
                         "m/44'/61'/1'/0/1",
                         "m/44'/61'/1'/0/2",
@@ -158,12 +169,12 @@ describe("Seeds", () => {
         });
 
         test("List empty", () => {
-            let seeds = vault.seeds().list();
+            let seeds = vault.listSeeds();
             expect(seeds.length).toBe(0);
         });
 
         test("Import mnemonic", () => {
-            let id = vault.seeds().import({
+            let id = vault.importSeed({
                 type: "mnemonic",
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
@@ -172,7 +183,7 @@ describe("Seeds", () => {
             });
             expect(id).toBeDefined();
 
-            let seeds = vault.seeds().list();
+            let seeds = vault.listSeeds();
             expect(seeds.length).toBe(1);
         })
     });
@@ -186,7 +197,7 @@ describe("Seeds", () => {
         });
 
         test("Create ethereum", () => {
-            let id = vault.seeds().import({
+            let id = vault.importSeed({
                 type: "mnemonic",
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
@@ -207,7 +218,7 @@ describe("Seeds", () => {
             };
             let accId = vault.addAccount(walletId, acc);
             let wallets = vault.listWallets();
-            let wallet = selector.getWallet(wallets, walletId);
+            let wallet = selectors.getWallet(wallets, walletId);
             expect(wallet.accounts.length).toBe(1);
             expect(wallet.accounts[0].blockchain).toBe(100);
 

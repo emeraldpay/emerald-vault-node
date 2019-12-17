@@ -1,11 +1,11 @@
 import {EthereumAccount, isEthereumAccount, Uuid, Wallet, WalletAccount} from "./types";
 
-export function getEthereumAccounts(wallet: Wallet): EthereumAccount[] {
+function getEthereumAccounts(wallet: Wallet): EthereumAccount[] {
     let accs = wallet.accounts.filter((a) => isEthereumAccount(a));
     return accs as EthereumAccount[];
 }
 
-export function findAccount(wallet: Wallet, address: string): WalletAccount | undefined {
+function findAccount(wallet: Wallet, address: string): WalletAccount | undefined {
     return wallet.accounts.find((a) => {
         if (isEthereumAccount(a)) {
             return a.address === address;
@@ -14,18 +14,18 @@ export function findAccount(wallet: Wallet, address: string): WalletAccount | un
     });
 }
 
-export function getWallet(wallets: Wallet[], id: Uuid): Wallet | undefined {
+function getWallet(wallets: Wallet[], id: Uuid): Wallet | undefined {
     return wallets.find((w) => w.id == id)
 }
 
-export function findWalletByAddress(wallets: Wallet[], address: string): Wallet | undefined {
+function findWalletByAddress(wallets: Wallet[], address: string): Wallet | undefined {
     address = address.toLowerCase();
     return wallets.find((wallet) =>
         wallet.accounts.some((a) => isEthereumAccount(a) && a.address.toLowerCase() === address)
     )
 }
 
-export function findAccountByAddress(wallets: Wallet[], address: string): WalletAccount | undefined {
+function findAccountByAddress(wallets: Wallet[], address: string): WalletAccount | undefined {
     address = address.toLowerCase();
     let wallet = findWalletByAddress(wallets, address);
     if (wallet) {
@@ -34,7 +34,7 @@ export function findAccountByAddress(wallets: Wallet[], address: string): Wallet
     return undefined;
 }
 
-export function accountsByBlockchain(wallets: Wallet[], blockchain: number): EthereumAccount[] {
+function accountsByBlockchain(wallets: Wallet[], blockchain: number): EthereumAccount[] {
     let result = [];
     wallets
         .forEach((w) =>
@@ -44,3 +44,12 @@ export function accountsByBlockchain(wallets: Wallet[], blockchain: number): Eth
         );
     return result
 }
+
+export const VaultSelectors = {
+    getEthereumAccounts,
+    findAccount,
+    getWallet,
+    findWalletByAddress,
+    findAccountByAddress,
+    accountsByBlockchain
+};

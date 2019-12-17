@@ -4,13 +4,48 @@ Emerald Vault as a native NodeJS module
 
 == Example
 
+.Install
 ----
-import {EmeraldVaultNative} from "emerald-vault-node";
+npm install @emeraldpay/emerald-vault-native
+----
+
+.Use
+----
+import {EmeraldVaultNative} from "emerald-vault-native";
 
 const vault = new EmeraldVaultNative({dir: "path/to/vault"});
-const accounts = vault.listAccounts("eth");
+const wallets = vault.listWallets();
 ----
 
+== Development
+
+=== Build instructions
+
+.Install dependencies
+----
+yarn install
+----
+
+.Build Native module
+----
+# for NodeJS (and default unit testing)
+
+yarn run build:rs
+
+# for Electron:
+
+yarn run build:rs:electron
+----
+
+.Build Typescript
+----
+yarn workspaces run build:ts
+----
+
+.Run unit tests
+----
+yarn workspaces run test
+----
 
 == License
 

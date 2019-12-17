@@ -1,21 +1,22 @@
+import {Config, Status, StatusCode,} from './types';
 import {
-    Account,
     AddAccount,
     AddressBookItem,
-    Config,
-    ImportMnemonic,
-    ImportPrivateKey,
-    Status,
-    StatusCode,
+    BlockchainType,
+    isLedger,
+    isMnemonic,
+    isRawSeed,
+    isReference,
+    SeedDefinition,
+    SeedDescription,
     UnsignedTx,
-    Update,
     Uuid,
-    Wallet
-} from './types';
-import {Seed} from "./Seed";
-import * as selectors from './selectors';
+    VaultSelectors as selectors,
+    Wallet,
+    IEmeraldVault
+} from "@emeraldpay/emerald-vault-core";
 
-var addon = require('../native');
+var addon = require('../../../native');
 
 function statusFail<T>(code: StatusCode = StatusCode.UNKNOWN, message: string = ""): Status<T> {
     return {
@@ -35,7 +36,7 @@ function statusOk<T>(result: T): Status<T> {
     }
 }
 
-export class EmeraldVaultNative {
+export class EmeraldVaultNative implements IEmeraldVault {
     private conf: Config;
 
     constructor(conf?: Config | undefined) {
@@ -44,10 +45,6 @@ export class EmeraldVaultNative {
 
     vaultVersion(): string {
         return "0.27.0"
-    }
-
-    seeds(): Seed {
-        return new Seed(this.conf);
     }
 
     autoMigrate() {
@@ -115,7 +112,7 @@ export class EmeraldVaultNative {
         return "0x" + status.result;
     }
 
-    exportPk(walletId: Uuid, accountId: number, password: string): string {
+    exportRawPk(walletId: Uuid, accountId: number, password: string): string {
         let status: Status<string> = addon.accounts_exportPk(this.conf, walletId, accountId, password);
         if (!status.succeeded) {
             throw Error(status.error.message)
@@ -123,12 +120,12 @@ export class EmeraldVaultNative {
         return status.result;
     }
 
-    exportAccount(walletId: Uuid, accountId: number, password?: string): any {
+    exportJsonPk(walletId: Uuid, accountId: number, password?: string): string {
         let status: Status<string> = addon.accounts_export(this.conf, walletId, accountId, password);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
-        return JSON.parse(status.result);
+        return status.result;
     }
 
     generateMnemonic(size: number): string {
@@ -164,5 +161,42 @@ export class EmeraldVaultNative {
             throw Error(status.error.message)
         }
         return status.result
+    }
+
+    listSeeds(): SeedDescription[] {
+        let status: Status<SeedDescription[]> = addon.seed_list(this.conf);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result;
+    }
+
+    importSeed(seed: SeedDefinition): Uuid {
+        let status: Status<Uuid> = addon.seed_add(this.conf, JSON.stringify(seed));
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
+    }
+
+    isSeedAvailable(seed: Uuid | SeedDefinition): boolean {
+        if (isReference(seed)) {
+            return addon.ledger_isConnected(seed);
+        } else {
+            if (isRawSeed(seed.value, seed)) {
+                return seed.value.length > 0;
+            }
+            if (isMnemonic(seed.value, seed)) {
+                return seed.value.value.length > 0;
+            }
+            if (isLedger(seed.value, seed)) {
+                return addon.ledger_isConnected(seed);
+            }
+        }
+        return false;
+    }
+
+    listSeedAddresses(seed: Uuid | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string } {
+        return addon.ledger_listAddresses(JSON.stringify(seed), blockchain, hdpath);
     }
 }

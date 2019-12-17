@@ -1,7 +1,8 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {EthereumAccount} from "../types";
-import * as selectors from '../selectors';
+import {EthereumAccount} from "@emeraldpay/emerald-vault-core";
+import {VaultSelectors as selectors} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
+
 
 describe("Accounts", () => {
 
@@ -206,7 +207,7 @@ describe("Accounts", () => {
             test("errors for unknown account", () => {
                 let walletId = vault.addWallet("test");
                 expect(() => {
-                    vault.exportAccount(walletId, 0);
+                    vault.exportJsonPk(walletId, 0);
                 }).toThrow()
             });
 
@@ -240,7 +241,7 @@ describe("Accounts", () => {
                     key: JSON.stringify(data)
                 });
 
-                let current = vault.exportAccount(walletId, accountIt);
+                let current = JSON.parse(vault.exportJsonPk(walletId, accountIt));
                 expect(current).toBeDefined();
                 expect(current.address).toBe("6412c428fc02902d137b60dc0bd0f6cd1255ea99")
             });
@@ -265,7 +266,7 @@ describe("Accounts", () => {
                 let account = selectors.findAccountByAddress(wallets, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
                 expect(account).toBeDefined();
 
-                let current = vault.exportAccount(wallet.id, account.id, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                let current = JSON.parse(vault.exportJsonPk(wallet.id, account.id, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"));
                 expect(current.address).toBe("3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
             });
 
@@ -525,7 +526,7 @@ describe("Accounts", () => {
                 key: data.pk,
                 password: data.password
             });
-            let pk = vault.exportPk(walletId, accountId, "test");
+            let pk = vault.exportRawPk(walletId, accountId, "test");
 
             expect(pk).toBe("0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd");
         });
@@ -559,7 +560,7 @@ describe("Accounts", () => {
                 key: JSON.stringify(data)
             });
 
-            let pk = vault.exportPk(walletId, accountId, "testpassword");
+            let pk = vault.exportRawPk(walletId, accountId, "testpassword");
 
             expect(pk).toBe("0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d");
         });
@@ -595,7 +596,7 @@ describe("Accounts", () => {
                 key: JSON.stringify(data)
             });
 
-            let pk = vault.exportPk(walletId, accountId, "testtest");
+            let pk = vault.exportRawPk(walletId, accountId, "testtest");
 
             expect(pk).toBe("0xad901ebb27a07ca54ffe797b24f602bdd600f300283c02a0b58b7c0567f12234");
         });
