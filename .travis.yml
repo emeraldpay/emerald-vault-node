@@ -47,12 +47,14 @@ script:
   # Show details about node module
   -  node-pre-gyp reveal --directory packages/native
 
+  - yarn workspace @emeraldpay/emerald-vault-core run test;
+
   # Run tests
-  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspaces run test;                fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspaces test:electron;           fi;
+  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run test;             fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;    fi;
 
   # Cleanup to avoid putting temp files into resulting package
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run clean:rs;  fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run clean:rs;         fi;
 
   # Package for pre-gyp
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run package:node;     fi;
