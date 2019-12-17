@@ -37,27 +37,27 @@ before_install:
   - npm -v
 
 install:
-  - npm install
+  - yarn install
 
 script:
   # Build Rust
-  - if [[ ${NODE_RUNTIME} == "node" ]]; then      npm run build:rs;            fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run build:rs:electron;   fi;
+  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn run build:rs;            fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn run build:rs:electron;   fi;
 
   # Show details about node module
   -  node-pre-gyp reveal
 
   # Run tests
-  - if [[ ${NODE_RUNTIME} == "node" ]]; then      npm run test;                fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run test:electron;       fi;
+  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspaces run test;                fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspaces test:electron;           fi;
 
   # Cleanup to avoid putting temp files into resulting package
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run clean:rs;            fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run clean:rs;  fi;
 
   # Package for pre-gyp
-  - if [[ ${NODE_RUNTIME} == "node" ]]; then      npm run package:node;        fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  npm run package:electron;    fi;
+  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run package:node;     fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run package:electron; fi;
 
   # Publish when using 'publish binary' keywords
   - COMMIT_MESSAGE=$(git log --format=%B --no-merges -n 1 | tr -d '\n')
-  - if [[ ${COMMIT_MESSAGE} =~ "publish binary" ]]; then npm run upload-binary || exit 0; fi;
+  - if [[ ${COMMIT_MESSAGE} =~ "publish binary" ]]; then yarn workspace @emeraldpay/emerald-vault-native run upload-binary || exit 0; fi;
