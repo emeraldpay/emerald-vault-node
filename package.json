@@ -3,9 +3,5 @@
   "workspaces": [
     "packages/core",
     "packages/native"
-  ],
-  "scripts": {
-    "build:rs": "neon build --release",
-    "build:rs:electron": "node build-electron.js"
-  }
+  ]
 }

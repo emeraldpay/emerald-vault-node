@@ -384,6 +384,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "emerald-vault"
 version = "0.27.0"
+source = "git+https://github.com/emeraldpay/emerald-vault?branch=feat/storage-v3#7866f34b3af7dca6ffd7ebe081dd06042ecd8edd"
 dependencies = [
  "aes-ctr 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -422,7 +423,7 @@ dependencies = [
 name = "emerald-vault-node"
 version = "0.5.0-0.27.0"
 dependencies = [
- "emerald-vault 0.27.0",
+ "emerald-vault 0.27.0 (git+https://github.com/emeraldpay/emerald-vault?branch=feat/storage-v3)",
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "neon 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "neon-build 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1407,6 +1408,7 @@ dependencies = [
 "checksum ctr 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "4b669fcb8e20124db86dbd9b01e74ec0e9e420e65381311ce5249864fc7ff0c0"
 "checksum digest 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f3d0c8c8752312f9713efd397ff63acb9f85585afbf179282e720e7704954dd5"
 "checksum either 1.5.3 (registry+https://github.com/rust-lang/crates.io-index)" = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
+"checksum emerald-vault 0.27.0 (git+https://github.com/emeraldpay/emerald-vault?branch=feat/storage-v3)" = "<none>"
 "checksum enum-display-derive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "53f76eb63c4bfc6fce5000f106254701b741fc9a65ee08445fde0ff39e583f1c"
 "checksum env_logger 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "aafcde04e90a5226a6443b7aabdb016ba2f8307c847d524724bd9b346dd1a2d3"
 "checksum error-chain 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3ab49e9dcb602294bc42f9a7dfc9bc6e936fca4418ea300dbfb84fe16de0b7d9"

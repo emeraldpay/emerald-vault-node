@@ -30,6 +30,8 @@
   },
   "scripts": {
     "build:ts": "tsc",
+    "build:rs": "neon build --release",
+    "build:rs:electron": "node build-electron.js",
     "build": "npm run clean && npm run build:rs && npm run build:ts",
     "jest": "jest",
     "jest:electron": "cross-env ELECTRON_RUN_AS_NODE=true ./node_modules/.bin/electron ./node_modules/jest/bin/jest.js",
