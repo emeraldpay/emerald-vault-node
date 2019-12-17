@@ -16,7 +16,7 @@ import {
     IEmeraldVault
 } from "@emeraldpay/emerald-vault-core";
 
-var addon = require('../../../native');
+var addon = require('../native');
 
 function statusFail<T>(code: StatusCode = StatusCode.UNKNOWN, message: string = ""): Status<T> {
     return {
