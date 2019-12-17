@@ -45,7 +45,7 @@ script:
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn run build:rs:electron;   fi;
 
   # Show details about node module
-  -  node-pre-gyp reveal
+  -  node-pre-gyp reveal --directory packages/native
 
   # Run tests
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspaces run test;                fi;
