@@ -1,5 +1,7 @@
 export {
-    Uuid,
+    Uuid, AccountId,
+    isAccountId,
+
     BlockchainType,
     AccountType,
     SeedType,
@@ -24,6 +26,7 @@ export {
     isLedger,
     isMnemonic,
     isRawSeed,
+    isSeedPkRef,
 
 
     ImportPkType,
@@ -36,5 +39,5 @@ export {
 } from './types';
 
 export {
-    VaultSelectors
-} from './selectors';
+    WalletOp, WalletsOp, AccountIdOp
+} from './ops'

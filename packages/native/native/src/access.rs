@@ -64,7 +64,7 @@ pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
 impl VaultConfig {
 
     pub fn get_config(cx: &mut FunctionContext) -> VaultConfig {
-        let config = cx.argument::<JsObject>(0).unwrap();
+        let config = cx.argument::<JsObject>(0).expect("Vault Config is not provided");
         let dir = match obj_get_str(cx, &config, "dir") {
             Some(val) => val,
             None => default_path().to_str().expect("No default path for current OS").to_string()
@@ -92,7 +92,7 @@ impl VaultConfig {
 
 impl MigrationConfig {
     pub fn get_config(cx: &mut FunctionContext) -> MigrationConfig {
-        let config = cx.argument::<JsObject>(0).unwrap();
+        let config = cx.argument::<JsObject>(0).expect("Vault Config is not provided");
         let dir = match obj_get_str(cx, &config, "dir") {
             Some(val) => val,
             None => default_path().to_str().expect("No default path for current OS").to_string()

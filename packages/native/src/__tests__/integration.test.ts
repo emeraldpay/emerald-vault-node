@@ -44,7 +44,7 @@ describe('Multiple clients', () => {
                             key: JSON.stringify(data)
                         });
                         // vault.updateAccount("eth",data.address, {name: "foo bar"} );
-                        let current = JSON.parse(vault.exportJsonPk(walletId, accountId));
+                        let current = JSON.parse(vault.exportJsonPk(accountId));
                         expect(current.address).toBe(data.address);
                         resolve(current.address);
                     } catch (e) {

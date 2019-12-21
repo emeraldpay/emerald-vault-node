@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {AddAccount, EthereumAccount, SeedDefinition, VaultSelectors as selectors} from "@emeraldpay/emerald-vault-core";
+import {AddAccount, EthereumAccount, SeedDefinition, WalletsOp, WalletOp} from "@emeraldpay/emerald-vault-core";
 
 const should_exist = process.env.EMERALD_TEST_LEDGER === 'true';
 
@@ -218,7 +218,7 @@ describe("Seeds", () => {
             };
             let accId = vault.addAccount(walletId, acc);
             let wallets = vault.listWallets();
-            let wallet = selectors.getWallet(wallets, walletId);
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
             expect(wallet.accounts.length).toBe(1);
             expect(wallet.accounts[0].blockchain).toBe(100);
 

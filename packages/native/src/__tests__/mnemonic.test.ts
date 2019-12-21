@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {EthereumAccount, VaultSelectors as selectors} from "@emeraldpay/emerald-vault-core";
+import {EthereumAccount} from "@emeraldpay/emerald-vault-core";
 
 describe("Mnemonic", () => {
 

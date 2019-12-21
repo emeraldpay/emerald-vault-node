@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {AddAccount, VaultSelectors as selectors} from "@emeraldpay/emerald-vault-core";
+import {AddAccount, WalletOp, WalletsOp, AccountIdOp} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 describe("Wallets", () => {
@@ -31,8 +31,8 @@ describe("Wallets", () => {
                 expect(etc[0].accounts[0].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
 
                 eth = eth.sort((a, b) =>
-                    selectors.getEthereumAccounts(a)[0].address.localeCompare(
-                        selectors.getEthereumAccounts(b)[0].address
+                    WalletOp.of(a).getEthereumAccounts()[0].address.localeCompare(
+                        WalletOp.of(b).getEthereumAccounts()[0].address
                     )
                 );
 
@@ -58,7 +58,7 @@ describe("Wallets", () => {
                 let id = vault.addWallet("Test 1111");
                 let wallets = vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
-                let created = selectors.getWallet(wallets, id);
+                let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
                 expect(created.name).toBe("Test 1111");
             });
@@ -94,9 +94,9 @@ describe("Wallets", () => {
                 };
                 let result = vault.addAccount(id, acc);
 
-                expect(result).toBe(0);
+                expect(result).toBe(id + "-0");
 
-                let wallet = selectors.getWallet(vault.listWallets(), id);
+                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id).value;
                 expect(wallet.accounts.length).toBe(1);
             });
 
@@ -110,10 +110,10 @@ describe("Wallets", () => {
                 };
                 let result = vault.addAccount(id, acc);
 
-                expect(result).toBe(0);
-                let wallet = selectors.getWallet(vault.listWallets(), id);
-                expect(wallet.accounts.length).toBe(1);
-                expect(selectors.getEthereumAccounts(wallet)[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+                expect(result).toBe(id + "-0");
+                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+                expect(wallet.value.accounts.length).toBe(1);
+                expect(wallet.getEthereumAccounts()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
             });
 
             test("Create and import 2 keys", () => {
@@ -133,15 +133,15 @@ describe("Wallets", () => {
                 };
                 let result2 = vault.addAccount(id, acc2);
 
-                expect(result1).toBe(0);
-                expect(result2).toBe(1);
+                expect(result1).toBe(id + "-0");
+                expect(result2).toBe(id + "-1");
 
-                let wallet = selectors.getWallet(vault.listWallets(), id);
-                expect(wallet.accounts.length).toBe(2);
-                expect(selectors.getEthereumAccounts(wallet)[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
-                expect(selectors.getEthereumAccounts(wallet)[0].blockchain).toBe(100);
-                expect(selectors.getEthereumAccounts(wallet)[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
-                expect(selectors.getEthereumAccounts(wallet)[1].blockchain).toBe(101);
+                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+                expect(wallet.value.accounts.length).toBe(2);
+                expect(wallet.getEthereumAccounts()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+                expect(wallet.getEthereumAccounts()[0].blockchain).toBe(100);
+                expect(wallet.getEthereumAccounts()[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+                expect(wallet.getEthereumAccounts()[1].blockchain).toBe(101);
             });
 
             test("Create and import from seed", () => {
@@ -161,15 +161,15 @@ describe("Wallets", () => {
                 };
                 let result2 = vault.addAccount(id, acc2);
 
-                expect(result1).toBe(0);
-                expect(result2).toBe(1);
+                expect(result1).toBe(id + "-0");
+                expect(result2).toBe(id + "-1");
 
-                let wallet = selectors.getWallet(vault.listWallets(), id);
-                expect(wallet.accounts.length).toBe(2);
-                expect(selectors.getEthereumAccounts(wallet)[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
-                expect(selectors.getEthereumAccounts(wallet)[0].blockchain).toBe(100);
-                expect(selectors.getEthereumAccounts(wallet)[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
-                expect(selectors.getEthereumAccounts(wallet)[1].blockchain).toBe(101);
+                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+                expect(wallet.value.accounts.length).toBe(2);
+                expect(wallet.getEthereumAccounts()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+                expect(wallet.getEthereumAccounts()[0].blockchain).toBe(100);
+                expect(wallet.getEthereumAccounts()[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+                expect(wallet.getEthereumAccounts()[1].blockchain).toBe(101);
             });
         });
 

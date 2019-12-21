@@ -11,9 +11,8 @@ import {
     SeedDescription,
     UnsignedTx,
     Uuid,
-    VaultSelectors as selectors,
     Wallet,
-    IEmeraldVault
+    IEmeraldVault, AccountId, AccountIdOp, WalletsOp
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native');
@@ -65,7 +64,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
-        return selectors.getWallet(status.result, id)
+        return WalletsOp.of(status.result).getWallet(id).value
     }
 
     addWallet(label: string | undefined): Uuid {
@@ -88,40 +87,44 @@ export class EmeraldVaultNative implements IEmeraldVault {
         throw Error("NOT IMPLEMENTED");
     }
 
-    addAccount(walletId: Uuid, account: AddAccount): number {
+    addAccount(walletId: Uuid, account: AddAccount): AccountId {
         let status: Status<number> = addon.wallets_addAccount(this.conf, walletId, JSON.stringify(account));
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
-        return status.result
+        return AccountIdOp.create(walletId, status.result).value
     }
 
-    removeAccount(walletId: Uuid, accountId: number) {
-        let status: Status<boolean> = addon.wallets_removeAccount(this.conf, walletId, accountId);
+    removeAccount(accountFullId: AccountId) {
+        let op = AccountIdOp.of(accountFullId);
+        let status: Status<boolean> = addon.wallets_removeAccount(this.conf, op.extractWalletId(), op.extractAccountInternalId());
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
         return status.result
     }
 
-    signTx(walletId: Uuid, accountId: number, tx: UnsignedTx, password?: string): string {
-        let status: Status<string> = addon.sign_tx(this.conf, walletId, accountId, JSON.stringify(tx), password);
+    signTx(accountFullId: AccountId, tx: UnsignedTx, password?: string): string {
+        let op = AccountIdOp.of(accountFullId);
+        let status: Status<string> = addon.sign_tx(this.conf, op.extractWalletId(), op.extractAccountInternalId(), JSON.stringify(tx), password);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
         return "0x" + status.result;
     }
 
-    exportRawPk(walletId: Uuid, accountId: number, password: string): string {
-        let status: Status<string> = addon.accounts_exportPk(this.conf, walletId, accountId, password);
+    exportRawPk(accountFullId: AccountId, password: string): string {
+        let op = AccountIdOp.of(accountFullId);
+        let status: Status<string> = addon.accounts_exportPk(this.conf, op.extractWalletId(), op.extractAccountInternalId(), password);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
         return status.result;
     }
 
-    exportJsonPk(walletId: Uuid, accountId: number, password?: string): string {
-        let status: Status<string> = addon.accounts_export(this.conf, walletId, accountId, password);
+    exportJsonPk(accountFullId: AccountId, password?: string): string {
+        let op = AccountIdOp.of(accountFullId);
+        let status: Status<string> = addon.accounts_export(this.conf, op.extractWalletId(), op.extractAccountInternalId(), password);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
@@ -136,17 +139,18 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return status.result
     }
 
-    listAddressBook(chain: string): AddressBookItem[] {
-        let opts = Object.assign({}, this.conf, {chain: chain});
+    listAddressBook(blockchain: number): AddressBookItem[] {
+        let opts = Object.assign({}, this.conf);
         let status: Status<AddressBookItem[]> = addon.addrbook_list(opts);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
         return status.result
+            .filter((item) => item.blockchains.indexOf(blockchain) >= 0);
     }
 
-    addToAddressBook(chain: string, item: AddressBookItem): boolean {
-        let opts = Object.assign({}, this.conf, {chain: chain});
+    addToAddressBook(item: AddressBookItem): boolean {
+        let opts = Object.assign({}, this.conf);
         let status: Status<boolean> = addon.addrbook_add(opts, JSON.stringify(item));
         if (!status.succeeded) {
             throw Error(status.error.message)
@@ -154,8 +158,8 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return status.result
     }
 
-    removeFromAddressBook(chain: string, address: string): boolean {
-        let opts = Object.assign({}, this.conf, {chain: chain});
+    removeFromAddressBook(blockchain: number, address: string): boolean {
+        let opts = Object.assign({}, this.conf);
         let status: Status<boolean> = addon.addrbook_remove(opts, address);
         if (!status.succeeded) {
             throw Error(status.error.message)
@@ -169,6 +173,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
             throw Error(status.error.message)
         }
         return status.result;
+    }
+
+    getConnectedHWSeed(create: boolean): SeedDescription | undefined {
+        return undefined
     }
 
     importSeed(seed: SeedDefinition): Uuid {

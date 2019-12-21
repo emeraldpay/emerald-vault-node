@@ -5,17 +5,11 @@ use neon::prelude::{FunctionContext, JsObject, JsResult, JsString, JsNumber};
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault, args_get_str};
-use emerald_vault::{
-    convert::{
-        json::keyfile::EthereumJsonV3File
-    },
-    core::chains::Blockchain,
-    mnemonic::HDPath,
-    storage::error::VaultError,
-    trim_hex,
-    structs::wallet::Wallet
-};
+use emerald_vault::{convert::{
+    json::keyfile::EthereumJsonV3File
+}, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey};
 use json::StatusResult;
+use emerald_vault::structs::wallet::AccountId;
 
 #[derive(Deserialize, Clone)]
 pub struct AddAccountJson {
@@ -33,7 +27,9 @@ pub enum AddAccountType {
     #[serde(rename = "raw-pk-hex")]
     RawHex(String),
     #[serde(rename = "hd-path")]
-    HdPath(SeedAccount)
+    HdPath(SeedAccount),
+    #[serde(rename = "generate-random")]
+    GenerateRandom
 }
 
 #[derive(Deserialize, Clone)]
@@ -48,7 +44,7 @@ pub struct SeedAccount {
 
 #[derive(Serialize, Clone)]
 pub struct WalletAccountJson {
-    pub id: usize,
+    pub id: String,
     pub blockchain: u32,
     pub address: Option<String>,
 }
@@ -64,7 +60,7 @@ impl From<Wallet> for WalletJson {
     fn from(wallet: Wallet) -> Self {
         let accounts: Vec<WalletAccountJson> = wallet.accounts.iter()
             .map(|a| WalletAccountJson {
-                id: a.id,
+                id: AccountId::from(&wallet, a).to_string(),
                 blockchain: a.blockchain as u32,
                 address: a.address.map(|v| v.to_string())
             })
@@ -123,7 +119,7 @@ impl WrappedVault {
                 let hex = hex::decode(hex)?;
                 storage.add_account(wallet_id)
                     .raw_pk(hex, account.password.unwrap().as_str(), blockchain)?
-            }
+            },
             AddAccountType::HdPath(hd) => {
                 storage.add_account(wallet_id)
                     .seed_hd(Uuid::from_str(hd.seed_id.as_str())?,
@@ -131,6 +127,14 @@ impl WrappedVault {
                              blockchain,
                              Some(hd.password),
                              None)?
+            },
+            AddAccountType::GenerateRandom => {
+                if account.password.is_none() {
+                    return panic!("Password is required".to_string())
+                }
+                let pk = PrivateKey::gen();
+                storage.add_account(wallet_id)
+                    .raw_pk(pk.0.to_vec(), account.password.unwrap().as_str(), blockchain)?
             }
         };
         Ok(result)
