@@ -16,7 +16,7 @@ use emerald_vault::{
     storage::error::VaultError,
     structs::{
         crypto::Encrypted,
-        seed::{LedgerSource, Seed, SeedSource}
+        seed::{Seed, SeedSource}
     },
 };
 use json::StatusResult;

@@ -5,14 +5,19 @@ use neon::prelude::*;
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault, args_get_str};
-use emerald_vault::{Address, convert::json::keyfile::EthereumJsonV3File, core::chains::Blockchain, mnemonic::{generate_key, HDPath, Language, Mnemonic}, storage::{
-    error::VaultError,
-    keyfile::AccountInfo
-}, structs::{
-    pk::PrivateKeyHolder,
-    wallet::{PKType, Wallet, WalletAccount}
-}, trim_hex, PrivateKey, ToHex};
-use json::{AsJsObject, StatusResult};
+use emerald_vault::{
+    Address,
+    convert::json::keyfile::EthereumJsonV3File,
+    mnemonic::{generate_key, HDPath, Language, Mnemonic},
+    structs::{
+        wallet::{PKType}
+    },
+    PrivateKey,
+    ToHex,
+    storage::error::VaultError,
+    storage::keyfile::AccountInfo
+};
+use json::{StatusResult};
 
 pub struct AccountData {
     pub address: String,

@@ -3,8 +3,7 @@ use neon::prelude::{Context, Handle, JsObject, JsValue, Object, Value};
 use emerald_vault::{
     storage::{
         error::VaultError
-    },
-    structs::wallet::{Wallet, WalletAccount}
+    }
 };
 
 #[derive(Debug, Copy, Clone)]
