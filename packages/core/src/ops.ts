@@ -12,6 +12,7 @@ import {
 export class WalletsOp {
     readonly value: Wallet[];
     readonly size: number;
+    private readonly kind = "emerald.WalletsOp";
 
     constructor(value: Wallet[]) {
         this.value = value || [];
@@ -20,6 +21,19 @@ export class WalletsOp {
 
     static of(wallets: Wallet[]): WalletsOp {
         return new WalletsOp(wallets)
+    }
+
+    static isOp(value: Wallet[] | WalletsOp): value is WalletsOp {
+        return typeof value === 'object'
+            && value !== null
+            && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.WalletsOp")
+    }
+
+    static asOp(value: Wallet[] | WalletsOp): WalletsOp {
+        if (WalletsOp.isOp(value)) {
+            return value
+        }
+        return WalletsOp.of(value)
     }
 
     getWallet(id: Uuid): WalletOp {
@@ -97,6 +111,7 @@ export class WalletsOp {
 
 export class WalletOp {
     readonly value: Wallet;
+    private readonly kind = "emerald.WalletOp";
 
     constructor(value: Wallet) {
         this.value = value;
@@ -105,6 +120,19 @@ export class WalletOp {
 
     static of(wallet: Wallet): WalletOp {
         return new WalletOp(wallet);
+    }
+
+    static isOp(value: Wallet | WalletOp): value is WalletOp {
+        return typeof value === 'object'
+            && value !== null
+            && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.WalletOp")
+    }
+
+    static asOp(value: Wallet | WalletOp): WalletOp {
+        if (WalletOp.isOp(value)) {
+            return value
+        }
+        return WalletOp.of(value)
     }
 
     getEthereumAccounts(): EthereumAccount[] {
@@ -135,6 +163,7 @@ export class WalletOp {
 
 export class AccountIdOp {
     readonly value: AccountId;
+    private readonly kind = "emerald.AccountIdOp";
 
     constructor(value: string) {
         this.value = value;
@@ -149,6 +178,19 @@ export class AccountIdOp {
             throw new Error("Not account id: " + value);
         }
         return new AccountIdOp(value);
+    }
+
+    static isOp(value: AccountId | string | AccountIdOp): value is AccountIdOp {
+        return typeof value === 'object'
+            && value !== null
+            && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.AccountIdOp")
+    }
+
+    static asOp(value: AccountId | AccountIdOp): AccountIdOp {
+        if (AccountIdOp.isOp(value)) {
+            return value
+        }
+        return AccountIdOp.of(value)
     }
 
     extractWalletId(): Uuid {

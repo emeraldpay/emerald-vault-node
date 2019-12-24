@@ -1,9 +1,85 @@
 import {Wallet} from "./types";
-import {WalletsOp} from "./ops";
+import {AccountIdOp, WalletOp, WalletsOp} from "./ops";
 
 describe("Ops", () => {
 
+    describe("WalletOp", () => {
+        test("typeof", () => {
+            let data: Wallet = {
+                id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
+                accounts: [],
+                name: "test"
+            };
+
+            let wallet = WalletOp.of(data);
+
+            expect(WalletOp.isOp(data)).toBeFalsy();
+            expect(WalletOp.isOp(wallet)).toBeTruthy();
+
+            // @ts-ignore
+            expect(WalletOp.isOp({})).toBeFalsy();
+            expect(WalletOp.isOp(null)).toBeFalsy();
+            expect(WalletOp.isOp(undefined)).toBeFalsy();
+        });
+
+        test("convert to op", () => {
+            let data: Wallet = {
+                id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
+                accounts: [],
+                name: "test"
+            };
+
+            let wallet = WalletOp.of(data);
+
+            expect(WalletOp.isOp(WalletOp.asOp(wallet))).toBeTruthy();
+            expect(WalletOp.isOp(WalletOp.asOp(data))).toBeTruthy();
+        });
+    });
+
     describe("WalletsOp", () => {
+        test("typeof", () => {
+            let data: Wallet[] = [
+                {
+                    id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
+                    accounts: [],
+                    name: "test"
+                },
+                {
+                    id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
+                    accounts: []
+                }
+            ];
+
+            let wallets = WalletsOp.of(data);
+
+            expect(WalletsOp.isOp(data)).toBeFalsy();
+            expect(WalletsOp.isOp(wallets)).toBeTruthy();
+
+            // @ts-ignore
+            expect(WalletsOp.isOp(wallets.getWallets()[0])).toBeFalsy();
+            expect(WalletsOp.isOp(null)).toBeFalsy();
+            expect(WalletsOp.isOp(undefined)).toBeFalsy();
+        });
+
+        test("convert to op", () => {
+            let data: Wallet[] = [
+                {
+                    id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
+                    accounts: [],
+                    name: "test"
+                },
+                {
+                    id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
+                    accounts: []
+                }
+            ];
+
+            let wallets = WalletsOp.of(data);
+
+            expect(WalletsOp.isOp(WalletsOp.asOp(wallets))).toBeTruthy();
+            expect(WalletsOp.isOp(WalletsOp.asOp(data))).toBeTruthy();
+        });
+
         test("getWallet", () => {
             let data: Wallet[] = [
                 {
@@ -67,5 +143,40 @@ describe("Ops", () => {
         });
     });
 
+    describe("AccountOp", () => {
+        test("typeof", () => {
+            expect(AccountIdOp.isOp(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-0"))).toBeTruthy();
+
+            expect(AccountIdOp.isOp("d0659bdd-8090-4b08-90a2-3b951cb98b37-0")).toBeFalsy();
+            expect(AccountIdOp.isOp("d0659bdd-8090-4b08-90a2-3b951cb98b37")).toBeFalsy();
+            expect(AccountIdOp.isOp(null)).toBeFalsy();
+            expect(AccountIdOp.isOp(undefined)).toBeFalsy();
+        });
+
+        test("Fails on invalid value", () => {
+            expect(() => {
+                AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37")
+            }).toThrow();
+
+            expect(() => {
+                AccountIdOp.of(null)
+            }).toThrow();
+
+            expect(() => {
+                AccountIdOp.of(undefined)
+            }).toThrow();
+
+            expect(() => {
+                AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-foobar")
+            }).toThrow();
+        });
+
+        test("Create from valid id", () => {
+            expect(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-0")).toBeDefined();
+            expect(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-1")).toBeDefined();
+            expect(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-51")).toBeDefined();
+        })
+
+    })
 
 });
