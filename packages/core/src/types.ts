@@ -40,7 +40,7 @@ export type AddressBookItem = {
     address: string,
     description?: string,
     name?: string,
-    blockchains: number[]
+    blockchain: number
 }
 
 export type ImportPrivateKey = {

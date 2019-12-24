@@ -24,7 +24,7 @@ struct AddressBookmarkJson {
     pub address: String,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub blockchains: Vec<u32>
+    pub blockchain: u32
 }
 
 #[derive(Deserialize, Debug)]
@@ -32,7 +32,7 @@ pub struct NewAddressBookItem {
     pub name: Option<String>,
     pub description: Option<String>,
     pub address: Address,
-    pub blockchains: Vec<u32>
+    pub blockchain: u32
 }
 
 impl From<&AddressBookmark> for AddressBookmarkJson {
@@ -45,17 +45,17 @@ impl From<&AddressBookmark> for AddressBookmarkJson {
             },
             name: value.details.label.clone(),
             description: value.details.description.clone(),
-            blockchains: value.details.blockchains.iter().map(|b| *b as u32).collect()
+            blockchain: value.details.blockchain as u32
         }
     }
 }
 
 impl NewAddressBookItem {
-    pub fn into_bookmark(self, blockchains: Vec<Blockchain>) -> AddressBookmark {
+    pub fn into_bookmark(self, blockchain: Blockchain) -> AddressBookmark {
         AddressBookmark {
             id: Uuid::new_v4(),
             details: BookmarkDetails {
-                blockchains,
+                blockchain,
                 label: self.name,
                 description: self.description,
                 address: AddressRef::EthereumAddress(self.address)
@@ -78,15 +78,8 @@ impl WrappedVault {
 
     fn add_to_addressbook(&self, item: NewAddressBookItem) -> bool {
         let storage = &self.cfg.get_storage();
-        let blockchains: Vec<Blockchain> = item.blockchains.iter()
-            .map(|id| Blockchain::try_from(*id))
-            .filter(|b| b.is_ok())
-            .map(|b| b.unwrap())
-            .collect();
-        if blockchains.len() == 0 {
-            return false
-        }
-        storage.addressbook().add(item.into_bookmark(blockchains)).is_ok()
+        let blockchain = Blockchain::try_from(item.blockchain).expect("Invalid blockchain id");
+        storage.addressbook().add(item.into_bookmark(blockchain)).is_ok()
     }
 
     fn remove_addressbook_by_addr(&self, address: &Address) -> bool {

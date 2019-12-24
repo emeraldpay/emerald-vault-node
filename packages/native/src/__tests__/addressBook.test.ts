@@ -65,7 +65,7 @@ describe("Address Book", () => {
         test("list etc", () => {
             let accounts = vault.listAddressBook(101);
             expect(accounts.length).toBe(0);
-            vault.addToAddressBook({name: "test 1", address: "0xc2d7cf95645d33006175b78989035c7c9061d3f9", blockchains: [101]});
+            vault.addToAddressBook({name: "test 1", address: "0xc2d7cf95645d33006175b78989035c7c9061d3f9", blockchain: 101});
             accounts = vault.listAddressBook(101);
             expect(accounts.length).toBe(1);
             expect(accounts[0].address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase());
@@ -86,7 +86,7 @@ describe("Address Book", () => {
         test("add and delete", () => {
             let accounts = vault.listAddressBook(101);
             expect(accounts.length).toBe(0);
-            vault.addToAddressBook({name: "test 1", address: "0xc2d7cf95645d33006175b78989035c7c9061d3f9", blockchains: [101]});
+            vault.addToAddressBook({name: "test 1", address: "0xc2d7cf95645d33006175b78989035c7c9061d3f9", blockchain: 101});
             accounts = vault.listAddressBook(101);
             expect(accounts.length).toBe(1);
             expect(accounts[0].address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase());

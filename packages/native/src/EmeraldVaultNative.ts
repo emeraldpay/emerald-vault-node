@@ -146,7 +146,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
             throw Error(status.error.message)
         }
         return status.result
-            .filter((item) => item.blockchains.indexOf(blockchain) >= 0);
+            .filter((item) => item.blockchain == blockchain);
     }
 
     addToAddressBook(item: AddressBookItem): boolean {
