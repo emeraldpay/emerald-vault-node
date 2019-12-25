@@ -34,6 +34,7 @@ before_install:
   - sh /tmp/rustup.sh -y
   - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then rustup target install x86_64-pc-windows-msvc;  fi;
   - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then export CARGO_BUILD_TARGET=x86_64-pc-windows-msvc;  fi;
+  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then export TARGET=x86_64-pc-windows-msvc;  fi;
   # Install NPM packages
   - node -v
   - npm -v
