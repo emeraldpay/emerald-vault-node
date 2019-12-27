@@ -24,6 +24,7 @@ env:
     - PATH="$HOME/.cargo/bin:$PATH"
     - RUSTFLAGS="-C target-feature=+crt-static"
     - RUST_BACKTRACE=1
+    - YARN_GPG=no # otherwise Yarn starts a GPG daemon which prevents builds from finishing on Windows
   matrix:
     - NODE_RUNTIME=electron
     - NODE_RUNTIME=node
