@@ -39,12 +39,6 @@ describe("Accounts", () => {
                 expect(accounts.length).toBe(0);
             });
 
-            test("list morden", () => {
-                let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10001)
-                    .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(0);
-            });
         });
 
         describe('Migrate vault 0.26 with ledger', () => {
@@ -82,12 +76,6 @@ describe("Accounts", () => {
                 expect(accounts.length).toBe(0);
             });
 
-            test("list morden", () => {
-                let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10001)
-                    .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(0);
-            });
         });
 
         describe('Test vault 0.26 basic', () => {
@@ -128,12 +116,6 @@ describe("Accounts", () => {
                 expect(accounts.length).toBe(0);
             });
 
-            test("list morden", () => {
-                let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10001)
-                    .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(0);
-            });
         });
 
         describe('Test default dir', () => {
@@ -156,15 +138,10 @@ describe("Accounts", () => {
                     .sort((a, b) => a.address.localeCompare(b.address));
                 console.log("accounts", accounts);
             });
-            test("list morden", () => {
-                let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10002)
-                    .sort((a, b) => a.address.localeCompare(b.address));
-                console.log("accounts", accounts);
-            });
+
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10001)
+                let accounts = wallets.accountsByBlockchain(10002)
                     .sort((a, b) => a.address.localeCompare(b.address));
                 console.log("accounts", accounts);
             });
