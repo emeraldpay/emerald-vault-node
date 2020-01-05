@@ -101,7 +101,7 @@ impl WrappedVault {
         }).map(|_| id)
     }
 
-    fn create_account(&self, wallet_id: Uuid, account: AddAccountJson) -> Result<u32, VaultError> {
+    fn create_account(&self, wallet_id: Uuid, account: AddAccountJson) -> Result<usize, VaultError> {
         let blockchain = Blockchain::try_from(account.blockchain)?;
         let storage = &self.cfg.get_storage();
         let result = match account.key_value {
