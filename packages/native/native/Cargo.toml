@@ -1,0 +1,26 @@
+[package]
+name = "emerald-vault-node"
+version = "0.5.0-0.27.0.rc1"
+authors = ["Igor Artamonov <igor@artamonov.ru>"]
+license = "Apache-2.0"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "emerald_vault_node"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+neon-build = "0.3.2"
+
+[dependencies]
+neon = "0.3.2"
+neon-serde = "0.3.0"
+#emerald-vault = "0.27.0"
+#emerald-vault = { path = "../../../../emerald-rs" }
+emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
+uuid = { version = "0.6", features = ["serde", "v4"] }
+hex = "0.3.2"
+serde = "1.0.103"
+serde_json = "1.0.44"
+serde_derive = "1.0.103"
