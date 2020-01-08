@@ -2,6 +2,8 @@ export {
     Uuid, AccountId,
     isAccountId,
 
+    BlockchainId,
+
     BlockchainType,
     AccountType,
     SeedType,

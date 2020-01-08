@@ -3,13 +3,19 @@ export type SeedType = "raw" | "ledger" | "mnemonic";
 export type AccountType = "pk" | "seed-hd";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
 
+export enum BlockchainId {
+    ETHEREUM = 100,
+    ETHEREUM_CLASSIC = 101,
+    KOVAN_TESTNET = 10002
+}
+
 /**
  * UUID string, identifier of a Wallet/Seed/etc
  */
 export type Uuid = string;
 
 /**
- * UUID/NUMBER id of an account, where UUID is id of the parent wallet, and NUMBER is account id inside the wallet
+ * UUID-NUMBER id of an account, where UUID is id of the parent wallet, and NUMBER is account id inside the wallet
  */
 export type AccountId = string;
 
