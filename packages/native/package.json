@@ -40,13 +40,15 @@
     "clean:test": "rimraf testdata/tmp-* && rimraf testdata/vault-0.26-basic && rimraf testdata/vault-0.26-book && rimraf testdata/vault-0.26-snappy && rimraf testdata/vault-0.10.1-migrate && rimraf testdata/vault-0.26-ledger",
     "clean:rs": "cd native && cargo clean",
     "clean:ts": "rimraf lib",
+    "clean:native": "rimraf native/index.node",
+    "clean:native:ifpublish": "if-env NO_NPM_BINARY=true && npm run clean:native || echo 'KEEP NATIVE BINARY'",
     "clean": "npm run clean:ts && npm run clean:test && npm run clean:rs",
     "unpack": "node prepare-tests.js",
     "install-binary": "node-pre-gyp install --fallback-to-build=false --update-binary",
     "package:node": "node-pre-gyp package",
     "package:electron": "node-pre-gyp package --runtime=electron --target=7.0.0",
     "upload-binary": "node-pre-gyp-github publish",
-    "prepublishOnly": "npm run clean && npm run build && npm run test"
+    "prepublishOnly": "npm run clean && npm run build && npm run test && npm run clean:native:ifpublish"
   },
   "dependencies": {
     "@emeraldpay/emerald-vault-core": "0.5.0-0.27.0.rc1"
@@ -66,6 +68,7 @@
     "electron-build-env": "0.2.0",
     "unzipper": "0.10.5",
     "electron": "^7.0.0",
-    "cross-env": "6.0.3"
+    "cross-env": "6.0.3",
+    "if-env": "^1.0.4"
   }
 }
