@@ -15,7 +15,8 @@
     "lib/*.js"
   ],
   "scripts": {
-    "build": "tsc",
+    "build:ts": "tsc",
+    "build": "npm run build:ts",
     "jest": "jest",
     "test": "npm run jest",
     "clean": "rimraf lib",
