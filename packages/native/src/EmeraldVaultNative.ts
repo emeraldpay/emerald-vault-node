@@ -15,7 +15,7 @@ import {
     IEmeraldVault, AccountId, AccountIdOp, WalletsOp
 } from "@emeraldpay/emerald-vault-core";
 
-var addon = require('../native');
+var addon = require('../native/index.node');
 
 function statusFail<T>(code: StatusCode = StatusCode.UNKNOWN, message: string = ""): Status<T> {
     return {
