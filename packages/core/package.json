@@ -15,14 +15,10 @@
     "lib/*.js"
   ],
   "scripts": {
-    "build:ts": "tsc",
-    "build": "npm run clean && npm run build:rs && npm run build:ts",
+    "build": "tsc",
     "jest": "jest",
-    "jest:electron": "cross-env ELECTRON_RUN_AS_NODE=true ./node_modules/.bin/electron ./node_modules/jest/bin/jest.js",
     "test": "npm run jest",
-    "test:electron": "npm run clean:test && npm run unpack && npm run jest:electron",
-    "clean:ts": "rimraf lib",
-    "clean": "npm run clean:ts",
+    "clean": "rimraf lib",
     "prepublishOnly": "npm run clean && npm run build && npm run test"
   },
   "dependencies": {},
