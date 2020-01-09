@@ -1,3 +1,3 @@
+# index.node should _not_ be ignored by this config, otherwise npm will ignore it too
 target
-index.node
 artifacts.json
