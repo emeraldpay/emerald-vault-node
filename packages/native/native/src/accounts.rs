@@ -14,8 +14,7 @@ use emerald_vault::{
     },
     PrivateKey,
     ToHex,
-    storage::error::VaultError,
-    storage::keyfile::AccountInfo
+    storage::error::VaultError
 };
 use json::{StatusResult};
 
@@ -25,19 +24,6 @@ pub struct AccountData {
     pub description: String,
     pub hidden: bool,
     pub hardware: bool
-}
-
-impl From<&AccountInfo> for AccountData {
-
-    fn from(src: &AccountInfo) -> Self {
-        AccountData {
-            address: src.address.clone(),
-            name: src.name.clone(),
-            description: src.description.clone(),
-            hidden: src.is_hidden,
-            hardware: src.is_hardware
-        }
-    }
 }
 
 #[derive(Deserialize)]
@@ -72,7 +58,7 @@ impl WrappedVault {
 
     fn get_wallet_address(&self, id: Uuid) -> Result<Address, VaultError> {
         let storage = &self.cfg.get_storage();
-        let wallet = storage.wallets().get(&id)?;
+        let wallet = storage.wallets().get(id)?;
         match &wallet.accounts.first()
             .expect("Wallet without address")
             .address {
@@ -92,11 +78,11 @@ impl WrappedVault {
             panic!("Wallet contains multiple addresses, deletion is not implemented");
         }
 
-        storage.wallets().remove(&wallet.id)
+        storage.wallets().remove(wallet.id)
             .expect("Previous wallet not removed");
         for acc in wallet.accounts {
             match acc.key {
-                PKType::PrivateKeyRef(id) => { storage.keys().remove(&id); },
+                PKType::PrivateKeyRef(id) => { storage.keys().remove(id); },
                 PKType::SeedHd(_) => {}
             }
         };
@@ -110,24 +96,6 @@ impl WrappedVault {
         id
     }
 
-    pub fn list_accounts(&self) -> Vec<AccountInfo> {
-        let storage = &self.cfg.get_storage();
-        let wallets = storage.wallets().list().expect("Vault not opened");
-
-        let result = wallets.iter()
-            .map(|id| storage.wallets().get(id))
-            .map(|w| w.ok())
-            .filter(|w| w.is_some())
-            .map(|w| w.unwrap())
-            .filter(|w|
-                //TODO workaround for compatibility, REMOVE IT
-                w.accounts.len() == 1 && w.accounts.first().unwrap().blockchain == self.get_blockchain()
-            )
-            .map(|w| AccountInfo::from(w))
-            .collect();
-
-        result
-    }
 
     fn put(&self, pk: &EthereumJsonV3File) -> Uuid {
         let storage = &self.cfg.get_storage();
@@ -139,7 +107,7 @@ impl WrappedVault {
     fn export_pk(&self, wallet_id: Uuid, account_id: usize, password: String) -> PrivateKey {
         let storage = &self.cfg.get_storage();
 
-        let wallet = storage.wallets().get(&wallet_id).expect("Wallet doesn't exit");
+        let wallet = storage.wallets().get(wallet_id).expect("Wallet doesn't exit");
         let account = wallet.get_account(account_id).expect("Account doesn't exist");
         account.export_pk(password, storage).expect("PrivateKey unavailable")
     }
@@ -147,7 +115,7 @@ impl WrappedVault {
     fn export_web3(&self, wallet_id: Uuid, account_id: usize, password: Option<String>) -> EthereumJsonV3File {
         let storage = &self.cfg.get_storage();
 
-        let wallet = storage.wallets().get(&wallet_id).expect("Wallet doesn't exit");
+        let wallet = storage.wallets().get(wallet_id).expect("Wallet doesn't exit");
         let account = wallet.get_account(account_id).expect("Account doesn't exist");
         account.export_web3(password, storage).expect("PrivateKey unavailable")
     }

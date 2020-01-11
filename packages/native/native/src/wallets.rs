@@ -148,7 +148,7 @@ impl WrappedVault {
 
     fn set_title(&self, wallet_id: Uuid, title: Option<String>) -> Result<(), VaultError> {
         let storage = &self.cfg.get_storage();
-        let mut wallet = storage.wallets().get(&wallet_id)?;
+        let mut wallet = storage.wallets().get(wallet_id)?;
         wallet.label = title;
         storage.wallets().update(wallet)?;
         Ok(())
@@ -156,7 +156,7 @@ impl WrappedVault {
 
     fn remove_account(&self, wallet_id: Uuid, account_id: usize) -> Result<bool, VaultError> {
         let storage = &self.cfg.get_storage();
-        let mut wallet = storage.wallets().get(&wallet_id)?;
+        let mut wallet = storage.wallets().get(wallet_id)?;
         let index = wallet.accounts.iter().position(|a| a.id == account_id);
         if index.is_none() {
             return Ok(false)

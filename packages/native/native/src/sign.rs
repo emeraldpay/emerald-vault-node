@@ -65,7 +65,7 @@ impl WrappedVault {
     fn sign_tx(&self, wallet_id: Uuid, account_id: usize,
                unsigned_tx: UnsignedTx, password: String, ) -> Vec<u8> {
         let storage = &self.cfg.get_storage();
-        let wallet = storage.wallets().get(&wallet_id).expect("Wallet doesn't exist");
+        let wallet = storage.wallets().get(wallet_id).expect("Wallet doesn't exist");
         let account = wallet.get_account(account_id).expect("Account not found");
 
         let from_address = Address::from_str(unsigned_tx.from.as_str()).expect("Invalid from address");

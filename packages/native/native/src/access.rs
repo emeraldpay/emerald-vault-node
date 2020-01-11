@@ -129,7 +129,7 @@ impl WrappedVault {
         let storage = &self.cfg.get_storage();
         let wallets: Vec<Wallet> = storage.wallets().list().expect("Wallets are not loaded")
             .iter()
-            .map(|id| storage.wallets().get(id))
+            .map(|id| storage.wallets().get(*id))
             .map(|w| w.ok())
             .filter(|w| w.is_some())
             .map(|w| w.unwrap())

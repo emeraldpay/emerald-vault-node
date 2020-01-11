@@ -373,7 +373,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "emerald-vault"
 version = "0.27.0"
-source = "git+https://github.com/emeraldpay/emerald-vault#8a1ebee8d470703d65c2d15c72cbb35d662a36c9"
+source = "git+https://github.com/emeraldpay/emerald-vault#5f9fc4be27df286351f1ce4453054129fc900128"
 dependencies = [
  "aes-ctr 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",

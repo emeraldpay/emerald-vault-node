@@ -91,7 +91,7 @@ impl WrappedVault {
         });
 
         if found.is_some() {
-            match storage.addressbook().remove(&found.unwrap().id) {
+            match storage.addressbook().remove(found.unwrap().id) {
                 Ok(r) => r,
                 Err(_) => false
             }
