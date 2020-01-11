@@ -8,23 +8,11 @@ use access::{VaultConfig, WrappedVault, args_get_str};
 use emerald_vault::{
     Address,
     convert::json::keyfile::EthereumJsonV3File,
-    mnemonic::{generate_key, HDPath, Language, Mnemonic},
-    structs::{
-        wallet::{PKType}
-    },
     PrivateKey,
     ToHex,
     storage::error::VaultError
 };
 use json::{StatusResult};
-
-pub struct AccountData {
-    pub address: String,
-    pub name: String,
-    pub description: String,
-    pub hidden: bool,
-    pub hardware: bool
-}
 
 #[derive(Deserialize)]
 pub struct UpdateAccount {
@@ -66,36 +54,6 @@ impl WrappedVault {
             None => Err(VaultError::IncorrectIdError)
         }
     }
-
-    #[deprecated]
-    fn remove_wallet(&self, addr: &Address) {
-        let storage = &self.cfg.get_storage();
-
-        let wallet = self.get_wallet_by_addr(addr);
-        let wallet = wallet.expect("Account with specified address is not found");
-
-        if wallet.accounts.len() != 1 {
-            panic!("Wallet contains multiple addresses, deletion is not implemented");
-        }
-
-        storage.wallets().remove(wallet.id)
-            .expect("Previous wallet not removed");
-        for acc in wallet.accounts {
-            match acc.key {
-                PKType::PrivateKeyRef(id) => { storage.keys().remove(id); },
-                PKType::SeedHd(_) => {}
-            }
-        };
-    }
-
-    fn import_pk(&self, pk: Vec<u8>, password: &str, label: Option<String>) -> Uuid {
-        let storage = &self.cfg.get_storage();
-        let id = storage.create_new()
-            .raw_pk(pk, password, self.get_blockchain())
-            .expect("PrivateKey not imported");
-        id
-    }
-
 
     fn put(&self, pk: &EthereumJsonV3File) -> Uuid {
         let storage = &self.cfg.get_storage();
@@ -173,29 +131,29 @@ pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(js_value.downcast().unwrap())
 }
 
-pub fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
-
-    let raw = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
-    let account: NewMnemonicAccount = serde_json::from_str(&raw).expect("Invalid JSON");
-
-    if account.password.is_empty() {
-        panic!("Empty password");
-    }
-
-    let mnemonic = Mnemonic::try_from(Language::English, &account.mnemonic).expect("Mnemonic is not valid");
-    let hd_path = HDPath::try_from(&account.hd_path).expect("HDPath is not valid");
-    let pk = generate_key(&hd_path, &mnemonic.seed(None)).expect("Unable to generate private key");
-
-    let id = vault.import_pk(pk.to_vec(), &account.password, Some(account.name));
-    let address = vault.get_wallet_address(id).expect("Address not initialized");
-
-    let result = JsObject::new(&mut cx);
-    let id_handle = cx.string(id.to_string());
-    result.set(&mut cx, "id", id_handle).expect("Failed to set id");
-    let addr_handle = cx.string(address.to_string());
-    result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
-
-    Ok(result)
-}
+//pub fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
+//    let cfg = VaultConfig::get_config(&mut cx);
+//    let vault = WrappedVault::new(cfg);
+//
+//    let raw = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
+//    let account: NewMnemonicAccount = serde_json::from_str(&raw).expect("Invalid JSON");
+//
+//    if account.password.is_empty() {
+//        panic!("Empty password");
+//    }
+//
+//    let mnemonic = Mnemonic::try_from(Language::English, &account.mnemonic).expect("Mnemonic is not valid");
+//    let hd_path = HDPath::try_from(&account.hd_path).expect("HDPath is not valid");
+//    let pk = generate_key(&hd_path, &mnemonic.seed(None)).expect("Unable to generate private key");
+//
+//    let id = vault.import_pk(pk.to_vec(), &account.password, Some(account.name));
+//    let address = vault.get_wallet_address(id).expect("Address not initialized");
+//
+//    let result = JsObject::new(&mut cx);
+//    let id_handle = cx.string(id.to_string());
+//    result.set(&mut cx, "id", id_handle).expect("Failed to set id");
+//    let addr_handle = cx.string(address.to_string());
+//    result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
+//
+//    Ok(result)
+//}
