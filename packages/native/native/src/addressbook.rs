@@ -91,7 +91,7 @@ impl WrappedVault {
         });
 
         if found.is_some() {
-            match storage.addressbook().remove(&found.unwrap().id) {
+            match storage.addressbook().remove(found.unwrap().id) {
                 Ok(r) => r,
                 Err(_) => false
             }
@@ -118,7 +118,6 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
 
 pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
-    let chain_code = cfg.chain.clone();
     let vault = WrappedVault::new(cfg);
 
 
@@ -136,7 +135,6 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
 
 pub fn remove(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
-    let chain_code = cfg.chain.clone();
     let vault = WrappedVault::new(cfg);
 
     let address = cx.argument::<JsString>(1).expect("Address no provided").value();

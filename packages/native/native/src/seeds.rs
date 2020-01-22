@@ -232,7 +232,7 @@ impl WrappedVault {
                     return Err(VaultError::PasswordRequired)
                 }
                 let mnemonic = Mnemonic::try_from(Language::English, value.value.as_str())
-                    .map_err(|e| VaultError::InvalidDataError("mnemonic".to_string()))?;
+                    .map_err(|_| VaultError::InvalidDataError("mnemonic".to_string()))?;
 //                let mnemonic_password = value.password.as_deref();
                 let mnemonic_password = value.password.as_ref().map(|x| &**x);
                 let raw = mnemonic.seed(mnemonic_password);

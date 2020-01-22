@@ -9,7 +9,7 @@ describe("Address Book", () => {
             vault = new EmeraldVaultNative({
                 dir: "./testdata/vault-0.26-book"
             });
-            vault.autoMigrate();
+            vault.open();
         });
 
         test("list eth", () => {

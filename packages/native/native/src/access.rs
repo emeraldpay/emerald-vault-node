@@ -8,17 +8,15 @@ use neon::prelude::{FunctionContext, JsObject, JsString};
 use neon::types::{JsNull, JsUndefined,};
 
 use emerald_vault::{
-    Address,
     core::chains::{Blockchain, EthereumChainId},
     storage::{
         default_path,
-        error::VaultError,
         vault::{
-            VaultAccess, VaultStorage
+            VaultStorage
         },
     },
     structs::{
-        wallet::{Wallet, WalletAccount},
+        wallet::{Wallet},
     }
 };
 
@@ -113,14 +111,6 @@ impl WrappedVault {
         WrappedVault {cfg}
     }
 
-    pub fn find_account<'a>(w: &'a Wallet, addr: &Address, blockchain: Blockchain) -> Option<&'a WalletAccount> {
-        w.accounts.iter()
-            .find(|a| {
-                let address_match = a.address == Some(*addr);
-                address_match && a.blockchain == blockchain
-            })
-    }
-
     pub fn get_blockchain(&self) -> Blockchain {
         Blockchain::try_from(self.cfg.chain.unwrap()).expect("Unsupported chain")
     }
@@ -129,23 +119,12 @@ impl WrappedVault {
         let storage = &self.cfg.get_storage();
         let wallets: Vec<Wallet> = storage.wallets().list().expect("Wallets are not loaded")
             .iter()
-            .map(|id| storage.wallets().get(id))
+            .map(|id| storage.wallets().get(*id))
             .map(|w| w.ok())
             .filter(|w| w.is_some())
             .map(|w| w.unwrap())
             .collect();
         wallets
-    }
-
-
-    pub fn get_wallet_by_addr(&self, addr: &Address) -> Option<Wallet> {
-        let storage = &self.cfg.get_storage();
-
-        let wallets = self.load_wallets();
-        let wallet = wallets.iter()
-            .find( |w| WrappedVault::find_account(w, addr, self.get_blockchain()).is_some());
-
-        wallet.cloned()
     }
 
 }

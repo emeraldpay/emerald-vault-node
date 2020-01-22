@@ -14,7 +14,7 @@ describe("Accounts", () => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.10.1-migrate"
                 });
-                vault.autoMigrate();
+                vault.open();
             });
 
             test("list eth", () => {
@@ -48,7 +48,7 @@ describe("Accounts", () => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.26-ledger"
                 });
-                vault.autoMigrate();
+                vault.open();
             });
 
             test("list eth", () => {
@@ -85,7 +85,7 @@ describe("Accounts", () => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.26-basic"
                 });
-                vault.autoMigrate();
+                vault.open();
             });
 
             test("list eth", () => {
@@ -155,7 +155,7 @@ describe("Accounts", () => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.26-snappy"
                 });
-                vault.autoMigrate();
+                vault.open();
             });
 
             test("list etc", () => {
@@ -231,7 +231,7 @@ describe("Accounts", () => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.26-basic"
                 });
-                vault.autoMigrate();
+                vault.open();
             });
 
             test("export 6412c428", () => {

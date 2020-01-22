@@ -11,7 +11,7 @@ describe("Seeds", () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("seed")
             });
-            vault.autoMigrate();
+            vault.open();
         });
         
         const type: SeedDefinition = {
@@ -55,7 +55,7 @@ describe("Seeds", () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("seed")
             });
-            vault.autoMigrate();
+            vault.open();
         });
 
         describe('24 words', () => {

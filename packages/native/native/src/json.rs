@@ -59,7 +59,7 @@ impl <T> From<Result<T, VaultError>> for StatusResult<T> {
     fn from(r: Result<T, VaultError>) -> Self {
         match r {
             Ok(t) => StatusResult::Ok(t),
-            Err(e) => StatusResult::Error(2, "Vault Error".to_string())
+            Err(_) => StatusResult::Error(2, "Vault Error".to_string())
         }
     }
 }

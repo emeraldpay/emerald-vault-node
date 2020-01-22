@@ -13,7 +13,7 @@ describe("Wallets", () => {
                 vault = new EmeraldVaultNative({
                     dir: "./testdata/vault-0.26-basic"
                 });
-                vault.autoMigrate();
+                vault.open();
             });
 
             test("list items", () => {

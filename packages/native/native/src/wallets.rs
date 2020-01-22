@@ -97,7 +97,7 @@ impl WrappedVault {
         storage.wallets().add(Wallet {
             id: id.clone(),
             label,
-            accounts: vec![]
+            ..Wallet::default()
         }).map(|_| id)
     }
 
@@ -113,7 +113,7 @@ impl WrappedVault {
             },
             AddAccountType::RawHex(hex) => {
                 if account.password.is_none() {
-                    return panic!("Password is required".to_string())
+                    panic!("Password is required".to_string())
                 }
                 let hex = trim_hex(hex.as_str());
                 let hex = hex::decode(hex)?;
@@ -130,7 +130,7 @@ impl WrappedVault {
             },
             AddAccountType::GenerateRandom => {
                 if account.password.is_none() {
-                    return panic!("Password is required".to_string())
+                    panic!("Password is required".to_string())
                 }
                 let pk = PrivateKey::gen();
                 storage.add_account(wallet_id)
@@ -140,15 +140,9 @@ impl WrappedVault {
         Ok(result)
     }
 
-    pub fn update(&self, wallet: Wallet) -> Result<(), VaultError> {
-        let storage = &self.cfg.get_storage();
-        storage.wallets().update(wallet)?;
-        Ok(())
-    }
-
     fn set_title(&self, wallet_id: Uuid, title: Option<String>) -> Result<(), VaultError> {
         let storage = &self.cfg.get_storage();
-        let mut wallet = storage.wallets().get(&wallet_id)?;
+        let mut wallet = storage.wallets().get(wallet_id)?;
         wallet.label = title;
         storage.wallets().update(wallet)?;
         Ok(())
@@ -156,7 +150,7 @@ impl WrappedVault {
 
     fn remove_account(&self, wallet_id: Uuid, account_id: usize) -> Result<bool, VaultError> {
         let storage = &self.cfg.get_storage();
-        let mut wallet = storage.wallets().get(&wallet_id)?;
+        let mut wallet = storage.wallets().get(wallet_id)?;
         let index = wallet.accounts.iter().position(|a| a.id == account_id);
         if index.is_none() {
             return Ok(false)

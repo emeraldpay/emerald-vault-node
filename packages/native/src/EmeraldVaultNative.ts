@@ -46,9 +46,36 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return "0.27.0"
     }
 
-    autoMigrate() {
+    /**
+     * Initialize vault, make migrations if necessary, and fix corrupted data if found
+     * @see autoMigrate
+     * @see autoFix
+     */
+    open() {
+        this.autoMigrate();
+        this.autoFix();
+    }
+
+    /**
+     * Checks the target directory for the content and if finds that it contains vault in the old format (v1 json files,
+     * or v2 rocksdb), then it automatically converts to the new format (v3 protobuf).
+     *
+     * Supposed to be called right after constructor
+     */
+    protected autoMigrate() {
         let opts = Object.assign({}, this.conf);
         addon.admin_migrate(opts);
+    }
+
+    /**
+     * Verifies the current state of the vault, and if find corrupted data (stalled backups, duplicate files, etc)
+     * then it tries to automatically fix it.
+     *
+     * Supposed to be called after constructor and auto migration
+     */
+    protected autoFix() {
+        let opts = Object.assign({}, this.conf);
+        addon.admin_autofix(opts);
     }
 
     listWallets(): Wallet[] {
