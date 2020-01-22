@@ -46,6 +46,7 @@ register_module!(mut cx, {
     cx.export_function("seed_list", seeds::list).expect("seed_list not exported");
 
     cx.export_function("admin_migrate", admin::migrate).expect("admin_migrate not exported");
+    cx.export_function("admin_autofix", admin::autofix).expect("admin_autofix not exported");
 
     Ok(())
 });
