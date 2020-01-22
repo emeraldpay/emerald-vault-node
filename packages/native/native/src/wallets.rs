@@ -97,7 +97,7 @@ impl WrappedVault {
         storage.wallets().add(Wallet {
             id: id.clone(),
             label,
-            accounts: vec![]
+            ..Wallet::default()
         }).map(|_| id)
     }
 
