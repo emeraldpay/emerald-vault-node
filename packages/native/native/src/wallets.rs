@@ -180,9 +180,7 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let label = cx.argument::<JsString>(1)
-        .ok()
-        .map(|x| x.value());
+    let label = args_get_str(&mut cx, 1);
     let id = vault.create_wallet(label).expect("Wallet not created");
 
     let status = StatusResult::Ok(id.to_string()).as_json();
@@ -194,7 +192,7 @@ pub fn add_account_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let wallet_id =read_wallet_id(&mut cx, 1);
+    let wallet_id = read_wallet_id(&mut cx, 1);
     let json = cx.argument::<JsString>(2).expect("Input JSON is not provided").value();
 
     let parsed: AddAccountJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
@@ -210,7 +208,7 @@ pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let wallet_id =read_wallet_id(&mut cx, 1);
+    let wallet_id = read_wallet_id(&mut cx, 1);
 
     let title = args_get_str(&mut cx, 2);
     let result = vault.set_title(wallet_id, title).is_ok();
