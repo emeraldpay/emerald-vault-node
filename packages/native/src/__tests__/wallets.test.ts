@@ -45,14 +45,30 @@ describe("Wallets", () => {
 
     describe("Create wallet and account", () => {
 
-        describe("Import Ethereum", () => {
+        describe("Create", () => {
             let vault: EmeraldVaultNative;
             beforeEach(() => {
                 vault = new EmeraldVaultNative({
-                    dir: tempPath("wallet-import")
+                    dir: tempPath("wallet-create")
                 });
             });
+            test("Create Wallet without label", () => {
+                let id = vault.addWallet(undefined);
+                let wallets = vault.listWallets();
+                expect(wallets.length).toBeGreaterThan(0);
+                let created = WalletsOp.of(wallets).getWallet(id).value;
+                expect(created).toBeDefined();
+                expect(created.name).toBeNull()
+            });
 
+            test("Create Wallet with empty label", () => {
+                let id = vault.addWallet("");
+                let wallets = vault.listWallets();
+                expect(wallets.length).toBeGreaterThan(0);
+                let created = WalletsOp.of(wallets).getWallet(id).value;
+                expect(created).toBeDefined();
+                expect(created.name).toBeNull();
+            });
 
             test("Create Wallet", () => {
                 let id = vault.addWallet("Test 1111");
@@ -61,6 +77,15 @@ describe("Wallets", () => {
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
                 expect(created.name).toBe("Test 1111");
+            });
+        });
+
+        describe("Import Ethereum", () => {
+            let vault: EmeraldVaultNative;
+            beforeEach(() => {
+                vault = new EmeraldVaultNative({
+                    dir: tempPath("wallet-import")
+                });
             });
 
             test("Create and import JSON", () => {
