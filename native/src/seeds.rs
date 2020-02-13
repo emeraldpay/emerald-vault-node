@@ -48,8 +48,7 @@ fn list_mnemonic_address(hd_path_all: Vec<String>, mnemonic: Mnemonic, password:
             .expect("Failed to create address");
         let pk = generate_key(&hd_path, &seed)
             .expect("Unable to generate private key");
-        let address = pk.to_address()
-            .expect("Invalid PrivateKey generated");
+        let address = pk.to_address();
         result.push(HDPathAddress {address, hd_path: item})
     }
     result

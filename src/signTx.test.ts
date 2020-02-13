@@ -1,5 +1,7 @@
 import {EmeraldVaultNative} from "./EmeraldVaultNative";
 
+const test_ledger = process.env.EMERALD_TEST_LEDGER === 'true';
+
 describe('Test signining', () => {
 
     let vault;
@@ -155,4 +157,34 @@ describe('Import and sign', () => {
 
         expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808025a02eab8b290050239e77329cb6d0d663c9bdbf0fe15918e4937be727dd67a0c593a05dda8f7b748b5907c0b414be260809f9c2dcfcd35a4a9b1cc801a7f4fe2154eb");
     });
+
+    test("sign with ledger", () => {
+        if (!test_ledger) {
+            console.warn("Ignore Ledger test");
+            return;
+        }
+        let pk = {
+            "address": process.env.EMERALD_TEST_LEDGER_P0.toLowerCase(),
+            "crypto" : {
+                "cipher" : "hardware",
+                "hardware": "ledger-nano",
+                "hd_path": "m/44'/60'/0'/0/0"
+            },
+            "id" : "3198bc9c-6672-5ab3-d995-4942343ae5b6",
+            "version" : 3
+        };
+        vault.importAccount("eth", pk);
+        let tx = {
+            from: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
+            to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
+            value: "0x0151951586775000",
+            gas: "0x5208",
+            gasPrice: "0x77359400",
+            nonce: "0x19",
+            data: ""
+        };
+        let raw = vault.signTx("eth", tx, "");
+
+        expect(raw).toBeDefined(); //TODO
+    })
 });

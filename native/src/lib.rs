@@ -14,26 +14,69 @@ mod seeds;
 use neon::prelude::*;
 use accounts::*;
 use access::{VaultConfig, Vault};
-use emerald_rs::{
-    Address,
-    rpc::common::{
-        SignTxTransaction
-    },
-    core::{
-        PrivateKey, PRIVATE_KEY_BYTES
-    },
-    keystore::{
-        KeyFile, CryptoType, KdfDepthLevel, Kdf, os_random
-    },
-    util::{
-        ToHex
-    },
-    mnemonic::{
-        Mnemonic, HDPath, Language, generate_key, MnemonicSize
-    },
-    rpc::common::NewMnemonicAccount
-};
+use emerald_rs::{Address, core::{
+    PrivateKey, PRIVATE_KEY_BYTES
+}, keystore::{
+    KeyFile, CryptoType, KdfDepthLevel, Kdf, os_random
+}, util::{
+    ToHex
+}, mnemonic::{
+    Mnemonic, HDPath, Language, generate_key, MnemonicSize
+}, Transaction, to_even_str, trim_hex, to_u64, to_arr, align_bytes};
 use std::str::FromStr;
+use hex::{FromHex, FromHexError};
+use emerald_rs::hdwallet::WManager;
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct SignTxTransaction {
+    pub from: String,
+    pub to: String,
+    pub gas: String,
+    #[serde(rename = "gasPrice")]
+    pub gas_price: String,
+    #[serde(default)]
+    pub value: String,
+    #[serde(default)]
+    pub data: String,
+    pub nonce: String,
+    #[serde(default)]
+    pub passphrase: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NewMnemonicAccount {
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    pub password: String,
+    pub mnemonic: String,
+    #[serde(alias = "hdPath")]
+    pub hd_path: String,
+}
+
+impl SignTxTransaction {
+    pub fn try_into(self) -> Result<Transaction, FromHexError> {
+        let gp_str = to_even_str(trim_hex(self.gas_price.as_str()));
+        let v_str = to_even_str(trim_hex(self.value.as_str()));
+        let gasl_str = to_even_str(trim_hex(self.gas.as_str()));
+
+        let gas_limit = Vec::from_hex(gasl_str)?;
+        let gas_price = Vec::from_hex(gp_str)?;
+        let value = Vec::from_hex(v_str)?;
+        let nonce = Vec::from_hex(to_even_str(trim_hex(self.nonce.as_str())))?;
+        let data = to_even_str(trim_hex(self.data.as_str()));
+
+        Ok(Transaction {
+            nonce: to_u64(&nonce),
+            gas_price: to_arr(&align_bytes(&gas_price, 32)),
+            gas_limit: to_u64(&gas_limit),
+            to: self.to.as_str().parse::<Address>().ok(),
+            value: to_arr(&align_bytes(&value, 32)),
+            data: Vec::from_hex(data)?,
+        })
+    }
+}
 
 fn list_accounts(mut cx: FunctionContext) -> JsResult<JsArray> {
     let cfg = VaultConfig::get_config(&mut cx);
@@ -175,18 +218,27 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
 
     let address = Address::from_str(sign.from.as_str()).expect("Invalid from address");
     let kf= vault.get(&address);
+    let tx: Transaction = sign.try_into().expect("Invalid sign JSON");
 
-    let raw_hex = match kf.crypto {
+    let raw_hex: Vec<u8> = match kf.crypto {
         CryptoType::Core(_) => {
             let pass = cx.argument::<JsString>(2).unwrap().value();
-
-            let tr = sign.try_into().expect("Invalid sign JSON");
             let pk = kf.decrypt_key(&pass).expect("Invalid password");
-            let raw_tx = tr.to_signed_raw(pk, chain_id).expect("Expect to sign a transaction");
-            format!("0x{}", raw_tx.to_hex())
+            tx.to_signed_raw(pk, chain_id).expect("Expect to sign a transaction")
+        },
+        CryptoType::HdWallet(hw) => {
+            let hd_path = HDPath::try_from(hw.hd_path.as_str()).expect("Invalid HDPath").to_bytes();
+            let mut manager = WManager::new(Some(hd_path.clone())).expect("No Ledger device found");
+            manager.update(None).expect("No Ledger device connected");
+
+            let rlp = tx.to_rlp(Some(chain_id));
+            let fd = &manager.devices()[0].1;
+            let sign = manager.sign_transaction(fd, rlp.as_slice(), Some(hd_path)).expect("Signature Declined");
+            tx.raw_from_sig(Some(chain_id), &sign)
         }
-        _ => panic!("Unsupported crypto")
     };
+
+    let raw_hex = format!("0x{}", raw_hex.to_hex());
 
     let value_js = cx.string(raw_hex);
 
@@ -267,7 +319,7 @@ fn list_address_book(mut cx: FunctionContext) -> JsResult<JsArray> {
         match e.get("name") {
             Some(val) => {
                 let val = cx.string(val.as_str()
-                    .expect("Expect string for the name field"));;
+                    .expect("Expect string for the name field"));
                 book_js.set(&mut cx, "name", val)
                     .expect("Failed to set name");
             },
