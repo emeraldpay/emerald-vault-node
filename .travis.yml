@@ -5,6 +5,8 @@ os:
 
 language: node_js
 
+osx_image: xcode11
+
 node_js:
   - 12
 
@@ -24,6 +26,7 @@ env:
     - PATH="$HOME/.cargo/bin:$PATH"
     - RUSTFLAGS="-C target-feature=+crt-static"
     - RUST_BACKTRACE=1
+    - YARN_GPG=no # otherwise Yarn starts a GPG daemon which prevents builds from finishing on Windows
   matrix:
     - NODE_RUNTIME=electron
     - NODE_RUNTIME=node
@@ -32,6 +35,7 @@ before_install:
   # Install Rust and Cargo
   - curl https://sh.rustup.rs -sSf > /tmp/rustup.sh
   - sh /tmp/rustup.sh -y
+  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then rustup toolchain install stable-msvc && rustup target install x86_64-pc-windows-msvc && rustup set default-host x86_64-pc-windows-msvc; fi
   # Install NPM packages
   - node -v
   - npm -v
