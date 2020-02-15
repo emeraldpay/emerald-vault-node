@@ -234,7 +234,7 @@ fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
             let rlp = tx.to_rlp(Some(chain_id));
             let fd = &manager.devices()[0].1;
             let sign = manager.sign_transaction(fd, rlp.as_slice(), Some(hd_path)).expect("Signature Declined");
-            tx.raw_from_sig(Some(chain_id), &sign)
+            tx.raw_from_sig(None, &sign)
         }
     };
 
