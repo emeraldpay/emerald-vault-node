@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-node",
-  "version": "0.4.1-0.26.5",
+  "version": "0.4.2-0.26.5",
   "description": "Emerald Vault as NodeJS library",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
   "license": "Apache-2.0",
