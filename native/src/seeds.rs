@@ -18,12 +18,12 @@ struct HDPathAddress {
 fn list_ledger_address(hd_path_all: Vec<String>) -> Vec<HDPathAddress> {
     let mut result = vec![];
 
-    let id = HDPath::try_from("m/44'/60'/0'/0'/0").expect("Failed to create address");
+    let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
     let mut wallet_manager = WManager::new(Some(id.to_bytes())).expect("Can't create HID endpoint");
+    wallet_manager.update(None).expect("Ledger not found");
     if !wallet_manager.open().is_ok() {
         return result;
     }
-    wallet_manager.update(None).expect("Devices list not loaded");
 
     let fd = &wallet_manager.devices()[0].1;
 
@@ -164,8 +164,9 @@ impl<'a> FromJs<Handle<'a, JsObject>> for Seed {
 //}
 
 pub fn is_connected(mut cx: FunctionContext) -> JsResult<JsBoolean> {
-    let id = HDPath::try_from("m/44'/60'/0'/0'/0").expect("Failed to create address");
-    let wallet_manager = WManager::new(Some(id.to_bytes())).expect("Can't create HID endpoint");
+    let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
+    let mut wallet_manager = WManager::new(Some(id.to_bytes())).expect("Can't create HID endpoint");
+    wallet_manager.update(None).expect("Ledger not found");
     let is_connected = wallet_manager.open().is_ok();
 
     let result = cx.boolean(is_connected);
