@@ -206,13 +206,36 @@ describe("Sign transaction", () => {
     });
 });
 
+function convertHex(b: Buffer): string {
+    let value = b.toString('hex');
+    if (value === "") {
+        return "0x0"
+    }
+    return "0x"+value
+}
 
-describe('Sign different combinations (slow to execute)', () => {
+function convertNum(b: Buffer): number {
+    let hex = convertHex(b).substr(2);
+    return parseInt(hex, 16)
+}
+
+function hexQuantity(hex: string): string {
+    if (hex.startsWith("0x0")) {
+        if (hex === "0x0") {
+            return hex
+        }
+        return hexQuantity("0x" + hex.substr(3))
+    }
+    return hex
+}
+
+
+describe('Sign different tx combinations (slow to execute)', () => {
 
     let vault;
     beforeAll(() => {
         vault = new EmeraldVaultNative({
-            dir: "./testdata/tmp-sign-variants"
+            dir: "./testdata/tmp-sign-tx-variants"
         });
     });
 
@@ -238,28 +261,6 @@ describe('Sign different combinations (slow to execute)', () => {
         }
     };
 
-    function convertHex(b: Buffer): string {
-        let value = b.toString('hex');
-        if (value === "") {
-            return "0x0"
-        }
-        return "0x"+value
-    }
-
-    function convertNum(b: Buffer): number {
-        let hex = convertHex(b).substr(2);
-        return parseInt(hex, 16)
-    }
-
-    function hexQuantity(hex: string): string {
-        if (hex.startsWith("0x0")) {
-            if (hex === "0x0") {
-                return hex
-            }
-            return hexQuantity("0x" + hex.substr(3))
-        }
-        return hex
-    }
 
     function testAll(accountId: AccountId, chainId: number) {
         let chainConfig = {};
@@ -342,5 +343,76 @@ describe('Sign different combinations (slow to execute)', () => {
 
 });
 
+describe('Sign different key combinations (slow to execute)', () => {
 
+    let vault;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative({
+            dir: "./testdata/tmp-sign-key-variants"
+        });
+    });
+
+    test("500 keys on same mnemonic", () => {
+        let seedId = vault.importSeed({
+            type: "mnemonic",
+            password: "testtest",
+            value: {
+                value: "gravity tornado laugh hold engine relief next math sleep organ above purse prefer afraid wife service opinion gallery swap violin middle"
+            }
+        });
+
+        let chainId = 1;
+        let walletId = vault.addWallet("test");
+
+        for (let i = 0; i < 500; i++) {
+            vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "hd-path",
+                key: {
+                    hdPath: "m/44'/60'/0'/0/" + i,
+                    seedId: seedId,
+                    password: "testtest"
+                }
+            });
+        }
+        let accounts = WalletOp.of(vault.getWallet(walletId)).getEthereumAccounts();
+        expect(accounts.length).toBe(500);
+        accounts.forEach(account => {
+            let tx = {
+                from: account.address,
+                to: "0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1",
+                value: "0x1234",
+                gas: "0x5678",
+                gasPrice: "0x9012",
+                nonce: "0x0"
+            };
+
+            let raw = vault.signTx(account.id, tx, "testtest");
+            expect(raw).toBeDefined();
+            let parsed;
+            try {
+                parsed = new Transaction(raw);
+            } catch (e) {
+                console.error("Invalid signature", tx);
+                console.error("Raw", raw);
+                console.error(e);
+            }
+
+            expect(parsed).toBeDefined();
+            expect(convertHex(parsed.getSenderAddress())).toBe(account.address);
+            expect(convertHex(parsed.to)).toBe("0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1");
+            expect(hexQuantity(convertHex(parsed.value))).toBe("0x1234");
+            expect(hexQuantity(convertHex(parsed.gasLimit))).toBe("0x5678");
+            expect(hexQuantity(convertHex(parsed.gasPrice))).toBe("0x9012");
+            expect(hexQuantity(convertHex(parsed.nonce))).toBe("0x0");
+            expect(parsed.data.toString('hex')).toBe("");
+            expect(convertNum(parsed.v)).toBeGreaterThanOrEqual(chainId * 2 + 35);
+            expect(convertNum(parsed.v)).toBeLessThanOrEqual(chainId * 2 + 36);
+
+        });
+    });
+
+
+
+});
 

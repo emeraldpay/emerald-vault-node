@@ -321,5 +321,36 @@ describe("Mnemonic", () => {
 
         });
 
+        test("import address with zero prefix", () => {
+            let data = {
+                password: "testtest",
+                hdPath: "m/44'/60'/0'/0/134",
+                mnemonic: "gravity tornado laugh hold engine relief next math sleep organ above purse prefer afraid wife service opinion gallery swap violin middle"
+            };
+
+            let seedId = vault.importSeed({
+                type: "mnemonic",
+                password: data.password,
+                value: {
+                    value: data.mnemonic
+                }
+            });
+
+            let walletId = vault.addWallet("test");
+            let accountId = vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "hd-path",
+                key: {
+                    hdPath: data.hdPath,
+                    seedId: seedId,
+                    password: data.password
+                }
+            });
+
+            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
+            expect(account).toBeDefined();
+            expect(account.address).toBe("0x00ED14a24d2acE1bCC60a978e017D3e0f9be92Ae".toLowerCase());
+
+        });
     });
 });
