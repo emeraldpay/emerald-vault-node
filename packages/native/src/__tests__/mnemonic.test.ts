@@ -52,7 +52,7 @@ describe("Mnemonic", () => {
         });
         test("generates 24 words", () => {
             let m = vault.generateMnemonic(24);
-            console.log(m);
+            // console.log(m);
             expect(m.split(" ").length).toBe(24);
             let uniq = new Set(m.split(" "));
             expect(uniq.size).toBeGreaterThan(12);

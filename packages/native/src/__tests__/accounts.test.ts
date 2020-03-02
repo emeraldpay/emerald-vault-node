@@ -129,21 +129,21 @@ describe("Accounts", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let accounts = wallets.accountsByBlockchain(100)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                console.log("accounts", accounts);
+                // console.log("accounts", accounts);
             });
 
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let accounts = wallets.accountsByBlockchain(101)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                console.log("accounts", accounts);
+                // console.log("accounts", accounts);
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let accounts = wallets.accountsByBlockchain(10002)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                console.log("accounts", accounts);
+                // console.log("accounts", accounts);
             });
 
         });

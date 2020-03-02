@@ -40,7 +40,7 @@ describe("Seeds", () => {
                     "m/44'/60'/0'/0/1",
                     "m/44'/60'/0'/0/2",
                 ]);
-                console.log(act);
+                // console.log(act);
                 expect(act["m/44'/60'/0'/0/0"]).toBe(process.env.EMERALD_TEST_LEDGER_P0.toLowerCase());
                 expect(act["m/44'/60'/0'/0/1"]).toBe(process.env.EMERALD_TEST_LEDGER_P1.toLowerCase());
                 expect(act["m/44'/60'/0'/0/2"]).toBe(process.env.EMERALD_TEST_LEDGER_P2.toLowerCase());
@@ -87,7 +87,7 @@ describe("Seeds", () => {
                         "m/44'/60'/1'/42/100",
                         "m/44'/60'/1'/42/101",
                     ]);
-                    console.log(act);
+                    // console.log(act);
                     expect(act["m/44'/60'/0'/0/0"]).toBe('0x110c84fCC6A775f788d3CA6A9492Abd5B3fEc588'.toLowerCase());
                     expect(act["m/44'/60'/0'/0/1"]).toBe('0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950'.toLowerCase());
                     expect(act["m/44'/60'/0'/0/2"]).toBe('0xd1bdBfb39e13aD7969e7D49bf7896AE6A868610C'.toLowerCase());
@@ -124,7 +124,7 @@ describe("Seeds", () => {
                         "m/44'/60'/0'/0/1",
                         "m/44'/60'/0'/0/2",
                     ]);
-                    console.log(act);
+                    // console.log(act);
                     expect(act["m/44'/60'/0'/0/0"]).toBe('0x5B1E304FB5923feE02aB6F2d0048096a34330cEF'.toLowerCase());
                     expect(act["m/44'/60'/0'/0/1"]).toBe('0x8A66db65fc9da4122ECa06e6089F4989d661AD45'.toLowerCase());
                     expect(act["m/44'/60'/0'/0/2"]).toBe('0x62342e8c2f34CBa5407B6e8780aB43215e74CC6A'.toLowerCase());
@@ -150,7 +150,7 @@ describe("Seeds", () => {
                         "m/44'/61'/1'/0/1",
                         "m/44'/61'/1'/0/2",
                     ]);
-                    console.log(act);
+                    // console.log(act);
                     expect(act["m/44'/61'/1'/0/0"]).toBe('0x50449D9039660fe13Afc2D75f698F7c0eDdb8818'.toLowerCase());
                     expect(act["m/44'/61'/1'/0/1"]).toBe('0xEa6C68Ca34400f7e05C773bce1E4AF6A05D116d4'.toLowerCase());
                     expect(act["m/44'/61'/1'/0/2"]).toBe('0x7dC0B25C51fC5FEc597De01C482b734433E577b7'.toLowerCase());
