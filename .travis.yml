@@ -43,9 +43,11 @@ install:
   - yarn install
 
 script:
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run version:electron;  fi;
+
   # Build Rust
-  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run build:rs;          fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron; fi;
+#  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run build:rs;          fi;
+#  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron; fi;
 
   # Show details about node module
   - node-pre-gyp reveal --directory packages/native
@@ -56,7 +58,6 @@ script:
   # Run tests
   - yarn workspace @emeraldpay/emerald-vault-core run test;
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run test;              fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run version:electron;  fi;
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;     fi;
 
   # Cleanup to avoid putting temp files into resulting package
