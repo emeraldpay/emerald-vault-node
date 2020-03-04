@@ -38,12 +38,15 @@ before_install:
   - rustup show
   - node -v
   - npm -v
+  - yarn global bin
 
 install:
   - yarn install
+  - yarn global add electron@7.1.14
 
 script:
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run version:electron;  fi;
+  #- if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run version:electron;  fi;
+  - electron --version
 
   # Build Rust
 #  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run build:rs;          fi;
