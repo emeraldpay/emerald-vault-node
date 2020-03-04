@@ -39,6 +39,8 @@ before_install:
   - node -v
   - npm -v
   - yarn global bin
+  # system details
+  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; echo %PATH% fi;
 
 install:
   - yarn install
@@ -46,7 +48,8 @@ install:
 
 script:
   #- if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run version:electron;  fi;
-  - electron --version
+  #  - electron --version
+  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; echo C:\Users\travis\AppData\Local\Yarn\bin\electron --version; fi;
 
   # Build Rust
 #  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run build:rs;          fi;
