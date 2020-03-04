@@ -4,8 +4,7 @@ module.exports = {
   testPathIgnorePatterns: [
     "<rootDir>/lib/",
     "<rootDir>/node_modules/",
-    "__tests__/_commons",
-    "__integration-tests__"
+    "__tests__/_commons"
   ],
   coverageDirectory: "./coverage/",
   collectCoverageFrom: [
