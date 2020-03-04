@@ -40,7 +40,7 @@ before_install:
   - npm -v
   - yarn global bin
   # system details
-  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; echo %PATH% fi;
+  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; echo %PATH%; fi;
 
 install:
   - yarn install
