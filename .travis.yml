@@ -56,6 +56,7 @@ script:
   # Run tests
   - yarn workspace @emeraldpay/emerald-vault-core run test;
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run test;              fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run version:electron;  fi;
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;     fi;
 
   # Cleanup to avoid putting temp files into resulting package
