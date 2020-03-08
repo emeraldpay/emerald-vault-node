@@ -3,11 +3,12 @@ on: [push, pull_request]
 
 jobs:
   build-native:
-    name: Build Native
-    runs-on: ["windows-latest", "macos-latest", "ubuntu-latest"]
+    name: Build Native on ${{ matrix.os }}
     strategy:
       matrix:
         node: ["electron", "node"]
+        os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1

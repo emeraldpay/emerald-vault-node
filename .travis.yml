@@ -57,6 +57,7 @@ script:
   # Run tests
   - yarn workspace @emeraldpay/emerald-vault-core run test;
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run test;              fi;
+  ## electron needs directx lib (dxva2.dll) which is missing on travis windows
   - if [[ ${NODE_RUNTIME} == "electron" && "$TRAVIS_OS_NAME" != "windows" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;     fi;
 
   # Cleanup to avoid putting temp files into resulting package
