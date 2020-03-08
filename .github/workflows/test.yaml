@@ -2,17 +2,30 @@ name: Test Vault
 on: [push, pull_request]
 
 jobs:
-  install:
-    name: Install
+  build:
+    name: Build
     runs-on: windows-latest
+    strategy:
+      node: ["electron", "node"]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: "12.x"
+
+      - id: install-rust
+        run: |
+          curl https://sh.rustup.rs -sSf > /tmp/rustup.sh
+          sh /tmp/rustup.sh -y
+
+      - id: install-rust-target
+        run: |
+          rustup toolchain install stable-msvc
+          rustup target install x86_64-pc-windows-msvc
+          rustup set default-host x86_64-pc-windows-msvc
+        if: runner.os == "Windows"
+
       - run: yarn install
-  build:
-    name: Build
-    runs-on: windows-latest
-    steps:
-      - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron
+      - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+      - run: node-pre-gyp reveal --directory packages/native
+      - run: yarn workspaces run build:ts
