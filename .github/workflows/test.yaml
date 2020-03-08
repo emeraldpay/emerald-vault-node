@@ -2,8 +2,8 @@ name: Test Vault
 on: [push, pull_request]
 
 jobs:
-  build:
-    name: Build
+  build-native:
+    name: Build Native
     runs-on: windows-latest
     strategy:
       matrix:
@@ -21,14 +21,30 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Instal MSVC for Rust
-        run: |
-          rustup toolchain install stable-msvc
-          rustup target install x86_64-pc-windows-msvc
-          rustup set default-host x86_64-pc-windows-msvc
-        if: runner.os == 'Windows'
-
       - run: yarn install
       - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
       - run: node-pre-gyp reveal --directory packages/native
       - run: yarn workspaces run build:ts
+
+      - name: Test
+        run: yarn workspace @emeraldpay/emerald-vault-native run test:${{ matrix.node }}
+
+      - name: Clean Before Package
+        run: yarn workspace @emeraldpay/emerald-vault-native run clean:rs
+        if: matrix.node == 'electron'
+
+      - name: Package
+        run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
+
+  build-core:
+    name: Build Native
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - run: yarn install
+      - run: yarn workspace @emeraldpay/emerald-vault-core run build:ts
+      - name: Test
+        run: yarn workspace @emeraldpay/emerald-vault-core run test
