@@ -31,7 +31,9 @@ jobs:
           LIBCLANG_PATH: "C:/Program Files (x86)/LLVM/lib"
 
       - name: Show lib details
-        run: node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+        run: |
+          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+          dir packages/native/native
 
       - name: Build Typescript
         run: yarn workspaces run build:ts
