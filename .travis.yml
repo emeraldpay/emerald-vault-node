@@ -25,6 +25,7 @@ env:
     - RUSTFLAGS="-C target-feature=+crt-static"
     - RUST_BACKTRACE=1
     - YARN_GPG=no # otherwise Yarn starts a GPG daemon which prevents builds from finishing on Windows
+    - ELECTRON_RUN_AS_NODE=true
   matrix:
     - NODE_RUNTIME=electron
     - NODE_RUNTIME=node
