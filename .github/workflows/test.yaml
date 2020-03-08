@@ -13,5 +13,6 @@ jobs:
       - run: yarn install
   build:
     name: Build
+    runs-on: windows-latest
     steps:
       - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron
