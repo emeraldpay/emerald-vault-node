@@ -39,23 +39,14 @@ before_install:
   - rustup show
   - node -v
   - npm -v
-  - yarn global bin
-  # system details
-  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then export PATH=/c/Users/travis/AppData/Local/Yarn/bin:$PATH; fi;
-  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then echo $PATH; fi;
 
 install:
   - yarn install
-  - yarn global add electron@7.1.14
 
 script:
-  #- if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run version:electron;  fi;
-  - electron --version
-#  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then C:/Users/travis/AppData/Local/Yarn/bin/electron --version; fi;
-
   # Build Rust
-#  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run build:rs;          fi;
-#  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron; fi;
+  - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run build:rs;          fi;
+  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron; fi;
 
   # Show details about node module
   - node-pre-gyp reveal --directory packages/native
@@ -66,7 +57,7 @@ script:
   # Run tests
   - yarn workspace @emeraldpay/emerald-vault-core run test;
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run test;              fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;     fi;
+  - if [[ ${NODE_RUNTIME} == "electron" && "$TRAVIS_OS_NAME" != "windows" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;     fi;
 
   # Cleanup to avoid putting temp files into resulting package
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run clean:rs;          fi;

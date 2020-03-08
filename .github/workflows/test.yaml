@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   build-native:
     name: Build Native
-    runs-on: windows-latest
+    runs-on: ["windows-latest", "macos-latest", "ubuntu-latest"]
     strategy:
       matrix:
         node: ["electron", "node"]
@@ -21,20 +21,23 @@ jobs:
           toolchain: stable
           override: true
 
-      - run: yarn install
-      - run: choco install -y llvm
+      - name: Instal LLVM
+        run: choco install -y llvm
+        if: runner.os == 'Windows'
+
+      - name: Instal JS dependencies
+        run: yarn install
 
       - name: Build Rust lib
         run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
         env:
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
-#          LIBCLANG_PATH: "C:/Program Files (x86)/LLVM/bin/"
 
       - name: Show lib details
         run: |
           node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
-          dir packages/native/native
+          ls packages/native/native
 
       - name: Build Typescript
         run: yarn workspaces run build:ts
