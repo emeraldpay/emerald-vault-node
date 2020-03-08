@@ -28,7 +28,7 @@ jobs:
         env:
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
-          LIBCLANG_PATH: "C:/Program Files/LLVM/bin/"
+          LIBCLANG_PATH: "C:/Program Files (x86)/LLVM/bin/"
 
       - name: Show lib details
         run: |
