@@ -26,7 +26,7 @@ jobs:
         env:
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
-          LIBCLANG_PATH: "C:\Program Files (x86)\LLVM\lib"
+          LIBCLANG_PATH: "C:/Program Files (x86)/LLVM/lib"
       - run: node-pre-gyp reveal --directory packages/native
       - run: yarn workspaces run build:ts
 
