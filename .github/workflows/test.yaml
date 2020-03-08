@@ -23,6 +23,9 @@ jobs:
 
       - run: yarn install
       - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          RUST_BACKTRACE: "1"
       - run: node-pre-gyp reveal --directory packages/native
       - run: yarn workspaces run build:ts
 
