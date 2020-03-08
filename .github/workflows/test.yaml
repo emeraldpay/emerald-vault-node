@@ -1,0 +1,17 @@
+name: Test Vault
+on: [push, pull_request]
+
+jobs:
+  install:
+    name: Install
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - run: yarn install
+  build:
+    name: Build
+    steps:
+      - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron
