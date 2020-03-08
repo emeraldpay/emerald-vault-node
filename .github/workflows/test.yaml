@@ -26,6 +26,10 @@ jobs:
         run: choco install -y llvm
         if: runner.os == 'Windows'
 
+      - name: Instal system libs
+        run: sudo apt-get install libusb-1.0-0-dev
+        if: runner.os == 'Linux'
+
       - name: Instal JS dependencies
         run: yarn install
 
