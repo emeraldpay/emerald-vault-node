@@ -14,17 +14,19 @@ jobs:
         with:
           node-version: "12.x"
 
-      - id: install-rust
-        run: |
-          curl https://sh.rustup.rs -sSf > /tmp/rustup.sh
-          sh /tmp/rustup.sh -y
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
 
-      - id: install-rust-target
+      - name: Instal MSVC for Rust
         run: |
           rustup toolchain install stable-msvc
           rustup target install x86_64-pc-windows-msvc
           rustup set default-host x86_64-pc-windows-msvc
-        if: runner.os == "Windows"
+        if: runner.os == 'Windows'
 
       - run: yarn install
       - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
