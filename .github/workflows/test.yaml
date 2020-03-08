@@ -22,13 +22,14 @@ jobs:
           override: true
 
       - run: yarn install
+      - run: choco install -y llvm
 
       - name: Build Rust lib
         run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
         env:
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
-          LIBCLANG_PATH: "C:/Program Files (x86)/LLVM/bin/"
+#          LIBCLANG_PATH: "C:/Program Files (x86)/LLVM/bin/"
 
       - name: Show lib details
         run: |
