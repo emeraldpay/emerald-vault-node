@@ -22,13 +22,19 @@ jobs:
           override: true
 
       - run: yarn install
-      - run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+
+      - name: Build Rust lib
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
         env:
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
           LIBCLANG_PATH: "C:/Program Files (x86)/LLVM/lib"
-      - run: node-pre-gyp reveal --directory packages/native
-      - run: yarn workspaces run build:ts
+
+      - name: Show lib details
+        run: node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+
+      - name: Build Typescript
+        run: yarn workspaces run build:ts
 
       - name: Test
         run: yarn workspace @emeraldpay/emerald-vault-native run test:${{ matrix.node }}
