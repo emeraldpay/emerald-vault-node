@@ -2,8 +2,8 @@ import {
     AccountId,
     EthereumAccount,
     extractAccountInternalId,
-    extractWalletId, isAccountId,
-    isEthereumAccount,
+    extractWalletId, getAccountId, HdPathAccount, isAccountId,
+    isEthereumAccount, isSeedPkRef,
     Uuid,
     Wallet,
     WalletAccount
@@ -251,6 +251,29 @@ export class WalletOp {
      */
     hasBlockchain(blockchain: number): boolean {
         return this.value.accounts.some((account) => account.blockchain === blockchain)
+    }
+
+    /**
+     * List BIP-44 Account Id which are used by current wallet for each Seed.
+     *
+     * @return list of active account id per seed.
+     */
+    getActiveHdAccounts(): HdPathAccount[] {
+        let result: HdPathAccount[] = [];
+        //TODO hardcoded for ethereum
+        this.getEthereumAccounts().forEach((account) => {
+            if (isSeedPkRef(account, account.key)) {
+                let seedId = account.key.seedId;
+                let accountId = getAccountId(account.key);
+                let alreadyExists = result.some((r) =>
+                    r.seedId === seedId && r.accountId === accountId
+                );
+                if (!alreadyExists) {
+                    result.push({seedId, accountId})
+                }
+            }
+        });
+        return result
     }
 }
 

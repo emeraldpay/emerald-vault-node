@@ -89,6 +89,37 @@ export type Wallet = {
     accounts: WalletAccount[],
 }
 
+/**
+ * BIP-44 Account Id for Seed (ex.: account is 1 on m/44'/0'/1'/0/0)
+ */
+export type HdPathAccount = {
+    /**
+     * Target Seed Id
+     */
+    seedId: Uuid,
+    /**
+     * account number
+     */
+    accountId: number
+}
+
+// HDPath format: m / purpose' / coin_type' / account' / change / address_index
+let HDPATH_REGEX = /m\/(\d+)'\/(\d+)'\/(\d+)'\/(\d+)(\/(\d+))?/;
+
+/**
+ * Extract used BIP-44 account from HD Path
+ *
+ * @param pk Seed based PK (SeedPKRef)
+ * @return account or undefined if HDPath doesn't match BIP-44 standard
+ */
+export function getAccountId(pk: SeedPKRef): number | undefined {
+    let m = pk.hdPath.match(HDPATH_REGEX);
+    if (!m) {
+        return undefined
+    }
+    return parseInt(m[3]);
+}
+
 export function isEthereumAccount(acc: WalletAccount): acc is EthereumAccount {
     return acc.blockchain === 100 || acc.blockchain === 101
 }
