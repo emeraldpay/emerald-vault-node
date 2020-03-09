@@ -34,7 +34,8 @@ before_install:
   - curl https://sh.rustup.rs -sSf > /tmp/rustup.sh
   - sh /tmp/rustup.sh -y
   - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then rustup toolchain install stable-msvc && rustup target install x86_64-pc-windows-msvc && rustup set default-host x86_64-pc-windows-msvc; fi
-  # Install NPM packages
+  # Show details about current system
+  - rustup show
   - node -v
   - npm -v
 
@@ -55,7 +56,8 @@ script:
   # Run tests
   - yarn workspace @emeraldpay/emerald-vault-core run test;
   - if [[ ${NODE_RUNTIME} == "node" ]]; then      yarn workspace @emeraldpay/emerald-vault-native run test;              fi;
-  - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;     fi;
+  ## electron needs directx lib (dxva2.dll) which is missing on travis windows
+  - if [[ ${NODE_RUNTIME} == "electron" && "$TRAVIS_OS_NAME" != "windows" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run test:electron;     fi;
 
   # Cleanup to avoid putting temp files into resulting package
   - if [[ ${NODE_RUNTIME} == "electron" ]]; then  yarn workspace @emeraldpay/emerald-vault-native run clean:rs;          fi;

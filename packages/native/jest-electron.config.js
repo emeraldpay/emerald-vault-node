@@ -14,5 +14,5 @@ module.exports = {
   collectCoverageFrom: [
     "src/**/*.ts"
   ],
-  runner: 'jest-serial-runner',
+  runner: '@jest-runner/electron/main',
 };

@@ -1,0 +1,71 @@
+name: Test Vault
+on: [push, pull_request]
+
+jobs:
+  build-native:
+    name: Build Native on ${{ matrix.os }}
+    strategy:
+      matrix:
+        node: ["electron", "node"]
+        os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Instal LLVM
+        run: choco install -y llvm
+        if: runner.os == 'Windows'
+
+      - name: Instal system libs
+        run: sudo apt-get install libusb-1.0-0-dev
+        if: runner.os == 'Linux'
+
+      - name: Instal JS dependencies
+        run: yarn install
+
+      - name: Build Rust lib
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          RUST_BACKTRACE: "1"
+
+      - name: Show lib details
+        run: |
+          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+          ls packages/native/native
+
+      - name: Build Typescript
+        run: yarn workspaces run build:ts
+
+      - name: Test
+        run: yarn workspace @emeraldpay/emerald-vault-native run test:${{ matrix.node }}
+
+      - name: Clean Before Package
+        run: yarn workspace @emeraldpay/emerald-vault-native run clean:rs
+        if: matrix.node == 'electron'
+
+      - name: Package
+        run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
+
+  build-core:
+    name: Build Native
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - run: yarn install
+      - run: yarn workspace @emeraldpay/emerald-vault-core run build:ts
+      - name: Test
+        run: yarn workspace @emeraldpay/emerald-vault-core run test

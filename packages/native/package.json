@@ -32,13 +32,15 @@
     "build:ts": "tsc",
     "build:rs": "neon build --release",
     "build:rs:electron": "node build-electron.js",
+    "build:rs:node": "npm run build:rs",
     "build": "npm run clean && npm run build:rs && npm run build:ts",
     "jest": "npm run jest:unit",
-    "jest:unit": "jest --config jest-unit.config.js",
-    "jest:all": "jest",
-    "jest:electron": "cross-env ELECTRON_RUN_AS_NODE=true ./node_modules/.bin/electron ../../node_modules/jest/bin/jest.js --config jest-unit.config.js",
+    "jest:unit": "jest",
+    "jest:all": "jest --config jest-all.config.js",
+    "jest:electron": "cross-env ELECTRON_RUN_AS_NODE=true ./node_modules/.bin/electron ../../node_modules/jest/bin/jest.js",
     "test": "npm run clean:test && npm run unpack && npm run jest",
     "test:electron": "npm run clean:test && npm run unpack && npm run jest:electron",
+    "test:node": "npm run test",
     "clean:test": "rimraf testdata/tmp-* && rimraf testdata/vault-0.26-basic && rimraf testdata/vault-0.26-book && rimraf testdata/vault-0.26-snappy && rimraf testdata/vault-0.10.1-migrate && rimraf testdata/vault-0.26-ledger",
     "clean:rs": "cd native && cargo clean",
     "clean:ts": "rimraf lib",
@@ -50,7 +52,8 @@
     "package:node": "node-pre-gyp package",
     "package:electron": "node-pre-gyp package --runtime=electron --target=7.0.0",
     "upload-binary": "node-pre-gyp-github publish",
-    "prepublishOnly": "npm run clean && npm run build && npm run test && npm run clean:native:ifpublish"
+    "prepublishOnly": "npm run clean && npm run build && npm run test && npm run clean:native:ifpublish",
+    "version:electron": "./node_modules/.bin/electron --version"
   },
   "dependencies": {
     "@emeraldpay/emerald-vault-core": "0.5.1-rc3"
@@ -63,6 +66,7 @@
     "@types/jest": "24.0.13",
     "ts-jest": "24.0.2",
     "jest-serial-runner": "1.1.0",
+    "@jest-runner/electron": "^2.0.3",
     "neon-cli": "0.3.2",
     "node-gyp": "6.0.0",
     "node-pre-gyp": "amilajack/node-pre-gyp#neon-compat",
