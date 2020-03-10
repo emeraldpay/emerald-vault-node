@@ -25,6 +25,8 @@ export {
     RawSeed,
     LedgerSeed,
     SeedDescription,
+    HDPathAccount,
+    HDPathAccounts,
     isLedger,
     isMnemonic,
     isRawSeed,

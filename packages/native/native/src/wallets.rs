@@ -9,7 +9,7 @@ use emerald_vault::{convert::{
     json::keyfile::EthereumJsonV3File
 }, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey};
 use json::StatusResult;
-use emerald_vault::structs::wallet::AccountId;
+use emerald_vault::structs::wallet::{AccountId, ReservedPath};
 
 #[derive(Deserialize, Clone)]
 pub struct AddAccountJson {
@@ -53,7 +53,23 @@ pub struct WalletAccountJson {
 pub struct WalletJson {
     pub id: String,
     pub name: Option<String>,
-    pub accounts: Vec<WalletAccountJson>
+    pub accounts: Vec<WalletAccountJson>,
+    pub reserved: Vec<ReservedAccountJson>
+}
+
+#[derive(Serialize, Clone)]
+pub struct ReservedAccountJson {
+    pub seed_id: Uuid,
+    pub account_id: u32,
+}
+
+impl From<ReservedPath> for ReservedAccountJson {
+    fn from(rp: ReservedPath) -> Self {
+        ReservedAccountJson {
+            seed_id: rp.seed_id,
+            account_id: rp.account_id
+        }
+    }
 }
 
 impl From<Wallet> for WalletJson {
@@ -65,10 +81,14 @@ impl From<Wallet> for WalletJson {
                 address: a.address.map(|v| v.to_string())
             })
             .collect();
+        let reserved: Vec<ReservedAccountJson> = wallet.reserved.iter()
+            .map(|x| ReservedAccountJson::from(x.clone()))
+            .collect();
         WalletJson {
             id: wallet.id.clone().to_string(),
             name: wallet.label,
-            accounts
+            accounts,
+            reserved
         }
     }
 }
