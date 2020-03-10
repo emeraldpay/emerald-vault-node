@@ -53,9 +53,47 @@ describe("Ops", () => {
                     name: "test"
                 };
 
-                let act = WalletOp.of(wallet1).getActiveHdAccounts();
-                expect(act.length).toBe(1);
-                expect(act[0]).toStrictEqual({seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 0})
+                let act = WalletOp.of(wallet1).getHDAccounts();
+                expect(Object.entries(act).length).toBe(1);
+                expect(act['5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc']).toStrictEqual([0])
+            });
+
+            test("stored as reserved, but doesn't exist as account", () => {
+                let acc1: EthereumAccount = {
+                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    blockchain: 100,
+                    id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
+                    key: {
+                        type: "seed-hd",
+                        hdPath: "m/44'/60'/0'/0/0",
+                        seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
+                    }
+                };
+                let acc2: EthereumAccount = {
+                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    blockchain: 100,
+                    id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
+                    key: {
+                        type: "seed-hd",
+                        hdPath: "m/44'/60'/0'/0/0",
+                        seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
+                    }
+                };
+                let wallet1: Wallet = {
+                    id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
+                    accounts: [acc1, acc2],
+                    name: "test",
+                    reserved: [
+                        {seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 0},
+                        {seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 1},
+                        {seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892', accountId: 0}
+                    ]
+                };
+
+                let act = WalletOp.of(wallet1).getHDAccounts();
+                expect(Object.entries(act).length).toBe(2);
+                expect(act['5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc']).toStrictEqual([0, 1]);
+                expect(act['cbb38ce9-d818-4aa3-9c87-bbdbb7796892']).toStrictEqual([0]);
             });
 
             test("two on different seed", () => {
@@ -85,10 +123,10 @@ describe("Ops", () => {
                     name: "test"
                 };
 
-                let act = WalletOp.of(wallet1).getActiveHdAccounts();
-                expect(act.length).toBe(2);
-                expect(act[0]).toStrictEqual({seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 0});
-                expect(act[1]).toStrictEqual({seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892', accountId: 0});
+                let act = WalletOp.of(wallet1).getHDAccounts();
+                expect(Object.entries(act).length).toBe(2);
+                expect(act['5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc']).toStrictEqual([0]);
+                expect(act['cbb38ce9-d818-4aa3-9c87-bbdbb7796892']).toStrictEqual([0]);
             });
 
             test("multiple", () => {
@@ -152,12 +190,10 @@ describe("Ops", () => {
                     name: "test"
                 };
 
-                let act = WalletOp.of(wallet1).getActiveHdAccounts();
-                expect(act.length).toBe(4);
-                expect(act[0]).toStrictEqual({seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 0});
-                expect(act[1]).toStrictEqual({seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892', accountId: 0});
-                expect(act[2]).toStrictEqual({seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892', accountId: 1});
-                expect(act[3]).toStrictEqual({seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892', accountId: 5});
+                let act = WalletOp.of(wallet1).getHDAccounts();
+                expect(Object.entries(act).length).toBe(2);
+                expect(act['5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc']).toStrictEqual([0]);
+                expect(act['cbb38ce9-d818-4aa3-9c87-bbdbb7796892']).toStrictEqual([0, 1, 5]);
             });
 
         })

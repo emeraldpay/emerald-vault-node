@@ -87,12 +87,13 @@ export type Wallet = {
     name?: string | undefined,
     description?: string | undefined,
     accounts: WalletAccount[],
+    reserved?: HDPathAccount[] | undefined
 }
 
 /**
  * BIP-44 Account Id for Seed (ex.: account is 1 on m/44'/0'/1'/0/0)
  */
-export type HdPathAccount = {
+export type HDPathAccount = {
     /**
      * Target Seed Id
      */
@@ -102,6 +103,8 @@ export type HdPathAccount = {
      */
     accountId: number
 }
+
+export type HDPathAccounts = {[key: string]: number[]};
 
 // HDPath format: m / purpose' / coin_type' / account' / change / address_index
 let HDPATH_REGEX = /m\/(\d+)'\/(\d+)'\/(\d+)'\/(\d+)(\/(\d+))?/;

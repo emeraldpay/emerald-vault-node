@@ -2,7 +2,7 @@ import {
     AccountId,
     EthereumAccount,
     extractAccountInternalId,
-    extractWalletId, getAccountId, HdPathAccount, isAccountId,
+    extractWalletId, getAccountId, HDPathAccount, HDPathAccounts, isAccountId,
     isEthereumAccount, isSeedPkRef,
     Uuid,
     Wallet,
@@ -258,8 +258,15 @@ export class WalletOp {
      *
      * @return list of active account id per seed.
      */
-    getActiveHdAccounts(): HdPathAccount[] {
-        let result: HdPathAccount[] = [];
+    getHDAccounts(): HDPathAccounts {
+        let result: HDPathAccount[] = [];
+
+        //copy reserved
+        if (this.value.reserved) {
+            this.value.reserved.forEach((r) => result.push(r));
+        }
+
+        //check current accounts, in case some were added but not stored
         //TODO hardcoded for ethereum
         this.getEthereumAccounts().forEach((account) => {
             if (isSeedPkRef(account, account.key)) {
@@ -273,7 +280,18 @@ export class WalletOp {
                 }
             }
         });
-        return result
+
+        //flatten to a map structure
+        let empty: HDPathAccounts = {};
+        return result.reduce((prev: HDPathAccounts, curr: HDPathAccount) => {
+            let x = prev[curr.seedId];
+            if (!x) {
+                prev[curr.seedId] = [curr.accountId];
+            } else if (x.indexOf(curr.accountId) < 0) {
+                x.push(curr.accountId);
+            }
+            return prev
+        }, empty)
     }
 }
 
