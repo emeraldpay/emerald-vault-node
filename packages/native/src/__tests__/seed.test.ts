@@ -179,6 +179,10 @@ describe("Seeds", () => {
 
             let account = wallet.accounts[0] as EthereumAccount;
             expect(account.address).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
+            let reserved = WalletOp.of(wallet).getHDAccounts();
+            let expReserved = {};
+            expReserved[id] = [0];
+            expect(reserved).toStrictEqual(expReserved)
 
             // let key = wallet.accounts[0].key as SeedPKRef;
             // expect(key.hdPath).toBe("m/44'/60'/0'/0/1");

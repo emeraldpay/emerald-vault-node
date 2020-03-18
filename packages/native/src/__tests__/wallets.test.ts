@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {AddAccount, WalletOp, WalletsOp, AccountIdOp} from "@emeraldpay/emerald-vault-core";
+import {AddAccount, WalletOp, WalletsOp, AccountIdOp, EthereumAccount} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 describe("Wallets", () => {
@@ -226,7 +226,40 @@ describe("Wallets", () => {
             vault.setWalletLabel(walletId, null);
             let wallet4 = vault.getWallet(walletId);
             expect(wallet4.name).toBeNull();
-        })
+        });
+
+        test("Keep seed reserved after removing account", () => {
+            let id = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = vault.addWallet("test seed");
+            let acc: AddAccount = {
+                blockchain: 100,
+                type: "hd-path",
+                key: {
+                    hdPath: "m/44'/60'/1'/0/1",
+                    seedId: id,
+                    password: "test"
+                }
+            };
+            let accId = vault.addAccount(walletId, acc);
+            vault.removeAccount(accId);
+
+            let wallets = vault.listWallets();
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
+            expect(wallet.accounts.length).toBe(0);
+
+            let reserved = WalletOp.of(wallet).getHDAccounts();
+            let expReserved = {};
+            expReserved[id] = [1];
+            expect(reserved).toStrictEqual(expReserved)
+        });
 
     });
 });

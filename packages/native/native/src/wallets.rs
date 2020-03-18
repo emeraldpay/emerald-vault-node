@@ -59,7 +59,9 @@ pub struct WalletJson {
 
 #[derive(Serialize, Clone)]
 pub struct ReservedAccountJson {
+    #[serde(rename = "seedId")]
     pub seed_id: Uuid,
+    #[serde(rename = "accountId")]
     pub account_id: u32,
 }
 
