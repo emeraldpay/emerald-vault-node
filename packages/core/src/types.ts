@@ -71,13 +71,15 @@ export type EthereumAccount = {
     id: AccountId,
     blockchain: number,
     address: string,
-    key: PKRef | SeedPKRef | undefined
+    key: PKRef | SeedPKRef | undefined,
+    receiveDisabled?: boolean | undefined
 }
 
 export type BitcoinAccount = {
     id: AccountId,
     blockchain: number,
-    key: PKRef | SeedPKRef
+    key: PKRef | SeedPKRef,
+    receiveDisabled?: boolean | undefined
 }
 
 export type WalletAccount = EthereumAccount | BitcoinAccount;

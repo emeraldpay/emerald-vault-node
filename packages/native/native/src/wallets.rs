@@ -47,6 +47,8 @@ pub struct WalletAccountJson {
     pub id: String,
     pub blockchain: u32,
     pub address: Option<String>,
+    #[serde(rename = "receiveDisabled")]
+    pub receive_disabled: bool,
 }
 
 #[derive(Serialize, Clone)]
@@ -80,7 +82,8 @@ impl From<Wallet> for WalletJson {
             .map(|a| WalletAccountJson {
                 id: AccountId::from(&wallet, a).to_string(),
                 blockchain: a.blockchain as u32,
-                address: a.address.map(|v| v.to_string())
+                address: a.address.map(|v| v.to_string()),
+                receive_disabled: a.receive_disabled,
             })
             .collect();
         let reserved: Vec<ReservedAccountJson> = wallet.reserved.iter()

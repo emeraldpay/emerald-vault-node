@@ -29,7 +29,9 @@ describe("Accounts", () => {
                     .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(2);
                 expect(accounts[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(accounts[0].receiveDisabled).toBeFalsy();
                 expect(accounts[1].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+                expect(accounts[1].receiveDisabled).toBeFalsy();
             });
 
             test("list kovan", () => {
@@ -58,8 +60,11 @@ describe("Accounts", () => {
 
                 expect(accounts.length).toBe(3);
                 expect(accounts[0].address).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
+                expect(accounts[0].receiveDisabled).toBeFalsy();
                 expect(accounts[1].address).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
+                expect(accounts[1].receiveDisabled).toBeFalsy();
                 expect(accounts[2].address).toBe("0xBD5222391BBB9F17484F2565455FB6610D9E145F".toLowerCase());
+                expect(accounts[2].receiveDisabled).toBeFalsy();
             });
 
             test("list etc", () => {
@@ -94,7 +99,9 @@ describe("Accounts", () => {
                     .sort((a, b) => a.address.localeCompare(b.address));
                 expect(accounts.length).toBe(2);
                 expect(accounts[0].address).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(accounts[0].receiveDisabled).toBeFalsy();
                 expect(accounts[1].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(accounts[1].receiveDisabled).toBeFalsy();
 
                 let account = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3").value;
                 expect(account.name).toBe("foo bar");
@@ -291,6 +298,7 @@ describe("Accounts", () => {
             let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
 
             expect(account.address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
+            expect(account.receiveDisabled).toBeFalsy();
         });
 
         test("import scrypt - c2d7cf95", () => {

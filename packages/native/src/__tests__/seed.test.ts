@@ -176,7 +176,7 @@ describe("Seeds", () => {
             let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
             expect(wallet.accounts.length).toBe(1);
             expect(wallet.accounts[0].blockchain).toBe(100);
-
+            expect(wallet.accounts[0].receiveDisabled).toBeFalsy();
             let account = wallet.accounts[0] as EthereumAccount;
             expect(account.address).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
             let reserved = WalletOp.of(wallet).getHDAccounts();
