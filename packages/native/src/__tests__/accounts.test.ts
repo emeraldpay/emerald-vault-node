@@ -596,7 +596,7 @@ describe("Accounts", () => {
 
         test("errors for invalid address", () => {
             expect(() => {
-                vault.removeWallet("3198bc9c-6672-5ab3-d995-4942343ae5b6");
+                vault.removeAccount("3198bc9c-6672-5ab3-d995-4942343ae5b6-1");
             }).toThrow()
         });
 

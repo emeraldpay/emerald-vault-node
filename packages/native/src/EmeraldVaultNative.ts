@@ -111,7 +111,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
     }
 
     removeWallet(walletId: Uuid) {
-        throw Error("NOT IMPLEMENTED");
+        let status: Status<boolean> = addon.wallets_remove(this.conf, walletId);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
     }
 
     addAccount(walletId: Uuid, account: AddAccount): AccountId {

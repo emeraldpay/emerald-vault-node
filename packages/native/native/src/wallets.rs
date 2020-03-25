@@ -183,6 +183,11 @@ impl WrappedVault {
         wallet.accounts.remove(index.unwrap());
         storage.wallets().update(wallet)
     }
+
+    fn remove(&self, wallet_id: Uuid) -> Result<bool, VaultError> {
+        let storage = &self.cfg.get_storage();
+        storage.remove_wallet(wallet_id)
+    }
 }
 
 pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
@@ -249,6 +254,18 @@ pub fn remove_account(mut cx: FunctionContext) -> JsResult<JsObject> {
     let (wallet_id, account_id) = read_wallet_and_account_ids(&mut cx, 1);
 
     let result = vault.remove_account(wallet_id, account_id).expect("Not deleted");
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
+}
+
+pub fn remove(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let wallet_id = read_wallet_id(&mut cx, 1);
+    let result = vault.remove(wallet_id).expect("Not deleted");
+
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())

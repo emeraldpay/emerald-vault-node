@@ -260,6 +260,82 @@ describe("Wallets", () => {
             expReserved[id] = [1];
             expect(reserved).toStrictEqual(expReserved)
         });
+    });
 
+    describe("Remove wallet", () => {
+        let vault: EmeraldVaultNative;
+        beforeEach(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("wallet-remove")
+            });
+        });
+
+        test("empty", () => {
+            let walletId = vault.addWallet("test 1");
+            let wallet = vault.getWallet(walletId);
+            expect(wallet).toBeDefined();
+            expect(wallet.name).toBe("test 1");
+
+            vault.removeWallet(walletId);
+
+            expect(() => {
+                vault.getWallet(walletId)
+            }).toThrowError("No wallet with id");
+        });
+
+        test("with accounts", () => {
+            let walletId = vault.addWallet("test 1");
+            let accountId1 = vault.addAccount(walletId, {
+                blockchain: 100,
+                type: "raw-pk-hex",
+                key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                password: "test"
+            });
+            let accountId2 = vault.addAccount(walletId, {
+                blockchain: 101,
+                type: "raw-pk-hex",
+                key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                password: "test"
+            });
+
+            let wallet = vault.getWallet(walletId);
+            expect(wallet).toBeDefined();
+
+            vault.removeWallet(walletId);
+
+            expect(() => {
+                vault.getWallet(walletId)
+            }).toThrowError("No wallet with id");
+        });
+
+        test("keep others", () => {
+            let walletId1 = vault.addWallet("test 1");
+            let accountId1 = vault.addAccount(walletId1, {
+                blockchain: 100,
+                type: "raw-pk-hex",
+                key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                password: "test"
+            });
+
+            let walletId2 = vault.addWallet("test 2");
+            let accountId2 = vault.addAccount(walletId2, {
+                blockchain: 100,
+                type: "raw-pk-hex",
+                key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                password: "test"
+            });
+
+            let wallet = vault.getWallet(walletId1);
+            expect(wallet).toBeDefined();
+
+            vault.removeWallet(walletId1);
+
+            expect(() => {
+                vault.getWallet(walletId1)
+            }).toThrowError("No wallet with id");
+
+            wallet = vault.getWallet(walletId2);
+            expect(wallet).toBeDefined();
+        });
     });
 });
