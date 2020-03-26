@@ -3,15 +3,20 @@ on: [push, pull_request]
 
 jobs:
   build-native:
-    name: Build Native on ${{ matrix.os }}
+    name: Native (${{ matrix.os }}, ${{ matrix.node }})
     strategy:
       matrix:
         node: ["electron", "node"]
-        os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+        # windows-2016 - because windows-latest comes with MSVC++ 14.25 (Visual Studio 2019 Version 16.5), which is
+        # incompatible with librocksdb-sys v5.18.3
+        os: ["windows-2016", "macos-latest", "ubuntu-latest"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v1
         with:
           node-version: "12.x"
 
@@ -58,7 +63,7 @@ jobs:
         run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
 
   build-core:
-    name: Build Native
+    name: Core
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
