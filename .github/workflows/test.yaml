@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   build-native:
-    name: Build Native on ${{ matrix.os }}
+    name: Native on ${{ matrix.os }}
     strategy:
       matrix:
         node: ["electron", "node"]
@@ -14,6 +14,12 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "12.x"
+
+      - name: Install MS Studion
+        uses: microsoft/setup-msbuild@v1.0.0
+        with:
+          vs-version: 15.9
+        if: runner.os == 'Windows'
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -58,7 +64,7 @@ jobs:
         run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
 
   build-core:
-    name: Build Native
+    name: Core
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
