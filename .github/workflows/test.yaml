@@ -7,6 +7,8 @@ jobs:
     strategy:
       matrix:
         node: ["electron", "node"]
+        # windows-2016 - because windows-latest comes with MSVC++ 14.25 (Visual Studio 2019 Version 16.5), which is
+        # incompatible with librocksdb-sys v5.18.3
         os: ["windows-2016", "macos-latest", "ubuntu-latest"]
     runs-on: ${{ matrix.os }}
     steps:
@@ -17,12 +19,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "12.x"
-
-      #      - name: Install MS Visual Studio
-      #        uses: microsoft/setup-msbuild@v1.0.0
-      #        with:
-      #          vs-version: 15.9
-      #        if: runner.os == 'Windows'
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
