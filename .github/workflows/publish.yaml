@@ -114,3 +114,5 @@ jobs:
 
       - name: Upload
         run: yarn workspace @emeraldpay/emerald-vault-native run upload-binary
+        env:
+          NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
