@@ -32,18 +32,18 @@ jobs:
       #      - name: Instal system libs
       #        run: sudo apt-get install libusb-1.0-0-dev
       #
-      #      - name: Instal JS dependencies
-      #        run: yarn install
-      #
-      #      - name: Build Rust lib
-      #        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:node
-      #        env:
-      #          RUSTFLAGS: "-C target-feature=+crt-static"
-      #          RUST_BACKTRACE: "1"
-      #
-      #      - name: Show lib details
-      #        run: |
-      #          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+      - name: Instal JS dependencies
+        run: yarn install
+        #
+        #      - name: Build Rust lib
+        #        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:node
+        #        env:
+        #          RUSTFLAGS: "-C target-feature=+crt-static"
+        #          RUST_BACKTRACE: "1"
+        #
+        #      - name: Show lib details
+        #        run: |
+        #          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
         #          ls packages/native/native
         #
         #      - name: Build Typescript
