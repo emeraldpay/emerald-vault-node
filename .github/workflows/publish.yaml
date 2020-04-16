@@ -56,7 +56,7 @@ jobs:
         #        run: yarn workspace @emeraldpay/emerald-vault-native run package:node
 
       - name: Authenticate Yarn
-        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.yarnrc
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
