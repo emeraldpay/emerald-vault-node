@@ -1,4 +1,4 @@
-name: Release to NPM
+name: Publish package
 
 on: [push]
 
@@ -8,7 +8,7 @@ on: [push]
 
 jobs:
   npm:
-    name: "Publishto NPM"
+    name: Publish to NPM
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
@@ -35,7 +35,7 @@ jobs:
         run: yarn install
 
       - name: Build Rust lib
-        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:node
         env:
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
