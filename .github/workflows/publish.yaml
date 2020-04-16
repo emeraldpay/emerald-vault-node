@@ -1,10 +1,8 @@
 name: Publish package
 
-on: [push]
-
-#on:
-#  release:
-#    types: [created]
+on:
+  release:
+    types: [created]
 
 jobs:
   npm:
@@ -39,13 +37,13 @@ jobs:
         run: npm config set scripts-prepend-node-path true
 
       - name: Publish to NPM - core
-        run: npm publish --access=public --dry-run
+        run: npm publish --access=public
         working-directory: packages/core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to NPM - native
-        run: npm publish --access=public --dry-run
+        run: npm publish --access=public
         working-directory: packages/native
         env:
           NO_NPM_BINARY: "true"
@@ -113,6 +111,6 @@ jobs:
         run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
 
       - name: Upload
-        run: yarn workspace @emeraldpay/emerald-vault-native run upload-binary --target_commitish=${{ github.ref }}
+        run: yarn workspace @emeraldpay/emerald-vault-native run upload-binary
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
