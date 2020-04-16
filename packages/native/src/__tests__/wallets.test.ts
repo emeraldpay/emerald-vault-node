@@ -52,7 +52,7 @@ describe("Wallets", () => {
                     dir: tempPath("wallet-create")
                 });
             });
-            test("Create Wallet without label", () => {
+            test("without label", () => {
                 let id = vault.addWallet(undefined);
                 let wallets = vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
@@ -61,7 +61,7 @@ describe("Wallets", () => {
                 expect(created.name).toBeNull()
             });
 
-            test("Create Wallet with empty label", () => {
+            test("with empty label", () => {
                 let id = vault.addWallet("");
                 let wallets = vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
@@ -70,13 +70,60 @@ describe("Wallets", () => {
                 expect(created.name).toBeNull();
             });
 
-            test("Create Wallet", () => {
+            test("with label", () => {
                 let id = vault.addWallet("Test 1111");
                 let wallets = vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
                 expect(created.name).toBe("Test 1111");
+            });
+
+            test("with label as options", () => {
+                let id = vault.addWallet({name: "Test 1111"});
+                let wallets = vault.listWallets();
+                expect(wallets.length).toBeGreaterThan(0);
+                let created = WalletsOp.of(wallets).getWallet(id).value;
+                expect(created).toBeDefined();
+                expect(created.name).toBe("Test 1111");
+                expect(created.reserved).toEqual([]);
+            });
+
+            test("with reserved seed", () => {
+                let id = vault.addWallet({
+                    name: "Test 1111",
+                    reserved: [{seedId: "95d3953b-6df0-424e-93ad-61e463564bff", accountId: 1}]
+                });
+                let wallets = vault.listWallets();
+                expect(wallets.length).toBeGreaterThan(0);
+                let created = WalletsOp.of(wallets).getWallet(id).value;
+                expect(created).toBeDefined();
+                expect(created.name).toBe("Test 1111");
+                expect(created.reserved).toBeDefined();
+                expect(created.reserved[0]).toEqual({seedId: "95d3953b-6df0-424e-93ad-61e463564bff", accountId: 1});
+                expect(created.reserved.length).toBe(1);
+            });
+
+            test("with few reserved seeds", () => {
+                let id = vault.addWallet(
+                    {
+                        name: "Test 1111",
+                        reserved: [
+                            {seedId: "95d3953b-6df0-424e-93ad-61e463564bff", accountId: 1},
+                            {seedId: "2c9f98b3-0499-4550-b5f5-086a0264ebd5", accountId: 1},
+                            {seedId: "2c9f98b3-0499-4550-b5f5-086a0264ebd5", accountId: 2},
+                        ]
+                    });
+                let wallets = vault.listWallets();
+                expect(wallets.length).toBeGreaterThan(0);
+                let created = WalletsOp.of(wallets).getWallet(id).value;
+                expect(created).toBeDefined();
+                expect(created.name).toBe("Test 1111");
+                expect(created.reserved).toBeDefined();
+                expect(created.reserved[0]).toEqual({seedId: "95d3953b-6df0-424e-93ad-61e463564bff", accountId: 1});
+                expect(created.reserved[1]).toEqual({seedId: "2c9f98b3-0499-4550-b5f5-086a0264ebd5", accountId: 1});
+                expect(created.reserved[2]).toEqual({seedId: "2c9f98b3-0499-4550-b5f5-086a0264ebd5", accountId: 2});
+                expect(created.reserved.length).toBe(3);
             });
         });
 

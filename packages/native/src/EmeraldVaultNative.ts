@@ -11,7 +11,7 @@ import {
     SeedDescription,
     UnsignedTx,
     Uuid,
-    Wallet,
+    Wallet, WalletCreateOptions,
     IEmeraldVault, AccountId, AccountIdOp, WalletsOp
 } from "@emeraldpay/emerald-vault-core";
 
@@ -94,8 +94,14 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return WalletsOp.of(status.result).getWallet(id).value
     }
 
-    addWallet(label: string | undefined): Uuid {
-        let status: Status<Uuid> = addon.wallets_add(this.conf, label);
+    addWallet(labelOrOptions: string | WalletCreateOptions | undefined): Uuid {
+        let options: WalletCreateOptions = {};
+        if (typeof labelOrOptions === 'string') {
+            options = {name: labelOrOptions}
+        } else if (typeof labelOrOptions === 'object') {
+            options = labelOrOptions
+        }
+        let status: Status<Uuid> = addon.wallets_add(this.conf, JSON.stringify(options));
         if (!status.succeeded) {
             throw Error(status.error.message)
         }

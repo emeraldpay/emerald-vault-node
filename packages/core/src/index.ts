@@ -13,6 +13,7 @@ export {
 
     AddressBookItem,
     Wallet,
+    WalletCreateOptions,
     WalletAccount,
     EthereumAccount,
     isEthereumAccount,

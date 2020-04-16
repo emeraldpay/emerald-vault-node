@@ -56,10 +56,16 @@ pub struct WalletJson {
     pub id: String,
     pub name: Option<String>,
     pub accounts: Vec<WalletAccountJson>,
-    pub reserved: Vec<ReservedAccountJson>
+    pub reserved: Vec<ReservedAccountJson>,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Deserialize, Clone)]
+pub struct AddWalletJson {
+    pub name: Option<String>,
+    pub reserved: Option<Vec<ReservedAccountJson>>,
+}
+
+#[derive(Deserialize, Serialize, Clone)]
 pub struct ReservedAccountJson {
     #[serde(rename = "seedId")]
     pub seed_id: Uuid,
@@ -71,7 +77,16 @@ impl From<ReservedPath> for ReservedAccountJson {
     fn from(rp: ReservedPath) -> Self {
         ReservedAccountJson {
             seed_id: rp.seed_id,
-            account_id: rp.account_id
+            account_id: rp.account_id,
+        }
+    }
+}
+
+impl From<ReservedAccountJson> for ReservedPath {
+    fn from(value: ReservedAccountJson) -> Self {
+        ReservedPath {
+            seed_id: value.seed_id,
+            account_id: value.account_id,
         }
     }
 }
@@ -115,13 +130,18 @@ fn read_wallet_and_account_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usi
 }
 
 impl WrappedVault {
-
-    fn create_wallet(&self, label: Option<String>) -> Result<Uuid, VaultError> {
+    fn create_wallet(&self, options: AddWalletJson) -> Result<Uuid, VaultError> {
         let storage = &self.cfg.get_storage();
         let id = Uuid::new_v4();
+        let reserved = options.reserved
+            .unwrap_or(Vec::new())
+            .iter()
+            .map(|r| ReservedPath::from(r.clone()))
+            .collect();
         storage.wallets().add(Wallet {
             id: id.clone(),
-            label,
+            label: options.name,
+            reserved,
             ..Wallet::default()
         }).map(|_| id)
     }
@@ -210,8 +230,10 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let label = args_get_str(&mut cx, 1);
-    let id = vault.create_wallet(label).expect("Wallet not created");
+    let json = cx.argument::<JsString>(1).expect("Input JSON with options is not provided").value();
+    let parsed: AddWalletJson = serde_json::from_str(json.as_str()).expect("Invalid JSON with options");
+
+    let id = vault.create_wallet(parsed).expect("Wallet not created");
 
     let status = StatusResult::Ok(id.to_string()).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;

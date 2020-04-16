@@ -93,6 +93,14 @@ export type Wallet = {
 }
 
 /**
+ * Options to create a new wallet
+ */
+export type WalletCreateOptions = {
+    name?: string | undefined,
+    reserved?: HDPathAccount[] | undefined
+}
+
+/**
  * BIP-44 Account Id for Seed (ex.: account is 1 on m/44'/0'/1'/0/0)
  */
 export type HDPathAccount = {
