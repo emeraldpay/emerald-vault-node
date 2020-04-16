@@ -44,16 +44,19 @@ jobs:
       #      - name: Show lib details
       #        run: |
       #          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
-      #          ls packages/native/native
-      #
-      #      - name: Build Typescript
-      #        run: yarn workspaces run build:ts
-      #
-      #      - name: Test
-      #        run: yarn workspace @emeraldpay/emerald-vault-native run test:node
+        #          ls packages/native/native
+        #
+        #      - name: Build Typescript
+        #        run: yarn workspaces run build:ts
+        #
+        #      - name: Test
+        #        run: yarn workspace @emeraldpay/emerald-vault-native run test:node
 
-      #      - name: Package
-      #        run: yarn workspace @emeraldpay/emerald-vault-native run package:node
+        #      - name: Package
+        #        run: yarn workspace @emeraldpay/emerald-vault-native run package:node
+        
+      - name: Authenticate Yarn
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
 
       - name: Publish to NPM - core
         run: yarn workspace @emeraldpay/emerald-vault-core publish --access=public --dry-run
