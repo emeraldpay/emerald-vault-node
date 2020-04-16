@@ -22,43 +22,23 @@ jobs:
           node-version: "12.x"
           always-auth: true
 
-      #      - name: Install Rust
-      #        uses: actions-rs/toolchain@v1
-      #        with:
-      #          profile: minimal
-      #          toolchain: stable
-      #          override: true
-      #
-      #      - name: Instal system libs
-      #        run: sudo apt-get install libusb-1.0-0-dev
-      #
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Instal system libs
+        run: sudo apt-get install libusb-1.0-0-dev
+
       - name: Instal JS dependencies
         run: yarn install
-        #
-        #      - name: Build Rust lib
-        #        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:node
-        #        env:
-        #          RUSTFLAGS: "-C target-feature=+crt-static"
-        #          RUST_BACKTRACE: "1"
-        #
-        #      - name: Show lib details
-        #        run: |
-        #          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
-        #          ls packages/native/native
-        #
-        #      - name: Build Typescript
-        #        run: yarn workspaces run build:ts
-        #
-        #      - name: Test
-        #        run: yarn workspace @emeraldpay/emerald-vault-native run test:node
 
-        #      - name: Package
-        #        run: yarn workspace @emeraldpay/emerald-vault-native run package:node
-
-      - name: Authenticate Yarn
-        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #      - name: Authenticate Yarn
+      #        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+      #        env:
+      #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: npm config set scripts-prepend-node-path true
 
@@ -74,10 +54,16 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to NPM - native
-        run: yarn workspace @emeraldpay/emerald-vault-native publish --access=public --dry-run
+        run: npm publish --access=public --dry-run
+        working-directory: packages/native
         env:
-          NO_NPM_BINARY: "true"
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  #      - name: Publish to NPM - native
+  #        run: yarn workspace @emeraldpay/emerald-vault-native publish --access=public --dry-run
+  #        env:
+  #          NO_NPM_BINARY: "true"
+  #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   prebuilds:
     needs: npm
