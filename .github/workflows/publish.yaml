@@ -60,6 +60,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - run: npm config set scripts-prepend-node-path true
+
       - name: Publish to NPM - core
         run: yarn workspace @emeraldpay/emerald-vault-core publish --access=public --dry-run
         env:
