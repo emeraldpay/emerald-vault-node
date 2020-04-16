@@ -56,7 +56,7 @@ jobs:
       #        run: yarn workspace @emeraldpay/emerald-vault-native run package:node
 
       - name: Publish to NPM
-        run: yarn workspaces publish --access=public --dry-run
+        run: yarn workspaces run publish --access=public --dry-run
         env:
           NO_NPM_BINARY: "true"
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
