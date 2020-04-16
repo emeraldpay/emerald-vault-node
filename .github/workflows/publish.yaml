@@ -35,17 +35,8 @@ jobs:
       - name: Instal JS dependencies
         run: yarn install
 
-      #      - name: Authenticate Yarn
-      #        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
-      #        env:
-      #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - run: npm config set scripts-prepend-node-path true
-
-      #      - name: Publish to NPM - core
-      #        run: yarn workspace @emeraldpay/emerald-vault-core publish --access=public --dry-run
-      #        env:
-      #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Configure Node.js Path
+        run: npm config set scripts-prepend-node-path true
 
       - name: Publish to NPM - core
         run: npm publish --access=public --dry-run
@@ -57,13 +48,8 @@ jobs:
         run: npm publish --access=public --dry-run
         working-directory: packages/native
         env:
+          NO_NPM_BINARY: "true"
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  #      - name: Publish to NPM - native
-  #        run: yarn workspace @emeraldpay/emerald-vault-native publish --access=public --dry-run
-  #        env:
-  #          NO_NPM_BINARY: "true"
-  #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   prebuilds:
     needs: npm
@@ -126,5 +112,5 @@ jobs:
       - name: Package
         run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
 
-      - name: Package
-        run: yarn workspace yarn workspace @emeraldpay/emerald-vault-native run upload-binary
+      - name: Upload
+        run: yarn workspace @emeraldpay/emerald-vault-native run upload-binary
