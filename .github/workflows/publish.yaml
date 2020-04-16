@@ -1,0 +1,124 @@
+name: Release to NPM
+
+on: [push]
+
+#on:
+#  release:
+#    types: [created]
+
+jobs:
+  npm:
+    name: "Publishto NPM"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Instal system libs
+        run: sudo apt-get install libusb-1.0-0-dev
+
+      - name: Instal JS dependencies
+        run: yarn install
+
+      - name: Build Rust lib
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          RUST_BACKTRACE: "1"
+
+      - name: Show lib details
+        run: |
+          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+          ls packages/native/native
+
+      - name: Build Typescript
+        run: yarn workspaces run build:ts
+
+      - name: Test
+        run: yarn workspace @emeraldpay/emerald-vault-native run test:node
+
+      - name: Package
+        run: yarn workspace @emeraldpay/emerald-vault-native run package:node
+
+      - name: Publish to NPM
+        run: npm publish --access=public --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  prebuilds:
+    needs: npm
+    name: Upload binary for (${{ matrix.os }}, ${{ matrix.node }})
+    strategy:
+      matrix:
+        node: ["electron", "node"]
+        # windows-2016 - because windows-latest comes with MSVC++ 14.25 (Visual Studio 2019 Version 16.5), which is
+        # incompatible with librocksdb-sys v5.18.3
+        os: ["windows-2016", "macos-latest", "ubuntu-latest"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Instal LLVM
+        run: choco install -y llvm
+        if: runner.os == 'Windows'
+
+      - name: Instal system libs
+        run: sudo apt-get install libusb-1.0-0-dev
+        if: runner.os == 'Linux'
+
+      - name: Instal JS dependencies
+        run: yarn install
+
+      - name: Build Rust lib
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          RUST_BACKTRACE: "1"
+
+      - name: Show lib details
+        run: |
+          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+          ls packages/native/native
+
+      - name: Build Typescript
+        run: yarn workspaces run build:ts
+
+      # Cleanup to avoid putting temp files into resulting package
+      - name: Clean Before Package
+        run: yarn workspace @emeraldpay/emerald-vault-native run clean:rs
+        if: matrix.node == 'electron'
+
+      - name: Package
+        run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
+
+      - name: Package
+        run: yarn workspace yarn workspace @emeraldpay/emerald-vault-native run upload-binary
