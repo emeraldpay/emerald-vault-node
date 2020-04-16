@@ -55,16 +55,21 @@ jobs:
         #      - name: Package
         #        run: yarn workspace @emeraldpay/emerald-vault-native run package:node
 
-      #      - name: Authenticate Yarn
-      #        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
-      #        env:
-      #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish to NPM - core
-        run: npm publish --access=public --dry-run
-        working-directory: packages/core
+      - name: Authenticate Yarn
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.yarnrc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to NPM - core
+        run: yarn workspace @emeraldpay/emerald-vault-core publish --access=public --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      #      - name: Publish to NPM - core
+      #        run: npm publish --access=public --dry-run
+      #        working-directory: packages/core
+      #        env:
+      #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to NPM - native
         run: yarn workspace @emeraldpay/emerald-vault-native publish --access=public --dry-run
