@@ -113,6 +113,6 @@ jobs:
         run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
 
       - name: Upload
-        run: yarn workspace @emeraldpay/emerald-vault-native run upload-binary
+        run: yarn workspace @emeraldpay/emerald-vault-native run upload-binary --target_commitish=${{ github.ref }}
         env:
           NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
