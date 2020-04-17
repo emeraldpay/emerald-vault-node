@@ -40,14 +40,14 @@ jobs:
         run: npm publish --access=public
         working-directory: packages/core
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to NPM - native
         run: npm publish --access=public
         working-directory: packages/native
         env:
           NO_NPM_BINARY: "true"
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   prebuilds:
     needs: npm
