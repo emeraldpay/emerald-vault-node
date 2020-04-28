@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {AddAccount, EthereumAccount, SeedDefinition, WalletsOp, WalletOp} from "@emeraldpay/emerald-vault-core";
+import {AddEntry, EthereumEntry, SeedDefinition, WalletsOp, WalletOp} from "@emeraldpay/emerald-vault-core";
 
 describe("Seeds", () => {
 
@@ -143,11 +143,11 @@ describe("Seeds", () => {
         })
     });
 
-    describe("Create Account", () => {
+    describe("Create Entry", () => {
         let vault: EmeraldVaultNative;
         beforeEach(() => {
             vault = new EmeraldVaultNative({
-                dir: tempPath("seed-account")
+                dir: tempPath("seed-entry")
             });
         });
 
@@ -162,7 +162,7 @@ describe("Seeds", () => {
             expect(id).toBeDefined();
 
             let walletId = vault.addWallet("test seed");
-            let acc: AddAccount = {
+            let addEntry: AddEntry = {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -171,20 +171,20 @@ describe("Seeds", () => {
                     password: "test"
                 }
             };
-            let accId = vault.addAccount(walletId, acc);
+            let accId = vault.addEntry(walletId, addEntry);
             let wallets = vault.listWallets();
             let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
-            expect(wallet.accounts.length).toBe(1);
-            expect(wallet.accounts[0].blockchain).toBe(100);
-            expect(wallet.accounts[0].receiveDisabled).toBeFalsy();
-            let account = wallet.accounts[0] as EthereumAccount;
-            expect(account.address).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
+            expect(wallet.entries.length).toBe(1);
+            expect(wallet.entries[0].blockchain).toBe(100);
+            expect(wallet.entries[0].receiveDisabled).toBeFalsy();
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.address).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
             let reserved = WalletOp.of(wallet).getHDAccounts();
             let expReserved = {};
             expReserved[id] = [0];
             expect(reserved).toStrictEqual(expReserved)
 
-            // let key = wallet.accounts[0].key as SeedPKRef;
+            // let key = wallet.entries[0].key as SeedPKRef;
             // expect(key.hdPath).toBe("m/44'/60'/0'/0/1");
         })
     });

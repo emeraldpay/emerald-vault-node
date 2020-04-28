@@ -38,13 +38,13 @@ describe('Multiple clients', () => {
                 let run = () => {
                     try {
                         let walletId = vault.addWallet("test");
-                        let accountId = vault.addAccount(walletId, {
+                        let entryId = vault.addEntry(walletId, {
                             blockchain: 100,
                             type: "ethereum-json",
                             key: JSON.stringify(data)
                         });
                         // vault.updateAccount("eth",data.address, {name: "foo bar"} );
-                        let current = JSON.parse(vault.exportJsonPk(accountId));
+                        let current = JSON.parse(vault.exportJsonPk(entryId));
                         expect(current.address).toBe(data.address);
                         resolve(current.address);
                     } catch (e) {

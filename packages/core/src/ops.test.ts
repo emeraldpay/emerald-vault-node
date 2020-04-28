@@ -1,5 +1,5 @@
-import {EthereumAccount, Wallet} from "./types";
-import {AccountIdOp, WalletOp, WalletsOp} from "./ops";
+import {EthereumEntry, Wallet} from "./types";
+import {EntryIdOp, WalletOp, WalletsOp} from "./ops";
 
 describe("Ops", () => {
 
@@ -7,7 +7,7 @@ describe("Ops", () => {
         test("typeof", () => {
             let data: Wallet = {
                 id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                accounts: [],
+                entries: [],
                 name: "test"
             };
 
@@ -25,7 +25,7 @@ describe("Ops", () => {
         test("convert to op", () => {
             let data: Wallet = {
                 id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                accounts: [],
+                entries: [],
                 name: "test"
             };
 
@@ -35,9 +35,9 @@ describe("Ops", () => {
             expect(WalletOp.isOp(WalletOp.asOp(data))).toBeTruthy();
         });
 
-        describe("return active HDPath accounts", () => {
+        describe("return active HDPath entries", () => {
             test("single", () => {
-                let acc1: EthereumAccount = {
+                let acc1: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
@@ -49,7 +49,7 @@ describe("Ops", () => {
                 };
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                    accounts: [acc1],
+                    entries: [acc1],
                     name: "test"
                 };
 
@@ -58,8 +58,8 @@ describe("Ops", () => {
                 expect(act['5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc']).toStrictEqual([0])
             });
 
-            test("stored as reserved, but doesn't exist as account", () => {
-                let acc1: EthereumAccount = {
+            test("stored as reserved, but doesn't exist as entry", () => {
+                let acc1: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
@@ -69,7 +69,7 @@ describe("Ops", () => {
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
                     }
                 };
-                let acc2: EthereumAccount = {
+                let acc2: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
@@ -81,7 +81,7 @@ describe("Ops", () => {
                 };
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                    accounts: [acc1, acc2],
+                    entries: [acc1, acc2],
                     name: "test",
                     reserved: [
                         {seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 0},
@@ -97,7 +97,7 @@ describe("Ops", () => {
             });
 
             test("two on different seed", () => {
-                let acc1: EthereumAccount = {
+                let acc1: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
@@ -107,7 +107,7 @@ describe("Ops", () => {
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
                     }
                 };
-                let acc2: EthereumAccount = {
+                let acc2: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
@@ -119,7 +119,7 @@ describe("Ops", () => {
                 };
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                    accounts: [acc1, acc2],
+                    entries: [acc1, acc2],
                     name: "test"
                 };
 
@@ -130,7 +130,7 @@ describe("Ops", () => {
             });
 
             test("multiple", () => {
-                let acc1: EthereumAccount = {
+                let acc1: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
@@ -141,7 +141,7 @@ describe("Ops", () => {
                     }
                 };
 
-                let acc2: EthereumAccount = {
+                let acc2: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
@@ -151,7 +151,7 @@ describe("Ops", () => {
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     }
                 };
-                let acc3: EthereumAccount = {
+                let acc3: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
@@ -161,7 +161,7 @@ describe("Ops", () => {
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     }
                 };
-                let acc4: EthereumAccount = {
+                let acc4: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
@@ -172,7 +172,7 @@ describe("Ops", () => {
                     }
                 };
 
-                let acc5: EthereumAccount = {
+                let acc5: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
                     blockchain: 101,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
@@ -186,7 +186,7 @@ describe("Ops", () => {
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                     //acc5 is same path for different coin
-                    accounts: [acc1, acc2, acc3, acc4, acc5],
+                    entries: [acc1, acc2, acc3, acc4, acc5],
                     name: "test"
                 };
 
@@ -204,12 +204,12 @@ describe("Ops", () => {
             let data: Wallet[] = [
                 {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                    accounts: [],
+                    entries: [],
                     name: "test"
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    accounts: []
+                    entries: []
                 }
             ];
 
@@ -228,12 +228,12 @@ describe("Ops", () => {
             let data: Wallet[] = [
                 {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                    accounts: [],
+                    entries: [],
                     name: "test"
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    accounts: []
+                    entries: []
                 }
             ];
 
@@ -247,12 +247,12 @@ describe("Ops", () => {
             let data: Wallet[] = [
                 {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                    accounts: [],
+                    entries: [],
                     name: "test"
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    accounts: []
+                    entries: []
                 }
             ];
 
@@ -266,11 +266,11 @@ describe("Ops", () => {
             ).toThrow();
         });
 
-        test("findWalletByAccount", () => {
+        test("findWalletByEntry", () => {
             let data: Wallet[] = [
                 {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
-                    accounts: [
+                    entries: [
                         {
                             id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea-1',
                             blockchain: 100,
@@ -286,58 +286,58 @@ describe("Ops", () => {
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    accounts: []
+                    entries: []
                 }
             ];
 
             let wallets = WalletsOp.of(data);
 
-            let wallet = wallets.findWalletByAccount("9ce1f45b-4a8e-46ee-b81f-1efd034feaea-1");
+            let wallet = wallets.findWalletByEntry("9ce1f45b-4a8e-46ee-b81f-1efd034feaea-1");
             expect(wallet).toBeDefined();
             expect(wallet.value.id).toBe("9ce1f45b-4a8e-46ee-b81f-1efd034feaea");
 
-            // Wallet exist, but account doesn't exist
-            let wallet2 = wallets.findWalletByAccount("9ce1f45b-4a8e-46ee-b81f-1efd034feaea-2");
+            // Wallet exist, but entry doesn't exist
+            let wallet2 = wallets.findWalletByEntry("9ce1f45b-4a8e-46ee-b81f-1efd034feaea-2");
             expect(wallet2).toBeUndefined();
 
             // Wallet doesn't exist
-            let wallet3 = wallets.findWalletByAccount("d0659bdd-8090-4b08-90a2-3b951cb98b37-0");
+            let wallet3 = wallets.findWalletByEntry("d0659bdd-8090-4b08-90a2-3b951cb98b37-0");
             expect(wallet3).toBeUndefined();
         });
     });
 
-    describe("AccountOp", () => {
+    describe("EntryOp", () => {
         test("typeof", () => {
-            expect(AccountIdOp.isOp(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-0"))).toBeTruthy();
+            expect(EntryIdOp.isOp(EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-0"))).toBeTruthy();
 
-            expect(AccountIdOp.isOp("d0659bdd-8090-4b08-90a2-3b951cb98b37-0")).toBeFalsy();
-            expect(AccountIdOp.isOp("d0659bdd-8090-4b08-90a2-3b951cb98b37")).toBeFalsy();
-            expect(AccountIdOp.isOp(null)).toBeFalsy();
-            expect(AccountIdOp.isOp(undefined)).toBeFalsy();
+            expect(EntryIdOp.isOp("d0659bdd-8090-4b08-90a2-3b951cb98b37-0")).toBeFalsy();
+            expect(EntryIdOp.isOp("d0659bdd-8090-4b08-90a2-3b951cb98b37")).toBeFalsy();
+            expect(EntryIdOp.isOp(null)).toBeFalsy();
+            expect(EntryIdOp.isOp(undefined)).toBeFalsy();
         });
 
         test("Fails on invalid value", () => {
             expect(() => {
-                AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37")
+                EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37")
             }).toThrow();
 
             expect(() => {
-                AccountIdOp.of(null)
+                EntryIdOp.of(null)
             }).toThrow();
 
             expect(() => {
-                AccountIdOp.of(undefined)
+                EntryIdOp.of(undefined)
             }).toThrow();
 
             expect(() => {
-                AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-foobar")
+                EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-foobar")
             }).toThrow();
         });
 
         test("Create from valid id", () => {
-            expect(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-0")).toBeDefined();
-            expect(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-1")).toBeDefined();
-            expect(AccountIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-51")).toBeDefined();
+            expect(EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-0")).toBeDefined();
+            expect(EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-1")).toBeDefined();
+            expect(EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-51")).toBeDefined();
         })
 
     })

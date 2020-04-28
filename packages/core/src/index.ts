@@ -1,11 +1,11 @@
 export {
-    Uuid, AccountId,
-    isAccountId,
+    Uuid, EntryId,
+    isEntryId,
 
     BlockchainId,
 
     BlockchainType,
-    AccountType,
+    EntryType,
     SeedType,
     isReference,
 
@@ -14,12 +14,12 @@ export {
     AddressBookItem,
     Wallet,
     WalletCreateOptions,
-    WalletAccount,
-    EthereumAccount,
-    isEthereumAccount,
+    WalletEntry,
+    EthereumEntry,
+    isEthereumEntry,
 
     SeedPKRef,
-    SeedAccount,
+    SeedEntry,
     SeedDefinition,
     ImportMnemonic,
     MnemonicSeed,
@@ -35,7 +35,7 @@ export {
 
 
     ImportPkType,
-    AddAccount,
+    AddEntry,
     Update,
     ImportPrivateKey,
     PKRef,
@@ -44,5 +44,5 @@ export {
 } from './types';
 
 export {
-    WalletOp, WalletsOp, AccountIdOp
+    WalletOp, WalletsOp, EntryIdOp
 } from './ops'

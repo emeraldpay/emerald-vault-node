@@ -1,6 +1,6 @@
 export type BlockchainType = "ethereum";
 export type SeedType = "raw" | "ledger" | "mnemonic";
-export type AccountType = "pk" | "seed-hd";
+export type EntryType = "pk" | "seed-hd";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
 
 export enum BlockchainId {
@@ -15,9 +15,9 @@ export enum BlockchainId {
 export type Uuid = string;
 
 /**
- * UUID-NUMBER id of an account, where UUID is id of the parent wallet, and NUMBER is account id inside the wallet
+ * UUID-NUMBER id of an entry, where UUID is id of the parent wallet, and NUMBER is entry id inside the wallet
  */
-export type AccountId = string;
+export type EntryId = string;
 
 export type Update = {
     name?: string | null,
@@ -57,38 +57,38 @@ export type ImportPrivateKey = {
 }
 
 export type PKRef = {
-    type: AccountType,
+    type: EntryType,
     keyId: Uuid
 }
 
 export type SeedPKRef = {
-    type: AccountType,
+    type: EntryType,
     seedId: Uuid,
     hdPath: string
 }
 
-export type EthereumAccount = {
-    id: AccountId,
+export type EthereumEntry = {
+    id: EntryId,
     blockchain: number,
     address: string,
     key: PKRef | SeedPKRef | undefined,
     receiveDisabled?: boolean | undefined
 }
 
-export type BitcoinAccount = {
-    id: AccountId,
+export type BitcoinEntry = {
+    id: EntryId,
     blockchain: number,
     key: PKRef | SeedPKRef,
     receiveDisabled?: boolean | undefined
 }
 
-export type WalletAccount = EthereumAccount | BitcoinAccount;
+export type WalletEntry = EthereumEntry | BitcoinEntry;
 
 export type Wallet = {
     id: Uuid,
     name?: string | undefined,
     description?: string | undefined,
-    accounts: WalletAccount[],
+    entries: WalletEntry[],
     reserved?: HDPathAccount[] | undefined
 }
 
@@ -133,51 +133,51 @@ export function getAccountId(pk: SeedPKRef): number | undefined {
     return parseInt(m[3]);
 }
 
-export function isEthereumAccount(acc: WalletAccount): acc is EthereumAccount {
+export function isEthereumEntry(acc: WalletEntry): acc is EthereumEntry {
     return acc.blockchain === 100 || acc.blockchain === 101
 }
 
-export function isBitcoinAccount(acc: WalletAccount): acc is BitcoinAccount {
+export function isBitcoinEntry(acc: WalletEntry): acc is BitcoinEntry {
     return false
 }
 
-export function isSeedPkRef(acc: WalletAccount, key: PKRef | SeedPKRef | undefined): key is SeedPKRef  {
+export function isSeedPkRef(acc: WalletEntry, key: PKRef | SeedPKRef | undefined): key is SeedPKRef {
     return typeof key === 'object'
         && isReference(key["seedId"])
         && typeof key["hdPath"] === "string"
 }
 
 // {UUID}-{INDEX}
-let ACCOUNT_ID_REGEX = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})-([0-9]+)$/;
+let ENTRY_ID_REGEX = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})-([0-9]+)$/;
 
-export function isAccountId(id: string): id is AccountId {
-    return id.match(ACCOUNT_ID_REGEX) != null
+export function isEntryId(id: string): id is EntryId {
+    return id.match(ENTRY_ID_REGEX) != null
 }
 
-export function extractWalletId(id: AccountId): Uuid {
-    let m = id.match(ACCOUNT_ID_REGEX);
+export function extractWalletId(id: EntryId): Uuid {
+    let m = id.match(ENTRY_ID_REGEX);
     if (typeof m !== 'object' || m === null) {
         throw new Error("Invalid id: " + id)
     }
     return m[1]
 }
 
-export function extractAccountInternalId(id: AccountId): number {
-    let m = id.match(ACCOUNT_ID_REGEX);
+export function extractEntryInternalId(id: EntryId): number {
+    let m = id.match(ENTRY_ID_REGEX);
     if (typeof m !== 'object' || m === null) {
         throw new Error("Invalid id: " + id)
     }
     return parseInt(m[2])
 }
 
-export type AddAccount = {
+export type AddEntry = {
     blockchain: number,
     type: ImportPkType,
-    key?: string | SeedAccount,
+    key?: string | SeedEntry,
     password?: string
 }
 
-export type SeedAccount = {
+export type SeedEntry = {
     seedId: Uuid,
     hdPath: string,
     password?: string
@@ -236,15 +236,15 @@ export interface IEmeraldVault {
 
     removeWallet(walletId: Uuid): void;
 
-    addAccount(walletId: Uuid, account: AddAccount): AccountId;
+    addEntry(walletId: Uuid, entry: AddEntry): EntryId;
 
-    removeAccount(accountId: AccountId): boolean;
+    removeEntry(entryId: EntryId): boolean;
 
-    signTx(accountId: AccountId, tx: UnsignedTx, password?: string): string;
+    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string;
 
-    exportRawPk(accountId: AccountId, password: string): string;
+    exportRawPk(entryId: EntryId, password: string): string;
 
-    exportJsonPk(accountId: AccountId, password?: string): string;
+    exportJsonPk(entryId: EntryId, password?: string): string;
 
     generateMnemonic(size: number): string;
 

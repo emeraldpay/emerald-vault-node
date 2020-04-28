@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {AccountId, WalletOp} from "@emeraldpay/emerald-vault-core";
+import {EntryId, WalletOp} from "@emeraldpay/emerald-vault-core";
 import Common from "ethereumjs-common";
 import {Transaction} from "ethereumjs-tx";
 
@@ -59,7 +59,7 @@ describe('Sign different tx combinations (slow to execute)', () => {
     };
 
 
-    function testAll(accountId: AccountId, chainId: number) {
+    function testAll(entryId: EntryId, chainId: number) {
         let chainConfig = {};
         if (chainId !== 1) {
             chainConfig = {common: Common.forCustomChain(1, {chainId}, 'byzantium')};
@@ -79,7 +79,7 @@ describe('Sign different tx combinations (slow to execute)', () => {
                                     nonce,
                                     data
                                 };
-                                let raw = vault.signTx(accountId, tx, "123456");
+                                let raw = vault.signTx(entryId, tx, "123456");
                                 expect(raw).toBeDefined();
                                 let parsed;
                                 try {
@@ -110,32 +110,32 @@ describe('Sign different tx combinations (slow to execute)', () => {
 
     test("ETH", () => {
         let walletId = vault.addWallet("slow sign ETH");
-        let accountId = vault.addAccount(walletId, {
+        let entryId = vault.addEntry(walletId, {
             blockchain: 100,
             type: "ethereum-json",
             key: JSON.stringify(pk)
         });
-        testAll(accountId, 1);
+        testAll(entryId, 1);
     });
 
     test("ETC", () => {
         let walletId = vault.addWallet("slow sign ETC");
-        let accountId = vault.addAccount(walletId, {
+        let entryId = vault.addEntry(walletId, {
             blockchain: 101,
             type: "ethereum-json",
             key: JSON.stringify(pk)
         });
-        testAll(accountId,61);
+        testAll(entryId, 61);
     });
 
     test("Kovan", () => {
         let walletId = vault.addWallet("slow sign Kovan");
-        let accountId = vault.addAccount(walletId, {
+        let entryId = vault.addEntry(walletId, {
             blockchain: 10002,
             type: "ethereum-json",
             key: JSON.stringify(pk)
         });
-        testAll(accountId,42);
+        testAll(entryId, 42);
     })
 
 });
@@ -162,7 +162,7 @@ describe('Sign different key combinations (slow to execute)', () => {
         let walletId = vault.addWallet("test");
 
         for (let i = 0; i < 500; i++) {
-            vault.addAccount(walletId, {
+            vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -172,11 +172,11 @@ describe('Sign different key combinations (slow to execute)', () => {
                 }
             });
         }
-        let accounts = WalletOp.of(vault.getWallet(walletId)).getEthereumAccounts();
-        expect(accounts.length).toBe(500);
-        accounts.forEach(account => {
+        let entries = WalletOp.of(vault.getWallet(walletId)).getEthereumEntries();
+        expect(entries.length).toBe(500);
+        entries.forEach(entry => {
             let tx = {
-                from: account.address,
+                from: entry.address,
                 to: "0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1",
                 value: "0x1234",
                 gas: "0x5678",
@@ -184,7 +184,7 @@ describe('Sign different key combinations (slow to execute)', () => {
                 nonce: "0x0"
             };
 
-            let raw = vault.signTx(account.id, tx, "testtest");
+            let raw = vault.signTx(entry.id, tx, "testtest");
             expect(raw).toBeDefined();
             let parsed;
             try {
@@ -196,7 +196,7 @@ describe('Sign different key combinations (slow to execute)', () => {
             }
 
             expect(parsed).toBeDefined();
-            expect(convertHex(parsed.getSenderAddress())).toBe(account.address);
+            expect(convertHex(parsed.getSenderAddress())).toBe(entry.address);
             expect(convertHex(parsed.to)).toBe("0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1");
             expect(hexQuantity(convertHex(parsed.value))).toBe("0x1234");
             expect(hexQuantity(convertHex(parsed.gasLimit))).toBe("0x5678");

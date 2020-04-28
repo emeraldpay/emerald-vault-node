@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {EthereumAccount} from "@emeraldpay/emerald-vault-core";
+import {EthereumEntry} from "@emeraldpay/emerald-vault-core";
 
 describe("Mnemonic", () => {
 
@@ -103,7 +103,7 @@ describe("Mnemonic", () => {
                 });
 
                 let walletId = vault.addWallet("test");
-                let accountId = vault.addAccount(walletId, {
+                let entryId = vault.addEntry(walletId, {
                     blockchain: 100,
                     type: "hd-path",
                     key: {
@@ -148,7 +148,7 @@ describe("Mnemonic", () => {
             });
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -158,9 +158,9 @@ describe("Mnemonic", () => {
                 }
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account).toBeDefined();
-            expect(account.address).toBe("0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1".toLowerCase());
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry).toBeDefined();
+            expect(entry.address).toBe("0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1".toLowerCase());
         });
 
         test("import f78a3c9 for ETC", () => {
@@ -179,7 +179,7 @@ describe("Mnemonic", () => {
             });
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "hd-path",
                 key: {
@@ -189,9 +189,9 @@ describe("Mnemonic", () => {
                 }
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account).toBeDefined();
-            expect(account.address).toBe("0xcA1c2E76F2122fddA9f97da0C4e37674727645cc".toLowerCase());
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry).toBeDefined();
+            expect(entry.address).toBe("0xcA1c2E76F2122fddA9f97da0C4e37674727645cc".toLowerCase());
         });
 
         test("import 12 words mnemonic", () => {
@@ -210,7 +210,7 @@ describe("Mnemonic", () => {
             });
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -220,9 +220,9 @@ describe("Mnemonic", () => {
                 }
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account).toBeDefined();
-            expect(account.address).toBe("0xaCeA13E5eB2120c2B42E0EdA0642d846Fa740F51".toLowerCase());
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry).toBeDefined();
+            expect(entry.address).toBe("0xaCeA13E5eB2120c2B42E0EdA0642d846Fa740F51".toLowerCase());
         });
 
         test("import 18 words mnemonic", () => {
@@ -241,7 +241,7 @@ describe("Mnemonic", () => {
             });
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -251,9 +251,9 @@ describe("Mnemonic", () => {
                 }
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account).toBeDefined();
-            expect(account.address).toBe("0x1E728c6d055380b69ac1c0fDC27425158621f109".toLowerCase());
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry).toBeDefined();
+            expect(entry.address).toBe("0x1E728c6d055380b69ac1c0fDC27425158621f109".toLowerCase());
 
         });
 
@@ -273,7 +273,7 @@ describe("Mnemonic", () => {
             });
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -283,9 +283,9 @@ describe("Mnemonic", () => {
                 }
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account).toBeDefined();
-            expect(account.address).toBe("0x61bfe74D742679902E0Ed88385A1272a9922FFb5".toLowerCase());
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry).toBeDefined();
+            expect(entry.address).toBe("0x61bfe74D742679902E0Ed88385A1272a9922FFb5".toLowerCase());
 
         });
 
@@ -305,7 +305,7 @@ describe("Mnemonic", () => {
             });
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -315,9 +315,9 @@ describe("Mnemonic", () => {
                 }
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account).toBeDefined();
-            expect(account.address).toBe("0x928560FaEe442342F703dabf04BC98460314B1C8".toLowerCase());
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry).toBeDefined();
+            expect(entry.address).toBe("0x928560FaEe442342F703dabf04BC98460314B1C8".toLowerCase());
 
         });
 
@@ -337,7 +337,7 @@ describe("Mnemonic", () => {
             });
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -347,9 +347,9 @@ describe("Mnemonic", () => {
                 }
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account).toBeDefined();
-            expect(account.address).toBe("0x00ED14a24d2acE1bCC60a978e017D3e0f9be92Ae".toLowerCase());
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry).toBeDefined();
+            expect(entry.address).toBe("0x00ED14a24d2acE1bCC60a978e017D3e0f9be92Ae".toLowerCase());
 
         });
     });

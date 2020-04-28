@@ -1,6 +1,6 @@
 import {Config, Status, StatusCode,} from './types';
 import {
-    AddAccount,
+    AddEntry,
     AddressBookItem,
     BlockchainType,
     isLedger,
@@ -12,7 +12,7 @@ import {
     UnsignedTx,
     Uuid,
     Wallet, WalletCreateOptions,
-    IEmeraldVault, AccountId, AccountIdOp, WalletsOp
+    IEmeraldVault, EntryId, EntryIdOp, WalletsOp
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -123,44 +123,44 @@ export class EmeraldVaultNative implements IEmeraldVault {
         }
     }
 
-    addAccount(walletId: Uuid, account: AddAccount): AccountId {
-        let status: Status<number> = addon.wallets_addAccount(this.conf, walletId, JSON.stringify(account));
+    addEntry(walletId: Uuid, entry: AddEntry): EntryId {
+        let status: Status<number> = addon.wallets_addEntry(this.conf, walletId, JSON.stringify(entry));
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
-        return AccountIdOp.create(walletId, status.result).value
+        return EntryIdOp.create(walletId, status.result).value
     }
 
-    removeAccount(accountFullId: AccountId) {
-        let op = AccountIdOp.of(accountFullId);
-        let status: Status<boolean> = addon.wallets_removeAccount(this.conf, op.extractWalletId(), op.extractAccountInternalId());
+    removeEntry(entryFullId: EntryId) {
+        let op = EntryIdOp.of(entryFullId);
+        let status: Status<boolean> = addon.wallets_removeEntry(this.conf, op.extractWalletId(), op.extractEntryInternalId());
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
         return status.result
     }
 
-    signTx(accountFullId: AccountId, tx: UnsignedTx, password?: string): string {
-        let op = AccountIdOp.of(accountFullId);
-        let status: Status<string> = addon.sign_tx(this.conf, op.extractWalletId(), op.extractAccountInternalId(), JSON.stringify(tx), password);
+    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string {
+        let op = EntryIdOp.of(entryId);
+        let status: Status<string> = addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
         return "0x" + status.result;
     }
 
-    exportRawPk(accountFullId: AccountId, password: string): string {
-        let op = AccountIdOp.of(accountFullId);
-        let status: Status<string> = addon.accounts_exportPk(this.conf, op.extractWalletId(), op.extractAccountInternalId(), password);
+    exportRawPk(entryId: EntryId, password: string): string {
+        let op = EntryIdOp.of(entryId);
+        let status: Status<string> = addon.entries_exportPk(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
         return status.result;
     }
 
-    exportJsonPk(accountFullId: AccountId, password?: string): string {
-        let op = AccountIdOp.of(accountFullId);
-        let status: Status<string> = addon.accounts_export(this.conf, op.extractWalletId(), op.extractAccountInternalId(), password);
+    exportJsonPk(entryId: EntryId, password?: string): string {
+        let op = EntryIdOp.of(entryId);
+        let status: Status<string> = addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }

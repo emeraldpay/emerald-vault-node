@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {AddAccount, WalletOp, WalletsOp, AccountIdOp, EthereumAccount} from "@emeraldpay/emerald-vault-core";
+import {AddEntry, WalletOp, WalletsOp} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 describe("Wallets", () => {
@@ -21,29 +21,29 @@ describe("Wallets", () => {
 
                 expect(wallets.length).toBe(3);
 
-                let eth = wallets.filter((w) => w.accounts.some((a) => a.blockchain == 100));
-                let etc = wallets.filter((w) => w.accounts.some((a) => a.blockchain == 101));
+                let eth = wallets.filter((w) => w.entries.some((a) => a.blockchain == 100));
+                let etc = wallets.filter((w) => w.entries.some((a) => a.blockchain == 101));
 
                 expect(eth.length).toBe(2);
                 expect(etc.length).toBe(1);
 
-                expect(etc[0].accounts.length).toBe(1);
-                expect(etc[0].accounts[0].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+                expect(etc[0].entries.length).toBe(1);
+                expect(etc[0].entries[0].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
 
                 eth = eth.sort((a, b) =>
-                    WalletOp.of(a).getEthereumAccounts()[0].address.localeCompare(
-                        WalletOp.of(b).getEthereumAccounts()[0].address
+                    WalletOp.of(a).getEthereumEntries()[0].address.localeCompare(
+                        WalletOp.of(b).getEthereumEntries()[0].address
                     )
                 );
 
-                expect(eth[0].accounts[0].address).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(eth[0].entries[0].address).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
                 expect(eth[0].name).toBe("foo bar");
-                expect(eth[1].accounts[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(eth[1].entries[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
             });
         });
     });
 
-    describe("Create wallet and account", () => {
+    describe("Create wallet and entry", () => {
 
         describe("Create", () => {
             let vault: EmeraldVaultNative;
@@ -159,89 +159,89 @@ describe("Wallets", () => {
                 };
 
                 let id = vault.addWallet("Test 2");
-                let acc: AddAccount = {
+                let acc: AddEntry = {
                     blockchain: 100,
                     type: "ethereum-json",
                     key: JSON.stringify(key)
                 };
-                let result = vault.addAccount(id, acc);
+                let result = vault.addEntry(id, acc);
 
                 expect(result).toBe(id + "-0");
 
                 let wallet = WalletsOp.of(vault.listWallets()).getWallet(id).value;
-                expect(wallet.accounts.length).toBe(1);
+                expect(wallet.entries.length).toBe(1);
             });
 
             test("Create and import raw", () => {
                 let id = vault.addWallet("Test 2");
-                let acc: AddAccount = {
+                let acc: AddEntry = {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test"
                 };
-                let result = vault.addAccount(id, acc);
+                let result = vault.addEntry(id, acc);
 
                 expect(result).toBe(id + "-0");
                 let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
-                expect(wallet.value.accounts.length).toBe(1);
-                expect(wallet.getEthereumAccounts()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+                expect(wallet.value.entries.length).toBe(1);
+                expect(wallet.getEthereumEntries()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
             });
 
             test("Create and import 2 keys", () => {
                 let id = vault.addWallet("Test 3");
-                let acc1: AddAccount = {
+                let acc1: AddEntry = {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test1"
                 };
-                let result1 = vault.addAccount(id, acc1);
-                let acc2: AddAccount = {
+                let result1 = vault.addEntry(id, acc1);
+                let acc2: AddEntry = {
                     blockchain: 101,
                     type: "raw-pk-hex",
                     key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
                     password: "test2"
                 };
-                let result2 = vault.addAccount(id, acc2);
+                let result2 = vault.addEntry(id, acc2);
 
                 expect(result1).toBe(id + "-0");
                 expect(result2).toBe(id + "-1");
 
                 let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
-                expect(wallet.value.accounts.length).toBe(2);
-                expect(wallet.getEthereumAccounts()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
-                expect(wallet.getEthereumAccounts()[0].blockchain).toBe(100);
-                expect(wallet.getEthereumAccounts()[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
-                expect(wallet.getEthereumAccounts()[1].blockchain).toBe(101);
+                expect(wallet.value.entries.length).toBe(2);
+                expect(wallet.getEthereumEntries()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+                expect(wallet.getEthereumEntries()[0].blockchain).toBe(100);
+                expect(wallet.getEthereumEntries()[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+                expect(wallet.getEthereumEntries()[1].blockchain).toBe(101);
             });
 
             test("Create and import from seed", () => {
                 let id = vault.addWallet("Test 3");
-                let acc1: AddAccount = {
+                let acc1: AddEntry = {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test1"
                 };
-                let result1 = vault.addAccount(id, acc1);
-                let acc2: AddAccount = {
+                let result1 = vault.addEntry(id, acc1);
+                let acc2: AddEntry = {
                     blockchain: 101,
                     type: "raw-pk-hex",
                     key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
                     password: "test2"
                 };
-                let result2 = vault.addAccount(id, acc2);
+                let result2 = vault.addEntry(id, acc2);
 
                 expect(result1).toBe(id + "-0");
                 expect(result2).toBe(id + "-1");
 
                 let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
-                expect(wallet.value.accounts.length).toBe(2);
-                expect(wallet.getEthereumAccounts()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
-                expect(wallet.getEthereumAccounts()[0].blockchain).toBe(100);
-                expect(wallet.getEthereumAccounts()[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
-                expect(wallet.getEthereumAccounts()[1].blockchain).toBe(101);
+                expect(wallet.value.entries.length).toBe(2);
+                expect(wallet.getEthereumEntries()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+                expect(wallet.getEthereumEntries()[0].blockchain).toBe(100);
+                expect(wallet.getEthereumEntries()[1].address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+                expect(wallet.getEthereumEntries()[1].blockchain).toBe(101);
             });
         });
 
@@ -275,7 +275,7 @@ describe("Wallets", () => {
             expect(wallet4.name).toBeNull();
         });
 
-        test("Keep seed reserved after removing account", () => {
+        test("Keep seed reserved after removing entry", () => {
             let id = vault.importSeed({
                 type: "mnemonic",
                 value: {
@@ -286,7 +286,7 @@ describe("Wallets", () => {
             expect(id).toBeDefined();
 
             let walletId = vault.addWallet("test seed");
-            let acc: AddAccount = {
+            let acc: AddEntry = {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -295,12 +295,12 @@ describe("Wallets", () => {
                     password: "test"
                 }
             };
-            let accId = vault.addAccount(walletId, acc);
-            vault.removeAccount(accId);
+            let entryId = vault.addEntry(walletId, acc);
+            vault.removeEntry(entryId);
 
             let wallets = vault.listWallets();
             let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
-            expect(wallet.accounts.length).toBe(0);
+            expect(wallet.entries.length).toBe(0);
 
             let reserved = WalletOp.of(wallet).getHDAccounts();
             let expReserved = {};
@@ -330,15 +330,15 @@ describe("Wallets", () => {
             }).toThrowError("No wallet with id");
         });
 
-        test("with accounts", () => {
+        test("with entries", () => {
             let walletId = vault.addWallet("test 1");
-            let accountId1 = vault.addAccount(walletId, {
+            vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
             });
-            let accountId2 = vault.addAccount(walletId, {
+            vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "raw-pk-hex",
                 key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
@@ -357,7 +357,7 @@ describe("Wallets", () => {
 
         test("keep others", () => {
             let walletId1 = vault.addWallet("test 1");
-            let accountId1 = vault.addAccount(walletId1, {
+            vault.addEntry(walletId1, {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
@@ -365,7 +365,7 @@ describe("Wallets", () => {
             });
 
             let walletId2 = vault.addWallet("test 2");
-            let accountId2 = vault.addAccount(walletId2, {
+            vault.addEntry(walletId2, {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",

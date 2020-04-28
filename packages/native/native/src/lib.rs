@@ -13,7 +13,7 @@ extern crate uuid;
 use neon::prelude::*;
 
 mod json;
-mod accounts;
+mod entries;
 mod access;
 mod seeds;
 mod sign;
@@ -25,13 +25,13 @@ register_module!(mut cx, {
     cx.export_function("wallets_list", wallets::list).expect("wallets_list not exported");
     cx.export_function("wallets_add", wallets::add).expect("wallets_add not exported");
     cx.export_function("wallets_remove", wallets::remove).expect("wallets_remove not exported");
-    cx.export_function("wallets_addAccount", wallets::add_account_to_wallet).expect("wallets_addAccount not exported");
+    cx.export_function("wallets_addEntry", wallets::add_entry_to_wallet).expect("wallets_addEntry not exported");
     cx.export_function("wallets_updateLabel", wallets::update_label).expect("wallets_updateLabel not exported");
-    cx.export_function("wallets_removeAccount", wallets::remove_account).expect("wallets_removeAccount not exported");
+    cx.export_function("wallets_removeEntry", wallets::remove_entry).expect("wallets_removeEntry not exported");
 
-    cx.export_function("accounts_import", accounts::import_ethereum).expect("accounts_import not exported");
-    cx.export_function("accounts_export", accounts::export).expect("accounts_export not exported");
-    cx.export_function("accounts_exportPk", accounts::export_pk).expect("accounts_exportPk not exported");
+    cx.export_function("entries_import", entries::import_ethereum).expect("entries_import not exported");
+    cx.export_function("entries_export", entries::export).expect("entries_export not exported");
+    cx.export_function("entries_exportPk", entries::export_pk).expect("entries_exportPk not exported");
 
     cx.export_function("sign_tx", sign::sign_tx).expect("sign_txTx not exported");
 

@@ -9,41 +9,41 @@ use emerald_vault::{convert::{
     json::keyfile::EthereumJsonV3File
 }, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey};
 use json::StatusResult;
-use emerald_vault::structs::wallet::{AccountId, ReservedPath};
+use emerald_vault::structs::wallet::{EntryId, ReservedPath};
 
 #[derive(Deserialize, Clone)]
-pub struct AddAccountJson {
+pub struct AddEntryJson {
     pub blockchain: u32,
     #[serde(flatten)]
-    pub key_value: AddAccountType,
-    pub password: Option<String>
+    pub key_value: AddEntryType,
+    pub password: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(tag = "type", content = "key")]
-pub enum AddAccountType {
+pub enum AddEntryType {
     #[serde(rename = "ethereum-json")]
     EthereumJson(String),
     #[serde(rename = "raw-pk-hex")]
     RawHex(String),
     #[serde(rename = "hd-path")]
-    HdPath(SeedAccount),
+    HdPath(SeedEntry),
     #[serde(rename = "generate-random")]
-    GenerateRandom
+    GenerateRandom,
 }
 
 #[derive(Deserialize, Clone)]
-pub struct SeedAccount {
+pub struct SeedEntry {
     #[serde(rename = "seedId")]
     pub seed_id: String,
     #[serde(rename = "hdPath")]
     pub hd_path: String,
     pub password: String,
-    pub address: Option<String>
+    pub address: Option<String>,
 }
 
 #[derive(Serialize, Clone)]
-pub struct WalletAccountJson {
+pub struct WalletEntryJson {
     pub id: String,
     pub blockchain: u32,
     pub address: Option<String>,
@@ -55,7 +55,7 @@ pub struct WalletAccountJson {
 pub struct WalletJson {
     pub id: String,
     pub name: Option<String>,
-    pub accounts: Vec<WalletAccountJson>,
+    pub entries: Vec<WalletEntryJson>,
     pub reserved: Vec<ReservedAccountJson>,
 }
 
@@ -93,9 +93,9 @@ impl From<ReservedAccountJson> for ReservedPath {
 
 impl From<Wallet> for WalletJson {
     fn from(wallet: Wallet) -> Self {
-        let accounts: Vec<WalletAccountJson> = wallet.accounts.iter()
-            .map(|a| WalletAccountJson {
-                id: AccountId::from(&wallet, a).to_string(),
+        let entries: Vec<WalletEntryJson> = wallet.entries.iter()
+            .map(|a| WalletEntryJson {
+                id: EntryId::from(&wallet, a).to_string(),
                 blockchain: a.blockchain as u32,
                 address: a.address.map(|v| v.to_string()),
                 receive_disabled: a.receive_disabled,
@@ -107,8 +107,8 @@ impl From<Wallet> for WalletJson {
         WalletJson {
             id: wallet.id.clone().to_string(),
             name: wallet.label,
-            accounts,
-            reserved
+            entries,
+            reserved,
         }
     }
 }
@@ -119,14 +119,14 @@ fn read_wallet_id(cx: &mut FunctionContext, pos: i32) -> Uuid {
     wallet_id
 }
 
-fn read_wallet_and_account_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usize) {
+fn read_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usize) {
     let wallet_id = cx.argument::<JsString>(pos).expect("wallet_id is not provided").value();
     let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
 
-    let account_id = cx.argument::<JsNumber>(pos + 1).expect("account_id is not provided").value();
-    let account_id = account_id as usize;
+    let entry_id = cx.argument::<JsNumber>(pos + 1).expect("entry_id is not provided").value();
+    let entry_id = entry_id as usize;
 
-    (wallet_id, account_id)
+    (wallet_id, entry_id)
 }
 
 impl WrappedVault {
@@ -146,40 +146,40 @@ impl WrappedVault {
         }).map(|_| id)
     }
 
-    fn create_account(&self, wallet_id: Uuid, account: AddAccountJson) -> Result<usize, VaultError> {
-        let blockchain = Blockchain::try_from(account.blockchain)?;
+    fn create_entry(&self, wallet_id: Uuid, entry: AddEntryJson) -> Result<usize, VaultError> {
+        let blockchain = Blockchain::try_from(entry.blockchain)?;
         let storage = &self.cfg.get_storage();
-        let result = match account.key_value {
-            AddAccountType::EthereumJson(json) => {
+        let result = match entry.key_value {
+            AddEntryType::EthereumJson(json) => {
                 let json = EthereumJsonV3File::try_from(json)?;
-                let id = storage.add_account(wallet_id)
+                let id = storage.add_entry(wallet_id)
                     .ethereum(&json, blockchain)?;
                 id
             },
-            AddAccountType::RawHex(hex) => {
-                if account.password.is_none() {
+            AddEntryType::RawHex(hex) => {
+                if entry.password.is_none() {
                     panic!("Password is required".to_string())
                 }
                 let hex = trim_hex(hex.as_str());
                 let hex = hex::decode(hex)?;
-                storage.add_account(wallet_id)
-                    .raw_pk(hex, account.password.unwrap().as_str(), blockchain)?
+                storage.add_entry(wallet_id)
+                    .raw_pk(hex, entry.password.unwrap().as_str(), blockchain)?
             },
-            AddAccountType::HdPath(hd) => {
-                storage.add_account(wallet_id)
+            AddEntryType::HdPath(hd) => {
+                storage.add_entry(wallet_id)
                     .seed_hd(Uuid::from_str(hd.seed_id.as_str())?,
                              HDPath::try_from(hd.hd_path.as_str())?,
                              blockchain,
                              Some(hd.password),
                              None)?
             },
-            AddAccountType::GenerateRandom => {
-                if account.password.is_none() {
+            AddEntryType::GenerateRandom => {
+                if entry.password.is_none() {
                     panic!("Password is required".to_string())
                 }
                 let pk = PrivateKey::gen();
-                storage.add_account(wallet_id)
-                    .raw_pk(pk.0.to_vec(), account.password.unwrap().as_str(), blockchain)?
+                storage.add_entry(wallet_id)
+                    .raw_pk(pk.0.to_vec(), entry.password.unwrap().as_str(), blockchain)?
             }
         };
         Ok(result)
@@ -193,14 +193,14 @@ impl WrappedVault {
         Ok(())
     }
 
-    fn remove_account(&self, wallet_id: Uuid, account_id: usize) -> Result<bool, VaultError> {
+    fn remove_entry(&self, wallet_id: Uuid, entry_id: usize) -> Result<bool, VaultError> {
         let storage = &self.cfg.get_storage();
         let mut wallet = storage.wallets().get(wallet_id)?;
-        let index = wallet.accounts.iter().position(|a| a.id == account_id);
+        let index = wallet.entries.iter().position(|a| a.id == entry_id);
         if index.is_none() {
             return Ok(false)
         }
-        wallet.accounts.remove(index.unwrap());
+        wallet.entries.remove(index.unwrap());
         storage.wallets().update(wallet)
     }
 
@@ -240,16 +240,16 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(js_value.downcast().unwrap())
 }
 
-pub fn add_account_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn add_entry_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = read_wallet_id(&mut cx, 1);
     let json = cx.argument::<JsString>(2).expect("Input JSON is not provided").value();
 
-    let parsed: AddAccountJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    let parsed: AddEntryJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
-    let id = vault.create_account(wallet_id, parsed).expect("Account not created");
+    let id = vault.create_entry(wallet_id, parsed).expect("Entry not created");
 
     let status = StatusResult::Ok(id).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
@@ -269,13 +269,13 @@ pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(js_value.downcast().unwrap())
 }
 
-pub fn remove_account(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn remove_entry(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let (wallet_id, account_id) = read_wallet_and_account_ids(&mut cx, 1);
+    let (wallet_id, entry_id) = read_wallet_and_entry_ids(&mut cx, 1);
 
-    let result = vault.remove_account(wallet_id, account_id).expect("Not deleted");
+    let result = vault.remove_entry(wallet_id, entry_id).expect("Not deleted");
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())

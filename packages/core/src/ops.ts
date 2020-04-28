@@ -1,12 +1,12 @@
 import {
-    AccountId,
-    EthereumAccount,
-    extractAccountInternalId,
-    extractWalletId, getAccountId, HDPathAccount, HDPathAccounts, isAccountId,
-    isEthereumAccount, isSeedPkRef,
+    EntryId,
+    EthereumEntry,
+    extractEntryInternalId,
+    extractWalletId, getAccountId, HDPathAccount, HDPathAccounts, isEntryId,
+    isEthereumEntry, isSeedPkRef,
     Uuid,
     Wallet,
-    WalletAccount
+    WalletEntry
 } from "./types";
 
 /**
@@ -69,16 +69,16 @@ export class WalletsOp {
     }
 
     /**
-     * Find wallet by specified account id
+     * Find wallet by specified entry id
      *
      * @param id
-     * @return wallet OR undefined if no wallet with such account found
+     * @return wallet OR undefined if no wallet with such entry found
      */
-    findWalletByAccount(id: AccountId): WalletOp | undefined {
+    findWalletByEntry(id: EntryId): WalletOp | undefined {
         let walletId = extractWalletId(id);
         try {
             let wallet = this.getWallet(walletId);
-            if (wallet.value.accounts.some((account) => account.id == id)) {
+            if (wallet.value.entries.some((entry) => entry.id == id)) {
                 return wallet
             } else {
                 return undefined
@@ -89,13 +89,13 @@ export class WalletsOp {
     }
 
     /**
-     * Find account with the specified id
+     * Find entry with the specified id
      *
      * @param id
-     * @return account OR undefined if not found
+     * @return entry OR undefined if not found
      */
-    findAccount(id: AccountId): EthereumAccount | undefined {
-        return this.getAccounts().find((account) => account.id == id)
+    findEntry(id: EntryId): EthereumEntry | undefined {
+        return this.getEntries().find((entry) => entry.id == id)
     }
 
     /**
@@ -106,14 +106,14 @@ export class WalletsOp {
     }
 
     /**
-     * @return all accounts in the current list
+     * @return all entries in the current list
      */
-    getAccounts(): EthereumAccount[] {
+    getEntries(): EthereumEntry[] {
         let result = [];
         this.value.forEach((wallet) =>
-            (wallet.accounts || [])
-                .filter((account) => isEthereumAccount(account))
-                .forEach((account) => result.push(account))
+            (wallet.entries || [])
+                .filter((entry) => isEthereumEntry(entry))
+                .forEach((entry) => result.push(entry))
         );
         return result
     }
@@ -127,8 +127,8 @@ export class WalletsOp {
     findWalletByAddress(address: string, blockchain?: number): WalletOp | undefined {
         address = address.toLowerCase();
         let wallet = this.value.find((wallet) =>
-            (wallet.accounts || []).some((a) =>
-                isEthereumAccount(a)
+            (wallet.entries || []).some((a) =>
+                isEthereumEntry(a)
                 && a.address.toLowerCase() === address
                 && (typeof blockchain === 'undefined' || a.blockchain === blockchain)
             )
@@ -151,16 +151,16 @@ export class WalletsOp {
     }
 
     /**
-     * Finds all accounts cross all wallets for the specified blockchain
+     * Finds all entries cross all wallets for the specified blockchain
      * @param blockchain
      */
-    accountsByBlockchain(blockchain: number): EthereumAccount[] {
+    entriesByBlockchain(blockchain: number): EthereumEntry[] {
         let result = [];
         this.value
             .forEach((w) =>
-                (w.accounts || [])
-                    .filter((acc) => acc.blockchain === blockchain)
-                    .forEach((acc) => result.push(acc as EthereumAccount))
+                (w.entries || [])
+                    .filter((entry) => entry.blockchain === blockchain)
+                    .forEach((entry) => result.push(entry as EthereumEntry))
             );
         return result
     }
@@ -175,7 +175,7 @@ export class WalletOp {
 
     constructor(value: Wallet) {
         this.value = value;
-        this.value.accounts = this.value.accounts || [];
+        this.value.entries = this.value.entries || [];
     }
 
     /**
@@ -210,47 +210,47 @@ export class WalletOp {
     }
 
     /**
-     * Return all Ethereum-type of accounts in that wallet
+     * Return all Ethereum-type of entries in that wallet
      */
-    getEthereumAccounts(): EthereumAccount[] {
-        let accounts = this.value.accounts.filter((a) => isEthereumAccount(a));
-        return accounts as EthereumAccount[];
+    getEthereumEntries(): EthereumEntry[] {
+        let entries = this.value.entries.filter((e) => isEthereumEntry(e));
+        return entries as EthereumEntry[];
     }
 
     /**
-     * Find a first account with specified address
+     * Find a first entry with specified address
      *
      * @param address
      * @param blockchain (optional)
      */
-    findAccountByAddress(address: string, blockchain?: number): WalletAccount | undefined {
-        return this.value.accounts.find((a) =>
-            isEthereumAccount(a)
-                && a.address === address
-                && (typeof blockchain === 'undefined' || a.blockchain === blockchain)
+    findEntryByAddress(address: string, blockchain?: number): WalletEntry | undefined {
+        return this.value.entries.find((e) =>
+            isEthereumEntry(e)
+            && e.address === address
+            && (typeof blockchain === 'undefined' || e.blockchain === blockchain)
         );
     }
 
     /**
      *
      * @param blockchain
-     * @return all accounts in the wallet for the specified blockchain
+     * @return all entries in the wallet for the specified blockchain
      */
-    accountsByBlockchain(blockchain: number): EthereumAccount[] {
+    entriesByBlockchain(blockchain: number): EthereumEntry[] {
         let result = [];
-        this.value.accounts
-                    .filter((acc) => acc.blockchain === blockchain)
-                    .forEach((acc) => result.push(acc as EthereumAccount));
+        this.value.entries
+            .filter((entry) => entry.blockchain === blockchain)
+            .forEach((entry) => result.push(entry as EthereumEntry));
         return result
     }
 
     /**
      *
      * @param blockchain
-     * @return true if at least one of the accounts is for specified blockchain
+     * @return true if at least one of the entries is for specified blockchain
      */
     hasBlockchain(blockchain: number): boolean {
-        return this.value.accounts.some((account) => account.blockchain === blockchain)
+        return this.value.entries.some((entry) => entry.blockchain === blockchain)
     }
 
     /**
@@ -266,12 +266,12 @@ export class WalletOp {
             this.value.reserved.forEach((r) => result.push(r));
         }
 
-        //check current accounts, in case some were added but not stored
+        //check current accounts used by entries, in case some were added but not stored
         //TODO hardcoded for ethereum
-        this.getEthereumAccounts().forEach((account) => {
-            if (isSeedPkRef(account, account.key)) {
-                let seedId = account.key.seedId;
-                let accountId = getAccountId(account.key);
+        this.getEthereumEntries().forEach((entry) => {
+            if (isSeedPkRef(entry, entry.key)) {
+                let seedId = entry.key.seedId;
+                let accountId = getAccountId(entry.key);
                 let alreadyExists = result.some((r) =>
                     r.seedId === seedId && r.accountId === accountId
                 );
@@ -296,60 +296,60 @@ export class WalletOp {
 }
 
 /**
- * Operations over AccountId
+ * Operations over EntryId
  */
-export class AccountIdOp {
-    readonly value: AccountId;
-    private readonly kind = "emerald.AccountIdOp";
+export class EntryIdOp {
+    readonly value: EntryId;
+    private readonly kind = "emerald.EntryIdOp";
 
     constructor(value: string) {
         this.value = value;
     }
 
     /**
-     * Create new for the wallet and account
+     * Create new for the wallet and entry
      *
      * @param walletId
-     * @param accountId account index (numeric)
+     * @param entryId entry index (numeric)
      */
-    static create(walletId: Uuid, accountId: number): AccountIdOp {
-        return new AccountIdOp(`${walletId}-${accountId}`)
+    static create(walletId: Uuid, entryId: number): EntryIdOp {
+        return new EntryIdOp(`${walletId}-${entryId}`)
     }
 
     /**
-     * Create new AccountIdOp instance for the specified full id
+     * Create new EntryIdOp instance for the specified full id
      *
      * @param value
-     * @throws error if argument is not a valid full account id (UUID-NUM format)
+     * @throws error if argument is not a valid full entry id (UUID-NUM format)
      */
-    static of(value: AccountId): AccountIdOp {
-        if (!isAccountId(value)) {
-            throw new Error("Not account id: " + value);
+    static of(value: EntryId): EntryIdOp {
+        if (!isEntryId(value)) {
+            throw new Error("Not entry id: " + value);
         }
-        return new AccountIdOp(value);
+        return new EntryIdOp(value);
     }
 
     /**
-     * Check if passed argument is AccountIdOp
+     * Check if passed argument is EntryIdOp
      *
      * @param value
      */
-    static isOp(value: AccountId | string | AccountIdOp): value is AccountIdOp {
+    static isOp(value: EntryId | string | EntryIdOp): value is EntryIdOp {
         return typeof value === 'object'
             && value !== null
-            && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.AccountIdOp")
+            && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.EntryIdOp")
     }
 
     /**
-     * Returns a AccountIdOp for specified argument. If it's already an Op then return itself, or if it's a string, then creates new AccountIdOp for it.
+     * Returns a EntryIdOp for specified argument. If it's already an Op then return itself, or if it's a string, then creates new EntryIdOp for it.
      *
      * @param value
      */
-    static asOp(value: AccountId | AccountIdOp): AccountIdOp {
-        if (AccountIdOp.isOp(value)) {
+    static asOp(value: EntryId | EntryIdOp): EntryIdOp {
+        if (EntryIdOp.isOp(value)) {
             return value
         }
-        return AccountIdOp.of(value)
+        return EntryIdOp.of(value)
     }
 
     /**
@@ -360,9 +360,9 @@ export class AccountIdOp {
     }
 
     /**
-     * @return account index (number)
+     * @return entry index (number)
      */
-    extractAccountInternalId(): number {
-        return extractAccountInternalId(this.value)
+    extractEntryInternalId(): number {
+        return extractEntryInternalId(this.value)
     }
 }

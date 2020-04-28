@@ -1,9 +1,9 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {EthereumAccount, WalletsOp, WalletOp, AccountIdOp} from "@emeraldpay/emerald-vault-core";
+import {EthereumEntry, WalletsOp, WalletOp, EntryIdOp} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 
-describe("Accounts", () => {
+describe("Entries", () => {
 
     describe("List", () => {
 
@@ -19,26 +19,26 @@ describe("Accounts", () => {
 
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(100);
-                expect(accounts.length).toBe(0);
+                let entries = wallets.entriesByBlockchain(100);
+                expect(entries.length).toBe(0);
             });
 
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(101)
+                let entries = wallets.entriesByBlockchain(101)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(2);
-                expect(accounts[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
-                expect(accounts[0].receiveDisabled).toBeFalsy();
-                expect(accounts[1].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
-                expect(accounts[1].receiveDisabled).toBeFalsy();
+                expect(entries.length).toBe(2);
+                expect(entries[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(entries[0].receiveDisabled).toBeFalsy();
+                expect(entries[1].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+                expect(entries[1].receiveDisabled).toBeFalsy();
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10002)
+                let entries = wallets.entriesByBlockchain(10002)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(0);
+                expect(entries.length).toBe(0);
             });
 
         });
@@ -55,30 +55,30 @@ describe("Accounts", () => {
 
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(100)
+                let entries = wallets.entriesByBlockchain(100)
                     .sort((a, b) => a.address.localeCompare(b.address));
 
-                expect(accounts.length).toBe(3);
-                expect(accounts[0].address).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
-                expect(accounts[0].receiveDisabled).toBeFalsy();
-                expect(accounts[1].address).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
-                expect(accounts[1].receiveDisabled).toBeFalsy();
-                expect(accounts[2].address).toBe("0xBD5222391BBB9F17484F2565455FB6610D9E145F".toLowerCase());
-                expect(accounts[2].receiveDisabled).toBeFalsy();
+                expect(entries.length).toBe(3);
+                expect(entries[0].address).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
+                expect(entries[0].receiveDisabled).toBeFalsy();
+                expect(entries[1].address).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
+                expect(entries[1].receiveDisabled).toBeFalsy();
+                expect(entries[2].address).toBe("0xBD5222391BBB9F17484F2565455FB6610D9E145F".toLowerCase());
+                expect(entries[2].receiveDisabled).toBeFalsy();
             });
 
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(101)
+                let entries = wallets.entriesByBlockchain(101)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts[0].address).toBe("0x5B30DE96FDF94AC6C5B4A8C243F991C649D66FA1".toLowerCase());
+                expect(entries[0].address).toBe("0x5B30DE96FDF94AC6C5B4A8C243F991C649D66FA1".toLowerCase());
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain( 10002)
+                let entries = wallets.entriesByBlockchain(10002)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(0);
+                expect(entries.length).toBe(0);
             });
 
         });
@@ -95,32 +95,32 @@ describe("Accounts", () => {
 
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(100)
+                let entries = wallets.entriesByBlockchain(100)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(2);
-                expect(accounts[0].address).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(accounts[0].receiveDisabled).toBeFalsy();
-                expect(accounts[1].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
-                expect(accounts[1].receiveDisabled).toBeFalsy();
+                expect(entries.length).toBe(2);
+                expect(entries[0].address).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(entries[0].receiveDisabled).toBeFalsy();
+                expect(entries[1].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(entries[1].receiveDisabled).toBeFalsy();
 
-                let account = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3").value;
-                expect(account.name).toBe("foo bar");
-                // expect(accounts[0].description).toBe("teßt account #1");
+                let entry = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3").value;
+                expect(entry.name).toBe("foo bar");
+                // expect(entries[0].description).toBe("teßt entry #1");
             });
 
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(101)
+                let entries = wallets.entriesByBlockchain(101)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(1);
-                expect(accounts[0].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+                expect(entries.length).toBe(1);
+                expect(entries[0].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10002)
+                let entries = wallets.entriesByBlockchain(10002)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(0);
+                expect(entries.length).toBe(0);
             });
 
         });
@@ -134,23 +134,23 @@ describe("Accounts", () => {
 
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(100)
+                let entries = wallets.entriesByBlockchain(100)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                // console.log("accounts", accounts);
+                // console.log("entries", entries);
             });
 
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(101)
+                let entries = wallets.entriesByBlockchain(101)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                // console.log("accounts", accounts);
+                // console.log("entries", entries);
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(10002)
+                let entries = wallets.entriesByBlockchain(10002)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                // console.log("accounts", accounts);
+                // console.log("entries", entries);
             });
 
         });
@@ -167,11 +167,11 @@ describe("Accounts", () => {
 
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let accounts = wallets.accountsByBlockchain(101)
+                let entries = wallets.entriesByBlockchain(101)
                     .sort((a, b) => a.address.localeCompare(b.address));
-                expect(accounts.length).toBe(2);
-                expect(accounts[0].address).toBe("0x1e728c6d055380b69ac1c0fdc27425158621f109");
-                expect(accounts[1].address).toBe("0xca1c2e76f2122fdda9f97da0c4e37674727645cc");
+                expect(entries.length).toBe(2);
+                expect(entries[0].address).toBe("0x1e728c6d055380b69ac1c0fdc27425158621f109");
+                expect(entries[1].address).toBe("0xca1c2e76f2122fdda9f97da0c4e37674727645cc");
             });
 
         });
@@ -187,10 +187,10 @@ describe("Accounts", () => {
                 });
             });
 
-            test("errors for unknown account", () => {
+            test("errors for unknown entry", () => {
                 let walletId = vault.addWallet("test");
                 expect(() => {
-                    vault.exportJsonPk(AccountIdOp.create(walletId, 0).value, "none");
+                    vault.exportJsonPk(EntryIdOp.create(walletId, 0).value, "none");
                 }).toThrow()
             });
 
@@ -218,13 +218,13 @@ describe("Accounts", () => {
                     }
                 };
                 let walletId = vault.addWallet("test");
-                let accountIt = vault.addAccount(walletId, {
+                let entryId = vault.addEntry(walletId, {
                     blockchain: 100,
                     type: "ethereum-json",
                     key: JSON.stringify(data)
                 });
 
-                let current = JSON.parse(vault.exportJsonPk(accountIt));
+                let current = JSON.parse(vault.exportJsonPk(entryId));
                 expect(current).toBeDefined();
                 expect(current.address).toBe("6412c428fc02902d137b60dc0bd0f6cd1255ea99")
             });
@@ -243,13 +243,13 @@ describe("Accounts", () => {
 
             test("export 6412c428", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
-                let wallet = wallets.findWalletByAddress( "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
                 expect(wallet).toBeDefined();
                 expect(wallet.value.name).toBe("foo bar");
-                let account = wallet.findAccountByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(account).toBeDefined();
+                let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(entry).toBeDefined();
 
-                let current = JSON.parse(vault.exportJsonPk(account.id, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"));
+                let current = JSON.parse(vault.exportJsonPk(entry.id, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"));
                 expect(current.address).toBe("3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
             });
 
@@ -289,16 +289,16 @@ describe("Accounts", () => {
             };
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
                 key: JSON.stringify(data)
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
 
-            expect(account.address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
-            expect(account.receiveDisabled).toBeFalsy();
+            expect(entry.address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
+            expect(entry.receiveDisabled).toBeFalsy();
         });
 
         test("import scrypt - c2d7cf95", () => {
@@ -322,18 +322,18 @@ describe("Accounts", () => {
                     "mac":"5cf4012fffd1fbe41b122386122350c3825a709619224961a16e908c2a366aa6"
                 },
                 "id":"eddd71dd-7ad6-4cd3-bc1a-11022f7db76c",
-                "version":3
+                "version": 3
             };
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "ethereum-json",
                 key: JSON.stringify(data)
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account.address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry.address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
         });
 
         //TODO
@@ -361,15 +361,15 @@ describe("Accounts", () => {
             };
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
                 key: JSON.stringify(data)
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
 
-            expect(account.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            expect(entry.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
         });
 
         test("import pbkdf2 - c2d7cf95", () => {
@@ -392,18 +392,18 @@ describe("Accounts", () => {
                     "mac" : "517ead924a9d0dc3124507e3393d175ce3ff7c1e96529c6c555ce9e51205e9b2"
                 },
                 "id" : "3198bc9c-6672-5ab3-d995-4942343ae5b6",
-                "version" : 3
+                "version": 3
             };
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "ethereum-json",
                 key: JSON.stringify(data)
             });
 
-            let account = vault.getWallet(walletId).accounts[0] as EthereumAccount;
-            expect(account.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
+            expect(entry.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
         })
     });
 
@@ -417,17 +417,17 @@ describe("Accounts", () => {
 
         test("import 0xfac192ce", () => {
             let walletId = vault.addWallet("import 1");
-            let accountId = vault.addAccount(walletId, {
-               type: "raw-pk-hex",
-               blockchain: 100,
-               key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-               password: "test"
+            let entryId = vault.addEntry(walletId, {
+                type: "raw-pk-hex",
+                blockchain: 100,
+                key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                password: "test"
             });
             let wallet = vault.getWallet(walletId);
-            let account = wallet.accounts[0] as EthereumAccount;
-            expect(account.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
 
-            let tx1 = vault.signTx(accountId,{
+            let tx1 = vault.signTx(entryId, {
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 to: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
                 gas: "0x5208",
@@ -441,17 +441,17 @@ describe("Accounts", () => {
 
         test("import 0xfac192ce - no prefix", () => {
             let walletId = vault.addWallet("import 1");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 type: "raw-pk-hex",
                 blockchain: 100,
                 key: "fac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
             });
             let wallet = vault.getWallet(walletId);
-            let account = wallet.accounts[0] as EthereumAccount;
-            expect(account.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
 
-            let tx1 = vault.signTx(accountId,{
+            let tx1 = vault.signTx(entryId, {
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 to: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
                 gas: "0x5208",
@@ -465,17 +465,17 @@ describe("Accounts", () => {
 
         test("import 0xf06d69cd, sign with data", () => {
             let walletId = vault.addWallet("import 1");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 type: "raw-pk-hex",
                 blockchain: 100,
                 key: "0xf06d69cdc7da0faffb1008270bca38f5e31891a3a773950e6d0fea48a7188551",
                 password: "test"
             });
             let wallet = vault.getWallet(walletId);
-            let account = wallet.accounts[0] as EthereumAccount;
-            expect(account.address).toBe("0xdb365e2b984128f5d187dbc8df1f947aa6e03361");
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.address).toBe("0xdb365e2b984128f5d187dbc8df1f947aa6e03361");
 
-            let tx1 = vault.signTx(accountId, {
+            let tx1 = vault.signTx(entryId, {
                 from: "0xdb365e2b984128f5d187dbc8df1f947aa6e03361",
                 to: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 gas: "0x1D8A8",
@@ -504,13 +504,13 @@ describe("Accounts", () => {
                 password: "test"
             };
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: data.pk,
                 password: data.password
             });
-            let pk = vault.exportRawPk(accountId, "test");
+            let pk = vault.exportRawPk(entryId, "test");
 
             expect(pk).toBe("0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd");
         });
@@ -538,13 +538,13 @@ describe("Accounts", () => {
                 "version" : 3
             };
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
                 key: JSON.stringify(data)
             });
 
-            let pk = vault.exportRawPk(accountId, "testpassword");
+            let pk = vault.exportRawPk(entryId, "testpassword");
 
             expect(pk).toBe("0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d");
         });
@@ -574,13 +574,13 @@ describe("Accounts", () => {
             };
 
             let walletId = vault.addWallet("test");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
                 key: JSON.stringify(data)
             });
 
-            let pk = vault.exportRawPk(accountId, "testtest");
+            let pk = vault.exportRawPk(entryId, "testtest");
 
             expect(pk).toBe("0xad901ebb27a07ca54ffe797b24f602bdd600f300283c02a0b58b7c0567f12234");
         });
@@ -596,7 +596,7 @@ describe("Accounts", () => {
 
         test("errors for invalid address", () => {
             expect(() => {
-                vault.removeAccount("3198bc9c-6672-5ab3-d995-4942343ae5b6-1");
+                vault.removeEntry("3198bc9c-6672-5ab3-d995-4942343ae5b6-1");
             }).toThrow()
         });
 
@@ -623,7 +623,7 @@ describe("Accounts", () => {
             };
 
             let walletId = vault.addWallet("test 1");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 type: "ethereum-json",
                 key: JSON.stringify(data),
                 blockchain: 101
@@ -632,17 +632,17 @@ describe("Accounts", () => {
             let wallet = vault.getWallet(walletId);
 
             expect(wallet).toBeDefined();
-            expect(wallet.accounts.length).toBe(1);
-            expect(wallet.accounts[0].blockchain).toBe(101);
-            let account = wallet.accounts[0] as EthereumAccount;
-            expect(account.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            expect(wallet.entries.length).toBe(1);
+            expect(wallet.entries[0].blockchain).toBe(101);
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
 
-            let removed = vault.removeAccount(account.id);
+            let removed = vault.removeEntry(entry.id);
             expect(removed).toBeTruthy();
 
             let wallet2 = vault.getWallet(walletId);
             // expect(wallet2).toBeUndefined();
-            expect(wallet2.accounts.length).toBe(0);
+            expect(wallet2.entries.length).toBe(0);
         });
 
     });

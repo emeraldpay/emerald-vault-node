@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {WalletsOp, WalletOp, AccountIdOp, AccountId} from "@emeraldpay/emerald-vault-core";
+import {WalletsOp} from "@emeraldpay/emerald-vault-core";
 
 
 describe("Sign transaction", () => {
@@ -24,10 +24,10 @@ describe("Sign transaction", () => {
                 nonce: "0x2"
             };
             let wallets = WalletsOp.of(vault.listWallets());
-            let wallet = wallets.findWalletByAddress( "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let account = wallet.findAccountByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+            let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+            let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
 
-            let raw = vault.signTx(account.id, tx, "testtest");
+            let raw = vault.signTx(entry.id, tx, "testtest");
 
             expect(raw).toBe("0xf865028477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38210518025a09d38cc96e9856d1a82ede28bee743dcff816ea3cb2217b927d4eab11887d9b9da05a236057d16224e93f59230e1c722e4511553e7264a80e787bcd29c6ec6a90c4");
         });
@@ -43,8 +43,8 @@ describe("Sign transaction", () => {
             };
             let wallets = WalletsOp.of(vault.listWallets());
             let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let account = wallet.findAccountByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let raw = vault.signTx(account.id, tx, "testtest");
+            let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+            let raw = vault.signTx(entry.id, tx, "testtest");
 
             expect(raw).toBe("0xf86c8201968477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3870292d3069b0a008026a0073d38c0929a96f0af687aa519e817bc5cee830cf27bbb0525fd2b102d364318a00b2ab0a20e908a0cd2f96720cae6f1dd900f3de7d40e4bb45fcb76263026c51c");
         });
@@ -61,8 +61,8 @@ describe("Sign transaction", () => {
             };
             let wallets = WalletsOp.of(vault.listWallets());
             let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let account = wallet.findAccountByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let raw = vault.signTx(account.id, tx, "testtest");
+            let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+            let raw = vault.signTx(entry.id, tx, "testtest");
 
             expect(raw).toBe("0xf8a8198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd380b844a9059cbb0000000000000000000000000d0707963952f2fba59dd06f2b425ace40b492fe0000000000000000000000000000000000000000000002650fe6fe599c94000025a0b2501b7c0ccd6cb000b6f568e504ed605f41e5fbdbdffe2a440e636aa499da1ca02e7e76de7b0167a09fda23395039443cf0bb523ceeacdf0f9fa873408753a7a3");
         });
@@ -99,7 +99,7 @@ describe("Sign transaction", () => {
                 }
             };
             let walletId = vault.addWallet("test sign 1");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
                 key: JSON.stringify(pk)
@@ -114,7 +114,7 @@ describe("Sign transaction", () => {
                 nonce: "0x19",
                 data: ""
             };
-            let raw = vault.signTx(accountId, tx, "sign with scrypt");
+            let raw = vault.signTx(entryId, tx, "sign with scrypt");
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808026a0f3357ca4028bcfd26de329b5405ed60342a3aad785e84ea3776ef650818e7de5a0469efc686f479b242f311480911668c8b1993188908f87bd1d1c56b82a0b4fa6");
         });
@@ -142,7 +142,7 @@ describe("Sign transaction", () => {
                 "version" : 3
             };
             let walletId = vault.addWallet("test sign 2");
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
                 key: JSON.stringify(pk)
@@ -157,7 +157,7 @@ describe("Sign transaction", () => {
                 nonce: "0x19",
                 data: ""
             };
-            let raw = vault.signTx(accountId, tx, "testpassword");
+            let raw = vault.signTx(entryId, tx, "testpassword");
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808025a06b2a5f318f1362404bd3f5bb68b7947091ae9dd06c8a01bdd967c20b1cd04ac5a059ab6b5aacf77ba3b5b3938254916e27e69f2b0ddfc028ec710eaaea96e3cff8");
         });
@@ -177,7 +177,7 @@ describe("Sign transaction", () => {
                 },
                 password: "1234"
             });
-            let accountId = vault.addAccount(walletId, {
+            let entryId = vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
@@ -197,7 +197,7 @@ describe("Sign transaction", () => {
                 nonce: "0x19",
                 data: ""
             };
-            let raw = vault.signTx(accountId, tx, "1234");
+            let raw = vault.signTx(entryId, tx, "1234");
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808025a02eab8b290050239e77329cb6d0d663c9bdbf0fe15918e4937be727dd67a0c593a05dda8f7b748b5907c0b414be260809f9c2dcfcd35a4a9b1cc801a7f4fe2154eb");
         });
