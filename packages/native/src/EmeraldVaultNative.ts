@@ -91,7 +91,6 @@ export class EmeraldVaultNative implements IEmeraldVault {
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
-        console.log("wallets ", JSON.stringify(status.result))
         return WalletsOp.of(status.result).getWallet(id).value
     }
 
@@ -135,6 +134,18 @@ export class EmeraldVaultNative implements IEmeraldVault {
     removeEntry(entryFullId: EntryId) {
         let op = EntryIdOp.of(entryFullId);
         let status: Status<boolean> = addon.wallets_removeEntry(this.conf, op.extractWalletId(), op.extractEntryInternalId());
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
+    }
+
+    setEntryLabel(entryFullId: EntryId, label: string | null): boolean {
+        let op = EntryIdOp.of(entryFullId);
+        let status: Status<boolean> = addon.entries_updateLabel(this.conf,
+            op.extractWalletId(), op.extractEntryInternalId(),
+            label
+        );
         if (!status.succeeded) {
             throw Error(status.error.message)
         }

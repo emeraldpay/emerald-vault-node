@@ -43,6 +43,11 @@ pub struct NewMnemonicAccount {
 }
 
 impl WrappedVault {
+    fn set_label(&self, wallet_id: Uuid, entry_id: usize, label: Option<String>) -> bool {
+        let storage = &self.cfg.get_storage();
+        let result = storage.update_entry(wallet_id, entry_id).set_label(label);
+        result.is_ok()
+    }
 
     fn get_wallet_address(&self, id: Uuid) -> Result<Address, VaultError> {
         let storage = &self.cfg.get_storage();
@@ -126,6 +131,22 @@ pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
 
     let pk = vault.export_pk(wallet_id, entry_id, password);
     let result = format!("0x{}", pk.to_hex());
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+    Ok(js_value.downcast().unwrap())
+}
+
+pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let wallet_id = cx.argument::<JsString>(1).expect("wallet_id not provided").value();
+    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+    let entry_id = cx.argument::<JsNumber>(2).expect("entry_id not provided").value() as usize;
+    let label = args_get_str(&mut cx, 3);
+
+    let result = vault.set_label(wallet_id, entry_id, label);
+
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
     Ok(js_value.downcast().unwrap())

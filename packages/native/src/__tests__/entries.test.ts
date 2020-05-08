@@ -54,6 +54,39 @@ describe("Entries", () => {
             expect(key.seedId).toBe(seedId);
             expect(key.hdPath).toBe("m/44'/60'/0'/1/1");
         });
+
+        test("set label", () => {
+            let walletId = vault.addWallet("wallet 1");
+            let entryId = vault.addEntry(walletId, {
+                type: "generate-random",
+                blockchain: 100,
+                password: "test"
+            });
+            vault.setEntryLabel(entryId, "test entry label");
+            let wallet = vault.getWallet(walletId);
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.label).toBe("test entry label");
+        });
+
+        test("remove label", () => {
+            let walletId = vault.addWallet("wallet 1");
+            let entryId = vault.addEntry(walletId, {
+                type: "generate-random",
+                blockchain: 100,
+                password: "test"
+            });
+            vault.setEntryLabel(entryId, "test entry label");
+            let wallet = vault.getWallet(walletId);
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.label).toBe("test entry label");
+
+            vault.setEntryLabel(entryId, undefined);
+
+            wallet = vault.getWallet(walletId);
+            entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.label).toBeNull();
+        });
+
     });
 
     describe("List", () => {

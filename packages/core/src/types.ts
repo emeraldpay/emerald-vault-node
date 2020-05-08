@@ -72,14 +72,16 @@ export type EthereumEntry = {
     blockchain: number,
     address: string,
     key: PKRef | SeedPKRef | undefined,
-    receiveDisabled?: boolean | undefined
+    receiveDisabled?: boolean | undefined,
+    label?: string | undefined
 }
 
 export type BitcoinEntry = {
     id: EntryId,
     blockchain: number,
     key: PKRef | SeedPKRef,
-    receiveDisabled?: boolean | undefined
+    receiveDisabled?: boolean | undefined,
+    label?: string | undefined
 }
 
 export type WalletEntry = EthereumEntry | BitcoinEntry;
@@ -239,6 +241,8 @@ export interface IEmeraldVault {
     addEntry(walletId: Uuid, entry: AddEntry): EntryId;
 
     removeEntry(entryId: EntryId): boolean;
+
+    setEntryLabel(entryFullId: EntryId, label: string | null): boolean;
 
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string;
 
