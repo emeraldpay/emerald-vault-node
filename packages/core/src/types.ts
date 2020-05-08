@@ -244,6 +244,8 @@ export interface IEmeraldVault {
 
     setEntryLabel(entryFullId: EntryId, label: string | null): boolean;
 
+    setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): boolean;
+
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string;
 
     exportRawPk(entryId: EntryId, password: string): string;

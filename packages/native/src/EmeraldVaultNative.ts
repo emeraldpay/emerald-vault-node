@@ -152,6 +152,18 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return status.result
     }
 
+    setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): boolean {
+        let op = EntryIdOp.of(entryFullId);
+        let status: Status<boolean> = addon.entries_updateReceiveDisabled(this.conf,
+            op.extractWalletId(), op.extractEntryInternalId(),
+            disabled
+        );
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result
+    }
+
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string {
         let op = EntryIdOp.of(entryId);
         let status: Status<string> = addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password);

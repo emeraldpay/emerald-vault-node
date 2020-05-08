@@ -87,6 +87,45 @@ describe("Entries", () => {
             expect(entry.label).toBeNull();
         });
 
+        test("disable receiving", () => {
+            let walletId = vault.addWallet("wallet 1");
+            let entryId = vault.addEntry(walletId, {
+                type: "generate-random",
+                blockchain: 100,
+                password: "test"
+            });
+            let wallet = vault.getWallet(walletId);
+            let entry = wallet.entries[0];
+            expect(entry.receiveDisabled).toBeFalsy();
+
+            vault.setEntryReceiveDisabled(entryId, true);
+            wallet = vault.getWallet(walletId);
+            entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.receiveDisabled).toBeTruthy();
+        });
+
+        test("enable receiving", () => {
+            let walletId = vault.addWallet("wallet 1");
+            let entryId = vault.addEntry(walletId, {
+                type: "generate-random",
+                blockchain: 100,
+                password: "test"
+            });
+            let wallet = vault.getWallet(walletId);
+            let entry = wallet.entries[0];
+            expect(entry.receiveDisabled).toBeFalsy();
+
+            vault.setEntryReceiveDisabled(entryId, true);
+            wallet = vault.getWallet(walletId);
+            entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.receiveDisabled).toBeTruthy();
+
+            vault.setEntryReceiveDisabled(entryId, false);
+            wallet = vault.getWallet(walletId);
+            entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.receiveDisabled).toBeFalsy();
+        });
+
     });
 
     describe("List", () => {

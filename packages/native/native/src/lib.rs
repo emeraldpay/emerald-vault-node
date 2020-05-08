@@ -33,6 +33,7 @@ register_module!(mut cx, {
     cx.export_function("entries_export", entries::export).expect("entries_export not exported");
     cx.export_function("entries_exportPk", entries::export_pk).expect("entries_exportPk not exported");
     cx.export_function("entries_updateLabel", entries::update_label).expect("entries_updateLabel not exported");
+    cx.export_function("entries_updateReceiveDisabled", entries::update_receive_disabled).expect("entries_updateReceiveDisabled not exported");
 
     cx.export_function("sign_tx", sign::sign_tx).expect("sign_txTx not exported");
 
