@@ -9,7 +9,7 @@ use emerald_vault::{convert::{
     json::keyfile::EthereumJsonV3File
 }, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey};
 use json::StatusResult;
-use emerald_vault::structs::wallet::{EntryId, ReservedPath};
+use emerald_vault::structs::wallet::{EntryId, ReservedPath, PKType};
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -49,6 +49,31 @@ pub struct WalletEntryJson {
     pub address: Option<String>,
     #[serde(rename = "receiveDisabled")]
     pub receive_disabled: bool,
+    pub label: Option<String>,
+    pub key: KeyRefJson,
+}
+
+#[derive(Serialize, Clone)]
+pub struct SeedHDPathJson {
+    #[serde(rename = "seedId")]
+    pub seed_id: String,
+    #[serde(rename = "hdPath")]
+    pub hd_path: String,
+}
+
+#[derive(Serialize, Clone)]
+pub struct PkIdJson {
+    #[serde(rename = "keyId")]
+    pub id: String
+}
+
+#[derive(Serialize, Clone)]
+#[serde(tag = "type")]
+pub enum KeyRefJson {
+    #[serde(rename = "pk")]
+    PrivateKey(PkIdJson),
+    #[serde(rename = "hd-path")]
+    HdPath(SeedHDPathJson),
 }
 
 #[derive(Serialize, Clone)]
@@ -99,6 +124,24 @@ impl From<Wallet> for WalletJson {
                 blockchain: a.blockchain as u32,
                 address: a.address.map(|v| v.to_string()),
                 receive_disabled: a.receive_disabled,
+                label: a.label.clone(),
+                key: match &a.key {
+                    PKType::SeedHd(seed) => {
+                        KeyRefJson::HdPath(
+                            SeedHDPathJson {
+                                seed_id: seed.seed_id.to_string(),
+                                hd_path: seed.hd_path.to_string(),
+                            }
+                        )
+                    },
+                    PKType::PrivateKeyRef(pk_id) => {
+                        KeyRefJson::PrivateKey(
+                            PkIdJson {
+                                id: pk_id.to_string()
+                            }
+                        )
+                    }
+                },
             })
             .collect();
         let reserved: Vec<ReservedAccountJson> = wallet.reserved.iter()

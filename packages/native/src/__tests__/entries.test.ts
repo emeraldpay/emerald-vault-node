@@ -1,9 +1,60 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {EthereumEntry, WalletsOp, WalletOp, EntryIdOp} from "@emeraldpay/emerald-vault-core";
+import {EthereumEntry, WalletsOp, WalletOp, EntryIdOp, PKRef, SeedPKRef} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 
 describe("Entries", () => {
+
+    describe("Details", () => {
+        let vault: EmeraldVaultNative;
+        beforeAll(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("./testdata/entry-details")
+            });
+            vault.open();
+        });
+
+        test("refers pk", () => {
+            let walletId = vault.addWallet("wallet 1");
+            let entryId = vault.addEntry(walletId, {
+                type: "generate-random",
+                blockchain: 100,
+                password: "test"
+            });
+            let wallet = vault.getWallet(walletId);
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.key.type).toBe("pk");
+            let key = entry.key as PKRef;
+            expect(key.keyId).toBeDefined();
+        });
+
+        test("refers seed", () => {
+            let walletId = vault.addWallet("wallet 1");
+            let seedId = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "pepper mention magic uncover vicious spare echo fitness solid bonus phrase predict pen grow lyrics certain swallow grass rain company tuna",
+                    password: null
+                },
+                password: "test"
+            })
+            let entryId = vault.addEntry(walletId, {
+                type: "hd-path",
+                blockchain: 100,
+                key: {
+                    seedId: seedId,
+                    hdPath: "m/44'/60'/0'/1/1",
+                    password: "test"
+                }
+            });
+            let wallet = vault.getWallet(walletId);
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.key.type).toBe("hd-path");
+            let key = entry.key as SeedPKRef;
+            expect(key.seedId).toBe(seedId);
+            expect(key.hdPath).toBe("m/44'/60'/0'/1/1");
+        });
+    });
 
     describe("List", () => {
 

@@ -91,6 +91,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
+        console.log("wallets ", JSON.stringify(status.result))
         return WalletsOp.of(status.result).getWallet(id).value
     }
 
