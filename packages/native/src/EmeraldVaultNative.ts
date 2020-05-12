@@ -249,7 +249,17 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     isSeedAvailable(seed: Uuid | SeedDefinition): boolean {
         if (isReference(seed)) {
-            return addon.ledger_isConnected(seed);
+            let isLedger = this.listSeeds().some(c =>
+                c.id == seed && c.type == "ledger"
+            );
+            if (!isLedger) {
+                return true;
+            }
+            let status: Status<boolean> = addon.ledger_isConnected({type: "ledger", value: {}});
+            if (!status.succeeded) {
+                throw Error(status.error.message)
+            }
+            return status.result;
         } else {
             if (isRawSeed(seed.value, seed)) {
                 return seed.value.length > 0;
@@ -258,13 +268,21 @@ export class EmeraldVaultNative implements IEmeraldVault {
                 return seed.value.value.length > 0;
             }
             if (isLedger(seed.value, seed)) {
-                return addon.ledger_isConnected(seed);
+                let status: Status<boolean> = addon.ledger_isConnected(seed);
+                if (!status.succeeded) {
+                    throw Error(status.error.message)
+                }
+                return status.result;
             }
         }
         return false;
     }
 
     listSeedAddresses(seed: Uuid | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string } {
-        return addon.ledger_listAddresses(JSON.stringify(seed), blockchain, hdpath);
+        let status: Status<{ [key: string]: string }> = addon.ledger_listAddresses(JSON.stringify(seed), blockchain, hdpath);
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result;
     }
 }

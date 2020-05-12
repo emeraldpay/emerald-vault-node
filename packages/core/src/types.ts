@@ -204,7 +204,6 @@ export type MnemonicSeed = {
 }
 
 export type LedgerSeed = {
-
 }
 
 export type RawSeed = string;

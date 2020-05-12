@@ -16,12 +16,14 @@ use emerald_vault::{
     storage::error::VaultError,
     structs::{
         crypto::Encrypted,
-        seed::{Seed, SeedSource}
+        seed::{Seed, SeedSource, LedgerSource}
     },
 };
 use json::StatusResult;
 use emerald_vault::util::optional::none_if_empty;
+use std::collections::HashMap;
 
+#[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
     address: Address,
     hd_path: String
@@ -53,13 +55,34 @@ pub struct SeedDefinitionJson {
 #[serde(tag = "type", content = "value")]
 pub enum SeedDefinitionType {
     #[serde(rename = "mnemonic")]
-    Mnemonic(MnemonicSeedJson)
+    Mnemonic(MnemonicSeedJson),
+    #[serde(rename = "ledger")]
+    Ledger(LedgerSeedJson),
 }
 
 #[derive(Deserialize, Clone)]
 pub struct MnemonicSeedJson {
     pub value: String,
-    pub password: Option<String>
+    pub password: Option<String>,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct LedgerSeedJson {}
+
+#[derive(Deserialize, Clone)]
+pub struct SeedReferenceJson {
+    #[serde(flatten)]
+    pub seed_type: SeedReferenceType,
+    pub password: Option<String>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(tag = "type", content = "value")]
+pub enum SeedReferenceType {
+    #[serde(rename = "reference")]
+    Reference(Uuid),
+    #[serde(rename = "ledger")]
+    Ledger(LedgerSeedJson),
 }
 
 impl From<Seed> for SeedJson {
@@ -93,12 +116,12 @@ impl SeedDefinitionJson {
 fn list_ledger_address(hd_path_all: Vec<String>) -> Vec<HDPathAddress> {
     let mut result = vec![];
 
-    let id = HDPath::try_from("m/44'/60'/0'/0'/0").expect("Failed to create address");
-    let mut wallet_manager = WManager::new(Some(id.to_bytes())).expect("Can't create HID endpoint");
+    let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
+    let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
+    wallet_manager.update(Some(id.to_bytes())).expect("Devices list not loaded");
     if !wallet_manager.open().is_ok() {
         return result;
     }
-    wallet_manager.update(None).expect("Devices list not loaded");
 
     let fd = &wallet_manager.devices()[0].1;
 
@@ -129,16 +152,21 @@ fn list_mnemonic_address(hd_path_all: Vec<String>, mnemonic: Mnemonic, password:
     result
 }
 
-pub fn is_connected(mut cx: FunctionContext) -> JsResult<JsBoolean> {
-    let id = HDPath::try_from("m/44'/60'/0'/0'/0").expect("Failed to create address");
-    let wallet_manager = WManager::new(Some(id.to_bytes())).expect("Can't create HID endpoint");
-    let is_connected = wallet_manager.open().is_ok();
+pub fn is_ledger_connected(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
+    let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
+    wallet_manager.update(Some(id.to_bytes())).expect("Devices list not loaded");
+    let status = match wallet_manager.open() {
+        Ok(_) => StatusResult::Ok(true),
+        Err(e) => StatusResult::Error(0, e.to_string())
+    };
 
-    let result = cx.boolean(is_connected);
-    Ok(result)
+    let status = status.as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
 }
 
-pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn list_ledger_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
     let json = cx.argument::<JsString>(0).expect("Input JSON is not provided").value();
 
     let hd_path_all = cx.argument::<JsArray>(2)
@@ -150,14 +178,12 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
             item.downcast::<JsString>().expect("Expected string element in array").value()
         }).collect();
 
-    let mut js_object = JsObject::new(&mut cx);
-
     let parsed: SeedDefinitionJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
     let addresses: Vec<HDPathAddress> = match parsed.seed_type {
-//            SeedDefinitionType::Ledger => {
-//                list_ledger_address(hd_path_all)
-//            },
+        SeedDefinitionType::Ledger(_) => {
+            list_ledger_address(hd_path_all)
+        },
         SeedDefinitionType::Mnemonic(m) => {
             let mnemonic = Mnemonic::try_from(Language::English, m.value.as_str())
                 .expect("Failed to parse mnemonic phrase");
@@ -165,13 +191,14 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
         }
     };
 
+    let mut result = HashMap::new();
     for address in addresses {
-        let address_js = cx.string(address.address.to_string());
-        js_object.set(&mut cx, address.hd_path.as_str(), address_js)
-            .expect("Failed to setup result");
+        result.insert(address.hd_path.as_str().to_string(), address.address.to_string());
     }
 
-    Ok(js_object)
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status)?;
+    Ok(js_value.downcast().unwrap())
 }
 
 pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
@@ -222,11 +249,11 @@ impl WrappedVault {
     pub fn add_seed(&self, seed: SeedDefinitionJson) -> Result<Uuid, VaultError> {
         let storage = &self.cfg.get_storage();
         let seed_source = match seed.seed_type {
-//            SeedDefinitionType::Ledger => {
-//                SeedSource::Ledger(LedgerSource {
-//                    fingerprints: vec![]
-//                })
-//            },
+            SeedDefinitionType::Ledger(_) => {
+                SeedSource::Ledger(LedgerSource {
+                    fingerprints: vec![]
+                })
+            },
             SeedDefinitionType::Mnemonic(value) => {
                 if seed.password.is_none() {
                     return Err(VaultError::PasswordRequired)

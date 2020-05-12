@@ -41,8 +41,8 @@ register_module!(mut cx, {
     cx.export_function("addrbook_add", addressbook::add).expect("addrbook_add not exported");
     cx.export_function("addrbook_remove", addressbook::remove).expect("addrbook_remove not exported");
 
-    cx.export_function("ledger_isConnected", seeds::is_connected).expect("ledger_isConnected not exported");
-    cx.export_function("ledger_listAddresses", seeds::list_addresses).expect("ledger_listAddresses not exported");
+    cx.export_function("ledger_isConnected", seeds::is_ledger_connected).expect("ledger_isConnected not exported");
+    cx.export_function("ledger_listAddresses", seeds::list_ledger_addresses).expect("ledger_listAddresses not exported");
 
     cx.export_function("seed_generateMnemonic", seeds::generate_mnemonic).expect("seed_generateMnemonic not exported");
     cx.export_function("seed_add", seeds::add).expect("seed_add not exported");
