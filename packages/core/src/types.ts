@@ -1,5 +1,6 @@
 export type BlockchainType = "ethereum";
 export type SeedType = "raw" | "ledger" | "mnemonic";
+export type SeedRefType = "ledger" | "mnemonic" | "id";
 export type EntryType = "pk" | "seed-hd";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
 
@@ -198,17 +199,24 @@ export type SeedDefinition = {
     password?: string
 }
 
+export type SeedReference = {
+    type: SeedRefType,
+    value: LedgerSeed | MnemonicSeed | Uuid,
+    // Password to _decrypt_ stored seed data, i.e. if it's Uuid pointing to a previously stored Mnemonic.
+    // Note, it's not the Mnemonic password.
+    password?: string
+}
+
 export type MnemonicSeed = {
     value: string,
     password?: string
 }
 
-export type LedgerSeed = {
-}
+export type LedgerSeed = {}
 
 export type RawSeed = string;
 
-export function isReference(seed: Uuid | SeedDefinition): seed is Uuid {
+export function isReference(seed: Uuid | SeedDefinition | SeedReference): seed is Uuid {
     return typeof seed === "string";
 }
 
@@ -265,7 +273,7 @@ export interface IEmeraldVault {
 
     importSeed(seed: SeedDefinition): Uuid;
 
-    isSeedAvailable(seed: Uuid | SeedDefinition): boolean;
+    isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): boolean;
 
-    listSeedAddresses(seed: Uuid | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string };
+    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string };
 }

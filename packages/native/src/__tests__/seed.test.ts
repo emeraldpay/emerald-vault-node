@@ -1,6 +1,13 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {AddEntry, EthereumEntry, SeedDefinition, WalletsOp, WalletOp} from "@emeraldpay/emerald-vault-core";
+import {
+    AddEntry,
+    EthereumEntry,
+    SeedDefinition,
+    WalletsOp,
+    WalletOp,
+    SeedReference
+} from "@emeraldpay/emerald-vault-core";
 
 describe("Seeds", () => {
 
@@ -140,6 +147,18 @@ describe("Seeds", () => {
 
             let seeds = vault.listSeeds();
             expect(seeds.length).toBe(1);
+
+            let available = vault.isSeedAvailable(id);
+            expect(available).toBeTruthy();
+
+            let ref: SeedReference = {
+                type: "id",
+                value: id,
+                password: "test"
+            }
+
+            let addresses = vault.listSeedAddresses(ref, "ethereum", ["m/44'/60'/0'/0/1"]);
+            expect(addresses["m/44'/60'/0'/0/1"].toLowerCase()).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase())
         })
     });
 

@@ -12,7 +12,7 @@ import {
     UnsignedTx,
     Uuid,
     Wallet, WalletCreateOptions,
-    IEmeraldVault, EntryId, EntryIdOp, WalletsOp
+    IEmeraldVault, EntryId, EntryIdOp, WalletsOp, SeedReference
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -247,39 +247,30 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return status.result
     }
 
-    isSeedAvailable(seed: Uuid | SeedDefinition): boolean {
+    isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): boolean {
+        let ref = seed;
         if (isReference(seed)) {
-            let isLedger = this.listSeeds().some(c =>
-                c.id == seed && c.type == "ledger"
-            );
-            if (!isLedger) {
-                return true;
-            }
-            let status: Status<boolean> = addon.ledger_isConnected({type: "ledger", value: {}});
-            if (!status.succeeded) {
-                throw Error(status.error.message)
-            }
-            return status.result;
-        } else {
-            if (isRawSeed(seed.value, seed)) {
-                return seed.value.length > 0;
-            }
-            if (isMnemonic(seed.value, seed)) {
-                return seed.value.value.length > 0;
-            }
-            if (isLedger(seed.value, seed)) {
-                let status: Status<boolean> = addon.ledger_isConnected(seed);
-                if (!status.succeeded) {
-                    throw Error(status.error.message)
-                }
-                return status.result;
+            ref = {
+                type: "id",
+                value: seed
             }
         }
-        return false;
+        let status: Status<boolean> = addon.seed_isAvailable(this.conf, JSON.stringify(ref));
+        if (!status.succeeded) {
+            throw Error(status.error.message)
+        }
+        return status.result;
     }
 
-    listSeedAddresses(seed: Uuid | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string } {
-        let status: Status<{ [key: string]: string }> = addon.ledger_listAddresses(JSON.stringify(seed), blockchain, hdpath);
+    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string } {
+        let ref = seed;
+        if (isReference(seed)) {
+            ref = {
+                type: "id",
+                value: seed
+            }
+        }
+        let status: Status<{ [key: string]: string }> = addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath);
         if (!status.succeeded) {
             throw Error(status.error.message)
         }

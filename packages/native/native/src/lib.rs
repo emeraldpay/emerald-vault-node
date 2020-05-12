@@ -41,12 +41,11 @@ register_module!(mut cx, {
     cx.export_function("addrbook_add", addressbook::add).expect("addrbook_add not exported");
     cx.export_function("addrbook_remove", addressbook::remove).expect("addrbook_remove not exported");
 
-    cx.export_function("ledger_isConnected", seeds::is_ledger_connected).expect("ledger_isConnected not exported");
-    cx.export_function("ledger_listAddresses", seeds::list_ledger_addresses).expect("ledger_listAddresses not exported");
-
     cx.export_function("seed_generateMnemonic", seeds::generate_mnemonic).expect("seed_generateMnemonic not exported");
     cx.export_function("seed_add", seeds::add).expect("seed_add not exported");
     cx.export_function("seed_list", seeds::list).expect("seed_list not exported");
+    cx.export_function("seed_isAvailable", seeds::is_available).expect("seed_isAvailable not exported");
+    cx.export_function("seed_listAddresses", seeds::list_addresses).expect("seed_listAddresses not exported");
 
     cx.export_function("admin_migrate", admin::migrate).expect("admin_migrate not exported");
     cx.export_function("admin_autofix", admin::autofix).expect("admin_autofix not exported");

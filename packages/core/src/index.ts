@@ -7,6 +7,7 @@ export {
     BlockchainType,
     EntryType,
     SeedType,
+    SeedRefType,
     isReference,
 
     UnsignedTx,
@@ -26,6 +27,7 @@ export {
     RawSeed,
     LedgerSeed,
     SeedDescription,
+    SeedReference,
     HDPathAccount,
     HDPathAccounts,
     isLedger,

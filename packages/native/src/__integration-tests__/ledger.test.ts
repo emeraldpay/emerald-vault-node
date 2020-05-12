@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
-import {SeedDefinition, Uuid} from "@emeraldpay/emerald-vault-core";
+import {SeedDefinition, SeedReference, Uuid} from "@emeraldpay/emerald-vault-core";
 
 const shouldExist = process.env.EMERALD_TEST_LEDGER === 'true';
 
@@ -19,14 +19,24 @@ describe('Use ledger', () => {
         vault.open();
     });
 
-    const type: SeedDefinition = {
+    const ledgerReference: SeedReference = {
+        type: "ledger",
+        value: {}
+    };
+    const ledgerDefinition: SeedDefinition = {
         type: "ledger",
         value: {}
     };
 
     describe('Ledger connection', () => {
         test("When connected", () => {
-            const act = vault.isSeedAvailable(type);
+            const act = vault.isSeedAvailable(ledgerReference);
+            expect(act).toBe(shouldExist);
+        });
+
+        test("When created as seed", () => {
+            let id: Uuid = vault.importSeed(ledgerDefinition)
+            const act = vault.isSeedAvailable(id);
             expect(act).toBe(shouldExist);
         });
 
@@ -40,7 +50,7 @@ describe('Use ledger', () => {
                 console.warn("Ignore Ledger tests");
                 return;
             }
-            const act = vault.listSeedAddresses(type, "ethereum", [
+            const act = vault.listSeedAddresses(ledgerReference, "ethereum", [
                 "m/44'/60'/0'/0/0",
                 "m/44'/60'/0'/0/1",
                 "m/44'/60'/0'/0/2",
@@ -50,6 +60,25 @@ describe('Use ledger', () => {
             expect(act["m/44'/60'/0'/0/1"]).toBe(testAddresses["m/44'/60'/0'/0/1"].toLowerCase());
             expect(act["m/44'/60'/0'/0/2"]).toBe(testAddresses["m/44'/60'/0'/0/2"].toLowerCase());
         });
+
+
+        test("List ethereum with created ledger", () => {
+            if (!shouldExist) {
+                console.warn("Ignore Ledger tests");
+                return;
+            }
+            let id: Uuid = vault.importSeed(ledgerDefinition)
+            const act = vault.listSeedAddresses(id, "ethereum", [
+                "m/44'/60'/0'/0/0",
+                "m/44'/60'/0'/0/1",
+                "m/44'/60'/0'/0/2",
+            ]);
+            console.log(act);
+            expect(act["m/44'/60'/0'/0/0"]).toBe(testAddresses["m/44'/60'/0'/0/0"].toLowerCase());
+            expect(act["m/44'/60'/0'/0/1"]).toBe(testAddresses["m/44'/60'/0'/0/1"].toLowerCase());
+            expect(act["m/44'/60'/0'/0/2"]).toBe(testAddresses["m/44'/60'/0'/0/2"].toLowerCase());
+        });
+
 
     });
 });

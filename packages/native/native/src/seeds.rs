@@ -1,11 +1,11 @@
 use neon::prelude::*;
 use uuid::Uuid;
 
-use access::{VaultConfig, WrappedVault};
+use access::{VaultConfig, WrappedVault, args_get_str};
 use emerald_vault::{
     Address,
     hdwallet::{
-        bip32::HDPath, WManager
+        bip32::HDPath, WManager,
     },
     mnemonic::{
         generate_key,
@@ -79,10 +79,12 @@ pub struct SeedReferenceJson {
 #[derive(Deserialize, Clone)]
 #[serde(tag = "type", content = "value")]
 pub enum SeedReferenceType {
-    #[serde(rename = "reference")]
+    #[serde(rename = "id")]
     Reference(Uuid),
     #[serde(rename = "ledger")]
     Ledger(LedgerSeedJson),
+    #[serde(rename = "mnemonic")]
+    Mnemonic(MnemonicSeedJson),
 }
 
 impl From<Seed> for SeedJson {
@@ -113,63 +115,25 @@ impl SeedDefinitionJson {
     }
 }
 
-fn list_ledger_address(hd_path_all: Vec<String>) -> Vec<HDPathAddress> {
-    let mut result = vec![];
+pub fn is_available(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let json = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
+    let parsed: SeedReferenceJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
-    let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
-    let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
-    wallet_manager.update(Some(id.to_bytes())).expect("Devices list not loaded");
-    if !wallet_manager.open().is_ok() {
-        return result;
-    }
-
-    let fd = &wallet_manager.devices()[0].1;
-
-    for item in hd_path_all {
-        let hd_path = HDPath::try_from(item.as_str()).expect("Failed to create address");
-        let address = wallet_manager.get_address(fd.as_str(), Some(hd_path.to_bytes()))
-            .expect("Filed to get address from Ledger");
-        result.push(HDPathAddress {address, hd_path: item})
-    }
-
-    result
-}
-
-fn list_mnemonic_address(hd_path_all: Vec<String>, mnemonic: Mnemonic, password: Option<String>) -> Vec<HDPathAddress> {
-    let mut result = vec![];
-    let seed = match password {
-        Some(p) => mnemonic.seed(Some(p.as_str())),
-        None => mnemonic.seed(None)
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+    let status = match vault.is_available(parsed) {
+        Ok(avail) => StatusResult::Ok(avail).as_json(),
+        Err(e) => StatusResult::Error(0, format!("{}", e)).as_json()
     };
-    for item in hd_path_all {
-        let hd_path = HDPath::try_from(item.as_str())
-            .expect("Failed to create address");
-        let pk = generate_key(&hd_path, &seed)
-            .expect("Unable to generate private key");
-        let address = pk.to_address();
-        result.push(HDPathAddress {address, hd_path: item})
-    }
-    result
-}
-
-pub fn is_ledger_connected(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
-    let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
-    wallet_manager.update(Some(id.to_bytes())).expect("Devices list not loaded");
-    let status = match wallet_manager.open() {
-        Ok(_) => StatusResult::Ok(true),
-        Err(e) => StatusResult::Error(0, e.to_string())
-    };
-
-    let status = status.as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())
 }
 
-pub fn list_ledger_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let json = cx.argument::<JsString>(0).expect("Input JSON is not provided").value();
-
-    let hd_path_all = cx.argument::<JsArray>(2)
+pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let json = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
+    let parsed: SeedReferenceJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    // blockchain (#1) is dropped
+    let hd_path_all = cx.argument::<JsArray>(3)
         .expect("List of HD Path is not provided")
         .to_vec(&mut cx)
         .expect("Failed to convert to Rust vector")
@@ -178,25 +142,20 @@ pub fn list_ledger_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
             item.downcast::<JsString>().expect("Expected string element in array").value()
         }).collect();
 
-    let parsed: SeedDefinitionJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
 
-    let addresses: Vec<HDPathAddress> = match parsed.seed_type {
-        SeedDefinitionType::Ledger(_) => {
-            list_ledger_address(hd_path_all)
+    let status = match vault.list_addresses(parsed, hd_path_all) {
+        Ok(addresses) => {
+            let mut result = HashMap::new();
+            for address in addresses {
+                result.insert(address.hd_path.as_str().to_string(), address.address.to_string());
+            }
+            StatusResult::Ok(result).as_json()
         },
-        SeedDefinitionType::Mnemonic(m) => {
-            let mnemonic = Mnemonic::try_from(Language::English, m.value.as_str())
-                .expect("Failed to parse mnemonic phrase");
-            list_mnemonic_address(hd_path_all, mnemonic, m.password)
-        }
+        Err(e) => StatusResult::Error(0, format!("{}", e)).as_json()
     };
 
-    let mut result = HashMap::new();
-    for address in addresses {
-        result.insert(address.hd_path.as_str().to_string(), address.address.to_string());
-    }
-
-    let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())
 }
@@ -241,6 +200,100 @@ pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
 }
 
 impl WrappedVault {
+    pub fn is_ledger_connected() -> Result<bool, VaultError> {
+        let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
+        let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
+        wallet_manager.update(Some(id.to_bytes())).expect("Devices list not loaded");
+        let opened = wallet_manager.open();
+        match opened {
+            Ok(_) => Ok(true),
+            Err(e) => Err(VaultError::HDKeyFailed(e))
+        }
+    }
+
+    pub fn is_available(&self, seed_ref: SeedReferenceJson) -> Result<bool, VaultError> {
+        let storage = &self.cfg.get_storage();
+        let connected = match seed_ref.seed_type {
+            SeedReferenceType::Reference(id) => {
+                let seed = storage.seeds().get(id)?;
+                match seed.source {
+                    SeedSource::Bytes(_) => true,
+                    SeedSource::Ledger(_) => WrappedVault::is_ledger_connected()?
+                }
+            },
+            SeedReferenceType::Ledger(_) => WrappedVault::is_ledger_connected()?,
+            SeedReferenceType::Mnemonic(m) => Mnemonic::try_from(Language::English, m.value.as_str()).is_ok()
+        };
+        Ok(connected)
+    }
+
+    fn list_ledger_addresses(hd_path_all: Vec<String>) -> Vec<HDPathAddress> {
+        let mut result = vec![];
+
+        let id = HDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
+        let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
+        wallet_manager.update(Some(id.to_bytes())).expect("Devices list not loaded");
+        if !wallet_manager.open().is_ok() {
+            return result;
+        }
+
+        let fd = &wallet_manager.devices()[0].1;
+
+        for item in hd_path_all {
+            let hd_path = HDPath::try_from(item.as_str()).expect("Failed to create address");
+            let address = wallet_manager.get_address(fd.as_str(), Some(hd_path.to_bytes()))
+                .expect("Filed to get address from Ledger");
+            result.push(HDPathAddress { address, hd_path: item })
+        }
+
+        result
+    }
+
+    fn list_seed_addresses(hd_path_all: Vec<String>, seed: Vec<u8>) -> Vec<HDPathAddress> {
+        let mut result = vec![];
+        for item in hd_path_all {
+            let hd_path = HDPath::try_from(item.as_str())
+                .expect("Failed to create address");
+            let pk = generate_key(&hd_path, &seed)
+                .expect("Unable to generate private key");
+            let address = pk.to_address();
+            result.push(HDPathAddress { address, hd_path: item })
+        }
+        result
+    }
+
+    fn list_mnemonic_addresses(hd_path_all: Vec<String>, mnemonic: Mnemonic, password: Option<String>) -> Vec<HDPathAddress> {
+        let seed = match password {
+            Some(p) => mnemonic.seed(Some(p.as_str())),
+            None => mnemonic.seed(None)
+        };
+        WrappedVault::list_seed_addresses(hd_path_all, seed)
+    }
+
+    pub fn list_addresses(&self, seed_ref: SeedReferenceJson, hd_path_all: Vec<String>) -> Result<Vec<HDPathAddress>, VaultError> {
+        let storage = &self.cfg.get_storage();
+        let addresses = match seed_ref.seed_type {
+            SeedReferenceType::Reference(id) => {
+                let seed = storage.seeds().get(id)?;
+                match seed.source {
+                    SeedSource::Bytes(source) => {
+                        let password = seed_ref.password.expect("Password is required");
+                        let source = source.decrypt(password.as_str())?;
+                        WrappedVault::list_seed_addresses(hd_path_all, source)
+                    },
+                    SeedSource::Ledger(_) => WrappedVault::list_ledger_addresses(hd_path_all)
+                }
+            },
+            SeedReferenceType::Ledger(_) => WrappedVault::list_ledger_addresses(hd_path_all),
+            SeedReferenceType::Mnemonic(m) => {
+                let mnemonic = Mnemonic::try_from(Language::English, m.value.as_str())
+                    .expect("Failed to parse mnemonic phrase");
+                WrappedVault::list_mnemonic_addresses(hd_path_all, mnemonic, m.password)
+            }
+        };
+        Ok(addresses)
+    }
+
     pub fn list_seeds(&self) -> Result<Vec<Seed>, VaultError> {
         let storage = &self.cfg.get_storage();
         storage.seeds().list_entries()
