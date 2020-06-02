@@ -9,7 +9,7 @@ describe("Entries", () => {
         let vault: EmeraldVaultNative;
         beforeAll(() => {
             vault = new EmeraldVaultNative({
-                dir: tempPath("./testdata/entry-details")
+                dir: tempPath("entry-details")
             });
             vault.open();
         });

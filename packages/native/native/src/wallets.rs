@@ -7,7 +7,7 @@ use uuid::Uuid;
 use access::{VaultConfig, WrappedVault, args_get_str};
 use emerald_vault::{convert::{
     json::keyfile::EthereumJsonV3File
-}, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey};
+}, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey, Address};
 use json::StatusResult;
 use emerald_vault::structs::wallet::{EntryId, ReservedPath, PKType};
 
@@ -38,7 +38,7 @@ pub struct SeedEntry {
     pub seed_id: String,
     #[serde(rename = "hdPath")]
     pub hd_path: String,
-    pub password: String,
+    pub password: Option<String>,
     pub address: Option<String>,
 }
 
@@ -209,12 +209,14 @@ impl WrappedVault {
                     .raw_pk(hex, entry.password.unwrap().as_str(), blockchain)?
             },
             AddEntryType::HdPath(hd) => {
+                let expected_address = hd.address
+                    .and_then(|s| Address::from_str(s.as_str()).ok());
                 storage.add_entry(wallet_id)
                     .seed_hd(Uuid::from_str(hd.seed_id.as_str())?,
                              HDPath::try_from(hd.hd_path.as_str())?,
                              blockchain,
-                             Some(hd.password),
-                             None)?
+                             hd.password,
+                             expected_address)?
             },
             AddEntryType::GenerateRandom => {
                 if entry.password.is_none() {

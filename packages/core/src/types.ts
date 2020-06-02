@@ -69,11 +69,30 @@ export type SeedPKRef = {
 }
 
 export type EthereumEntry = {
+    /**
+     * String Id of the entry
+     */
     id: EntryId,
+    /**
+     * Blockchain Id
+     */
     blockchain: number,
-    address: string,
+    /**
+     * Address of the entry.
+     * It maybe undefined, for example if entry is created as HD Path on a Ledger which wasn't connected during creation
+     */
+    address: string | undefined,
+    /**
+     * Reference to the Private Key
+     */
     key: PKRef | SeedPKRef | undefined,
+    /**
+     * If true then entry should be used only for Sending from
+     */
     receiveDisabled?: boolean | undefined,
+    /**
+     * Optional user defined label for the entry
+     */
     label?: string | undefined
 }
 
@@ -183,7 +202,11 @@ export type AddEntry = {
 export type SeedEntry = {
     seedId: Uuid,
     hdPath: string,
-    password?: string
+    password?: string,
+    // (optional) Expected Address on that path
+    // Can used for verification or saved with the created entry, if actual address is impossible to get (ex. when
+    // the seed is Ledger based, but Ledger is not connected)
+    address?: string
 }
 
 export type SeedDescription = {
