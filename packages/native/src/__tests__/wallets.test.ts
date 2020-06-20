@@ -290,9 +290,8 @@ describe("Wallets", () => {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
+                    seed: {type: "id", value: id, password: "test"},
                     hdPath: "m/44'/60'/1'/0/1",
-                    seedId: id,
-                    password: "test"
                 }
             };
             let entryId = vault.addEntry(walletId, acc);

@@ -192,17 +192,36 @@ export function extractEntryInternalId(id: EntryId): number {
     return parseInt(m[2])
 }
 
-export type AddEntry = {
-    blockchain: number,
-    type: ImportPkType,
-    key?: string | SeedEntry,
-    password?: string
+interface AddAnyEntry {
+    blockchain: number;
 }
 
+export interface AddJsonEntry extends AddAnyEntry {
+    type: "ethereum-json";
+    key: string;
+}
+
+export interface AddRawPkEntry extends AddAnyEntry {
+    type: "raw-pk-hex";
+    key: string;
+    password: string;
+}
+
+export interface AddSeedEntry extends AddAnyEntry {
+    type: "hd-path";
+    key: SeedEntry;
+}
+
+export interface AddRandomEntry extends AddAnyEntry {
+    type: "generate-random";
+    password: string;
+}
+
+export type AddEntry = AddJsonEntry | AddRawPkEntry | AddSeedEntry | AddRandomEntry;
+
 export type SeedEntry = {
-    seedId: Uuid,
+    seed: SeedReference,
     hdPath: string,
-    password?: string,
     // (optional) Expected Address on that path
     // Can used for verification or saved with the created entry, if actual address is impossible to get (ex. when
     // the seed is Ledger based, but Ledger is not connected)
@@ -215,27 +234,52 @@ export type SeedDescription = {
     available: boolean
 }
 
-export type SeedDefinition = {
-    type: SeedType,
-    value: RawSeed | LedgerSeed | MnemonicSeed,
-    // Password to _encrypt_ seed data on the disc, applied to raw or mnemonic seed only
-    password?: string
+export interface BaseSeedDefinition {
+    // Password to _encrypt_ seed data in the vault
+    password?: string;
 }
 
-export type SeedReference = {
-    type: SeedRefType,
-    value: LedgerSeed | MnemonicSeed | Uuid,
-    // Password to _decrypt_ stored seed data, i.e. if it's Uuid pointing to a previously stored Mnemonic.
-    // Note, it's not the Mnemonic password.
-    password?: string
+export interface RawSeedDefinition extends BaseSeedDefinition {
+    type: "raw";
+    value: RawSeed;
 }
 
-export type MnemonicSeed = {
-    value: string,
-    password?: string
+export interface MnemonicSeedDefinition extends BaseSeedDefinition {
+    type: "mnemonic";
+    value: MnemonicSeed;
 }
 
-export type LedgerSeed = {}
+/**
+ * Full Definition for a new Seed, i.e. to create
+ */
+export type SeedDefinition = RawSeedDefinition | MnemonicSeedDefinition;
+
+export interface IdSeedReference {
+    type: "id";
+    value: Uuid;
+    // Password to _decrypt_ stored seed data
+    password?: string;
+}
+
+export interface LedgerSeedReference {
+    type: "ledger";
+}
+
+/**
+ * Reference to a seed, which may exist in vault or accessible in other ways (ex. hardware key)
+ */
+export type SeedReference = IdSeedReference | LedgerSeedReference;
+
+export interface MnemonicSeed {
+    /**
+     * Mnemonic phrase
+     */
+    value: string;
+    /**
+     * Optional Mnemonic password
+     */
+    password?: string;
+}
 
 export type RawSeed = string;
 
@@ -243,16 +287,16 @@ export function isReference(seed: Uuid | SeedDefinition | SeedReference): seed i
     return typeof seed === "string";
 }
 
-export function isRawSeed(value: RawSeed | LedgerSeed | MnemonicSeed, parent: SeedDefinition): value is RawSeed {
-    return parent.type === "raw"
+export function isRawSeed(value: RawSeed | MnemonicSeed, parent: SeedDefinition): value is RawSeed {
+    return parent.type === "raw";
 }
 
-export function isMnemonic(value: RawSeed | LedgerSeed | MnemonicSeed, parent: SeedDefinition): value is MnemonicSeed {
-    return parent.type === "mnemonic"
+export function isMnemonic(value: RawSeed | MnemonicSeed, parent: SeedDefinition): value is MnemonicSeed {
+    return parent.type === "mnemonic";
 }
 
-export function isLedger(value: RawSeed | LedgerSeed | MnemonicSeed, parent: SeedDefinition): value is LedgerSeed {
-    return parent.type === "ledger"
+export function isLedger(value: SeedReference): value is LedgerSeedReference {
+    return value.type === "ledger";
 }
 
 export interface IEmeraldVault {
@@ -294,7 +338,7 @@ export interface IEmeraldVault {
 
     getConnectedHWSeed(create: boolean): SeedDescription | undefined;
 
-    importSeed(seed: SeedDefinition): Uuid;
+    importSeed(seed: SeedDefinition | LedgerSeedReference): Uuid;
 
     isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): boolean;
 

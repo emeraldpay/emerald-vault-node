@@ -10,6 +10,8 @@ use emerald_vault::{convert::{
 }, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey, Address};
 use json::StatusResult;
 use emerald_vault::structs::wallet::{EntryId, ReservedPath, PKType};
+use seeds::{SeedDefinitionOrReferenceType, SeedDefinitionOrReferenceJson};
+use emerald_vault::structs::seed::{SeedSource, Seed, LedgerSource};
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -34,8 +36,8 @@ pub enum AddEntryType {
 
 #[derive(Deserialize, Clone)]
 pub struct SeedEntry {
-    #[serde(rename = "seedId")]
-    pub seed_id: String,
+    #[serde(rename = "seed")]
+    pub seed: SeedDefinitionOrReferenceJson,
     #[serde(rename = "hdPath")]
     pub hd_path: String,
     pub password: Option<String>,
@@ -211,12 +213,40 @@ impl WrappedVault {
             AddEntryType::HdPath(hd) => {
                 let expected_address = hd.address
                     .and_then(|s| Address::from_str(s.as_str()).ok());
-                storage.add_entry(wallet_id)
-                    .seed_hd(Uuid::from_str(hd.seed_id.as_str())?,
-                             HDPath::try_from(hd.hd_path.as_str())?,
-                             blockchain,
-                             hd.password,
-                             expected_address)?
+                match hd.seed.value {
+                    SeedDefinitionOrReferenceType::Reference(seed_id) => {
+                        storage.add_entry(wallet_id)
+                            .seed_hd(seed_id,
+                                     HDPath::try_from(hd.hd_path.as_str())?,
+                                     blockchain,
+                                     hd.seed.password,
+                                     expected_address)?
+                    },
+                    SeedDefinitionOrReferenceType::Ledger => {
+                        let seeds = storage.seeds().list_entries()?;
+                        let ledger = seeds.iter()
+                            .find(|s| match s.source {
+                                SeedSource::Ledger(_) => true,
+                                _ => false
+                            });
+                        let seed_id = match ledger {
+                            Some(seed) => seed.id,
+                            None => storage.seeds().add(Seed {
+                                id: Uuid::new_v4(),
+                                source: SeedSource::Ledger(LedgerSource { fingerprints: vec![] }),
+                            })?
+                        };
+                        storage.add_entry(wallet_id)
+                            .seed_hd(seed_id,
+                                     HDPath::try_from(hd.hd_path.as_str())?,
+                                     blockchain,
+                                     hd.seed.password,
+                                     expected_address)?
+                    },
+                    SeedDefinitionOrReferenceType::Mnemonic(_) => {
+                        panic!("Direct creation from Mnemonic is not implemented. Create Seed first")
+                    }
+                }
             },
             AddEntryType::GenerateRandom => {
                 if entry.password.is_none() {

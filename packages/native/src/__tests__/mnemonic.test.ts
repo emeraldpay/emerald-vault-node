@@ -107,9 +107,8 @@ describe("Mnemonic", () => {
                     blockchain: 100,
                     type: "hd-path",
                     key: {
+                        seed: {type: "id", value: seedId, password: data.password},
                         hdPath: data.hdPath,
-                        seedId: seedId,
-                        password: data.password
                     }
                 });
             }).toThrow();
@@ -153,8 +152,7 @@ describe("Mnemonic", () => {
                 type: "hd-path",
                 key: {
                     hdPath: data.hdPath,
-                    seedId: seedId,
-                    password: data.password
+                    seed: {type: "id", value: seedId, password: data.password},
                 }
             });
 
@@ -184,8 +182,7 @@ describe("Mnemonic", () => {
                 type: "hd-path",
                 key: {
                     hdPath: data.hdPath,
-                    seedId: seedId,
-                    password: data.password
+                    seed: {type: "id", value: seedId, password: data.password},
                 }
             });
 
@@ -215,8 +212,7 @@ describe("Mnemonic", () => {
                 type: "hd-path",
                 key: {
                     hdPath: data.hdPath,
-                    seedId: seedId,
-                    password: data.password
+                    seed: {type: "id", value: seedId, password: data.password},
                 }
             });
 
@@ -246,8 +242,7 @@ describe("Mnemonic", () => {
                 type: "hd-path",
                 key: {
                     hdPath: data.hdPath,
-                    seedId: seedId,
-                    password: data.password
+                    seed: {type: "id", value: seedId, password: data.password},
                 }
             });
 
@@ -278,8 +273,7 @@ describe("Mnemonic", () => {
                 type: "hd-path",
                 key: {
                     hdPath: data.hdPath,
-                    seedId: seedId,
-                    password: data.password
+                    seed: {type: "id", value: seedId, password: data.password},
                 }
             });
 
@@ -310,8 +304,7 @@ describe("Mnemonic", () => {
                 type: "hd-path",
                 key: {
                     hdPath: data.hdPath,
-                    seedId: seedId,
-                    password: data.password
+                    seed: {type: "id", value: seedId, password: data.password},
                 }
             });
 
@@ -342,8 +335,7 @@ describe("Mnemonic", () => {
                 type: "hd-path",
                 key: {
                     hdPath: data.hdPath,
-                    seedId: seedId,
-                    password: data.password
+                    seed: {type: "id", value: seedId, password: data.password},
                 }
             });
 

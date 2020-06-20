@@ -25,9 +25,16 @@ export {
     ImportMnemonic,
     MnemonicSeed,
     RawSeed,
-    LedgerSeed,
+
     SeedDescription,
+
     SeedReference,
+    LedgerSeedReference,
+    IdSeedReference,
+
+    MnemonicSeedDefinition,
+    RawSeedDefinition,
+
     HDPathAccount,
     HDPathAccounts,
     isLedger,

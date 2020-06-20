@@ -3,16 +3,18 @@ import {
     AddEntry,
     AddressBookItem,
     BlockchainType,
-    isLedger,
-    isMnemonic,
-    isRawSeed,
     isReference,
     SeedDefinition,
     SeedDescription,
     UnsignedTx,
     Uuid,
-    Wallet, WalletCreateOptions,
-    IEmeraldVault, EntryId, EntryIdOp, WalletsOp, SeedReference
+    Wallet,
+    WalletsOp,
+    WalletCreateOptions,
+    IEmeraldVault,
+    EntryId, EntryIdOp,
+    SeedReference,
+    LedgerSeedReference
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -236,10 +238,11 @@ export class EmeraldVaultNative implements IEmeraldVault {
     }
 
     getConnectedHWSeed(create: boolean): SeedDescription | undefined {
+        //TODO
         return undefined
     }
 
-    importSeed(seed: SeedDefinition): Uuid {
+    importSeed(seed: SeedDefinition | LedgerSeedReference): Uuid {
         let status: Status<Uuid> = addon.seed_add(this.conf, JSON.stringify(seed));
         if (!status.succeeded) {
             throw Error(status.error.message)

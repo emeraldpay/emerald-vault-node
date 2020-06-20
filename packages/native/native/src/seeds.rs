@@ -32,7 +32,9 @@ struct HDPathAddress {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SeedJson {
     pub id: String,
+    #[serde(rename = "type")]
     pub seed_type: SeedType,
+    #[serde(rename = "available")]
     pub is_available: bool
 }
 
@@ -44,47 +46,28 @@ pub enum SeedType {
     Bytes
 }
 
-#[derive(Deserialize, Clone)]
-pub struct SeedDefinitionJson {
+#[derive(Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct SeedDefinitionOrReferenceJson {
     #[serde(flatten)]
-    pub seed_type: SeedDefinitionType,
-    pub password: Option<String>
+    pub value: SeedDefinitionOrReferenceType,
+    pub password: Option<String>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug, Eq, PartialEq)]
 #[serde(tag = "type", content = "value")]
-pub enum SeedDefinitionType {
+pub enum SeedDefinitionOrReferenceType {
     #[serde(rename = "mnemonic")]
     Mnemonic(MnemonicSeedJson),
-    #[serde(rename = "ledger")]
-    Ledger(LedgerSeedJson),
-}
-
-#[derive(Deserialize, Clone)]
-pub struct MnemonicSeedJson {
-    pub value: String,
-    pub password: Option<String>,
-}
-
-#[derive(Deserialize, Clone)]
-pub struct LedgerSeedJson {}
-
-#[derive(Deserialize, Clone)]
-pub struct SeedReferenceJson {
-    #[serde(flatten)]
-    pub seed_type: SeedReferenceType,
-    pub password: Option<String>,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(tag = "type", content = "value")]
-pub enum SeedReferenceType {
     #[serde(rename = "id")]
     Reference(Uuid),
     #[serde(rename = "ledger")]
-    Ledger(LedgerSeedJson),
-    #[serde(rename = "mnemonic")]
-    Mnemonic(MnemonicSeedJson),
+    Ledger,
+}
+
+#[derive(Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct MnemonicSeedJson {
+    pub value: String,
+    pub password: Option<String>,
 }
 
 impl From<Seed> for SeedJson {
@@ -103,27 +86,27 @@ impl From<Seed> for SeedJson {
     }
 }
 
-impl SeedDefinitionJson {
+impl SeedDefinitionOrReferenceJson {
     fn clean(self) -> Self {
-        SeedDefinitionJson {
-            seed_type: self.seed_type,
+        SeedDefinitionOrReferenceJson {
+            value: self.value,
             password: match self.password {
                 None => None,
                 Some(s) => none_if_empty(s.as_str())
-            }
+            },
         }
     }
 }
 
 pub fn is_available(mut cx: FunctionContext) -> JsResult<JsObject> {
     let json = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
-    let parsed: SeedReferenceJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
     let status = match vault.is_available(parsed) {
         Ok(avail) => StatusResult::Ok(avail).as_json(),
-        Err(e) => StatusResult::Error(0, format!("{}", e)).as_json()
+        Err(e) => StatusResult::Ok(false).as_json()
     };
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())
@@ -131,7 +114,7 @@ pub fn is_available(mut cx: FunctionContext) -> JsResult<JsObject> {
 
 pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
     let json = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
-    let parsed: SeedReferenceJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
     // blockchain (#1) is dropped
     let hd_path_all = cx.argument::<JsArray>(3)
         .expect("List of HD Path is not provided")
@@ -165,7 +148,7 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     let vault = WrappedVault::new(cfg);
 
     let json = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
-    let parsed: SeedDefinitionJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
     let parsed = parsed.clean();
 
     let result = vault.add_seed(parsed).expect("Seed not added");
@@ -180,7 +163,25 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
     let vault = WrappedVault::new(cfg);
     let seeds = vault.list_seeds().expect("List not loaded");
 
-    let result: Vec<SeedJson> = seeds.iter().map(|s| SeedJson::from(s.clone())).collect();
+    let mut result: Vec<SeedJson> = seeds.iter().map(|s| SeedJson::from(s.clone())).collect();
+
+    let has_ledger = result.iter().any(|e| {
+        match e.seed_type {
+            SeedType::Ledger => true,
+            SeedType::Bytes => false,
+        }
+    });
+
+    if has_ledger {
+        let ledger_connected = WrappedVault::is_ledger_connected().map_or(false, |v| v);
+        result = result.iter().cloned().map(|e| {
+            match e.seed_type {
+                SeedType::Ledger => SeedJson { is_available: ledger_connected, ..e },
+                SeedType::Bytes => e,
+            }
+        }).collect()
+    }
+
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
     Ok(js_value.downcast().unwrap())
@@ -211,18 +212,18 @@ impl WrappedVault {
         }
     }
 
-    pub fn is_available(&self, seed_ref: SeedReferenceJson) -> Result<bool, VaultError> {
+    pub fn is_available(&self, seed_ref: SeedDefinitionOrReferenceJson) -> Result<bool, VaultError> {
         let storage = &self.cfg.get_storage();
-        let connected = match seed_ref.seed_type {
-            SeedReferenceType::Reference(id) => {
+        let connected = match seed_ref.value {
+            SeedDefinitionOrReferenceType::Reference(id) => {
                 let seed = storage.seeds().get(id)?;
                 match seed.source {
                     SeedSource::Bytes(_) => true,
                     SeedSource::Ledger(_) => WrappedVault::is_ledger_connected()?
                 }
             },
-            SeedReferenceType::Ledger(_) => WrappedVault::is_ledger_connected()?,
-            SeedReferenceType::Mnemonic(m) => Mnemonic::try_from(Language::English, m.value.as_str()).is_ok()
+            SeedDefinitionOrReferenceType::Ledger => WrappedVault::is_ledger_connected()?,
+            SeedDefinitionOrReferenceType::Mnemonic(m) => Mnemonic::try_from(Language::English, m.value.as_str()).is_ok()
         };
         Ok(connected)
     }
@@ -270,10 +271,10 @@ impl WrappedVault {
         WrappedVault::list_seed_addresses(hd_path_all, seed)
     }
 
-    pub fn list_addresses(&self, seed_ref: SeedReferenceJson, hd_path_all: Vec<String>) -> Result<Vec<HDPathAddress>, VaultError> {
+    pub fn list_addresses(&self, seed_ref: SeedDefinitionOrReferenceJson, hd_path_all: Vec<String>) -> Result<Vec<HDPathAddress>, VaultError> {
         let storage = &self.cfg.get_storage();
-        let addresses = match seed_ref.seed_type {
-            SeedReferenceType::Reference(id) => {
+        let addresses = match seed_ref.value {
+            SeedDefinitionOrReferenceType::Reference(id) => {
                 let seed = storage.seeds().get(id)?;
                 match seed.source {
                     SeedSource::Bytes(source) => {
@@ -284,12 +285,12 @@ impl WrappedVault {
                     SeedSource::Ledger(_) => WrappedVault::list_ledger_addresses(hd_path_all)
                 }
             },
-            SeedReferenceType::Ledger(_) => WrappedVault::list_ledger_addresses(hd_path_all),
-            SeedReferenceType::Mnemonic(m) => {
+            SeedDefinitionOrReferenceType::Mnemonic(m) => {
                 let mnemonic = Mnemonic::try_from(Language::English, m.value.as_str())
                     .expect("Failed to parse mnemonic phrase");
                 WrappedVault::list_mnemonic_addresses(hd_path_all, mnemonic, m.password)
-            }
+            },
+            SeedDefinitionOrReferenceType::Ledger => WrappedVault::list_ledger_addresses(hd_path_all)
         };
         Ok(addresses)
     }
@@ -299,15 +300,15 @@ impl WrappedVault {
         storage.seeds().list_entries()
     }
 
-    pub fn add_seed(&self, seed: SeedDefinitionJson) -> Result<Uuid, VaultError> {
+    pub fn add_seed(&self, seed: SeedDefinitionOrReferenceJson) -> Result<Uuid, VaultError> {
         let storage = &self.cfg.get_storage();
-        let seed_source = match seed.seed_type {
-            SeedDefinitionType::Ledger(_) => {
+        let seed_source = match seed.value {
+            SeedDefinitionOrReferenceType::Ledger => {
                 SeedSource::Ledger(LedgerSource {
                     fingerprints: vec![]
                 })
             },
-            SeedDefinitionType::Mnemonic(value) => {
+            SeedDefinitionOrReferenceType::Mnemonic(value) => {
                 if seed.password.is_none() {
                     return Err(VaultError::PasswordRequired)
                 }
@@ -317,9 +318,116 @@ impl WrappedVault {
                 let mnemonic_password = value.password.as_ref().map(|x| &**x);
                 let raw = mnemonic.seed(mnemonic_password);
                 SeedSource::Bytes(Encrypted::encrypt(raw, seed.password.unwrap().as_str())?)
+            },
+            SeedDefinitionOrReferenceType::Reference(_) => {
+                return Err(VaultError::UnsupportedDataError("Cannot create Seed from existing seed".to_string()))
             }
         };
         let id = storage.seeds().add(Seed { id: Uuid::new_v4(), source: seed_source })?;
         Ok(id)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType, MnemonicSeedJson};
+    use uuid::Uuid;
+    use std::str::FromStr;
+
+    #[test]
+    fn parse_ledger_ref() {
+        let json = "{\"type\": \"ledger\"}";
+        let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json).expect("parsed");
+
+        assert_eq!(
+            SeedDefinitionOrReferenceJson {
+                value: SeedDefinitionOrReferenceType::Ledger,
+                password: None,
+            },
+            parsed
+        );
+    }
+
+    #[test]
+    fn parse_id_ref() {
+        let json = "{\"type\": \"id\", \"value\": \"4f3a7696-af3a-445d-9aa5-b556d78736da\"}";
+        let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json).expect("parsed");
+
+        assert_eq!(
+            SeedDefinitionOrReferenceJson {
+                value: SeedDefinitionOrReferenceType::Reference(
+                    Uuid::from_str("4f3a7696-af3a-445d-9aa5-b556d78736da").unwrap()
+                ),
+                password: None,
+            },
+            parsed
+        );
+    }
+
+    #[test]
+    fn parse_id_ref_with_password() {
+        let json = "{\"type\": \"id\", \"value\": \"4f3a7696-af3a-445d-9aa5-b556d78736da\", \"password\": \"test\"}";
+        let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json).expect("parsed");
+
+        assert_eq!(
+            SeedDefinitionOrReferenceJson {
+                value: SeedDefinitionOrReferenceType::Reference(
+                    Uuid::from_str("4f3a7696-af3a-445d-9aa5-b556d78736da").unwrap()
+                ),
+                password: Some("test".to_string()),
+            },
+            parsed
+        );
+    }
+
+    #[test]
+    fn parse_mnemonic() {
+        let json = "{\"type\": \"mnemonic\", \"value\": {\"value\": \"test test\"}}";
+        let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json).expect("parsed");
+
+        assert_eq!(
+            SeedDefinitionOrReferenceJson {
+                value: SeedDefinitionOrReferenceType::Mnemonic(MnemonicSeedJson {
+                    value: "test test".to_string(),
+                    password: None,
+                }),
+                password: None,
+            },
+            parsed
+        );
+    }
+
+    #[test]
+    fn parse_mnemonic_with_passphrase() {
+        let json = "{\"type\": \"mnemonic\", \"value\": {\"value\": \"test test\", \"password\": \"hello\"}}";
+        let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json).expect("parsed");
+
+        assert_eq!(
+            SeedDefinitionOrReferenceJson {
+                value: SeedDefinitionOrReferenceType::Mnemonic(MnemonicSeedJson {
+                    value: "test test".to_string(),
+                    password: Some("hello".to_string()),
+                }),
+                password: None,
+            },
+            parsed
+        );
+    }
+
+    #[test]
+    fn parse_mnemonic_with_passphrase_and_encryption_password() {
+        let json = "{\"type\": \"mnemonic\", \"password\": \"word!\", \"value\": {\"value\": \"test test\", \"password\": \"hello\"}}";
+        let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json).expect("parsed");
+
+        assert_eq!(
+            SeedDefinitionOrReferenceJson {
+                value: SeedDefinitionOrReferenceType::Mnemonic(MnemonicSeedJson {
+                    value: "test test".to_string(),
+                    password: Some("hello".to_string()),
+                }),
+                password: Some("word!".to_string()),
+            },
+            parsed
+        );
     }
 }

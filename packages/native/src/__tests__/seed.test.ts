@@ -3,10 +3,10 @@ import {tempPath} from "./_commons";
 import {
     AddEntry,
     EthereumEntry,
-    SeedDefinition,
     WalletsOp,
     WalletOp,
-    SeedReference
+    SeedReference,
+    MnemonicSeedDefinition
 } from "@emeraldpay/emerald-vault-core";
 
 describe("Seeds", () => {
@@ -22,10 +22,11 @@ describe("Seeds", () => {
 
         describe('24 words', () => {
 
-            const type: SeedDefinition = {
+            const type: MnemonicSeedDefinition = {
                 type: "mnemonic",
                 value: {
-                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea",
+                    password: undefined
                 }
             };
 
@@ -63,7 +64,7 @@ describe("Seeds", () => {
         });
 
         describe('24 words with password', () => {
-            const type: SeedDefinition = {
+            const type: MnemonicSeedDefinition = {
                 type: "mnemonic",
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea",
@@ -96,7 +97,7 @@ describe("Seeds", () => {
         });
 
         describe('21 words', () => {
-            const type: SeedDefinition = {
+            const type: MnemonicSeedDefinition = {
                 type: "mnemonic",
                 value: {
                     value: "pepper mention magic uncover vicious spare echo fitness solid bonus phrase predict pen grow lyrics certain swallow grass rain company tuna",
@@ -185,9 +186,8 @@ describe("Seeds", () => {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
+                    seed: {type: "id", value: id, password: "test"},
                     hdPath: "m/44'/60'/0'/0/1",
-                    seedId: id,
-                    password: "test"
                 }
             };
             let accId = vault.addEntry(walletId, addEntry);

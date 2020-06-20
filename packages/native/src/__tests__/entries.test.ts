@@ -42,9 +42,8 @@ describe("Entries", () => {
                 type: "hd-path",
                 blockchain: 100,
                 key: {
-                    seedId: seedId,
-                    hdPath: "m/44'/60'/0'/1/1",
-                    password: "test"
+                    seed: {type: "id", value: seedId, password: "test"},
+                    hdPath: "m/44'/60'/0'/1/1"
                 }
             });
             let wallet = vault.getWallet(walletId);

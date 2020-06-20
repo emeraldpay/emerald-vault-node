@@ -181,9 +181,8 @@ describe("Sign transaction", () => {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
-                    seedId,
+                    seed: {type: "id", value: seedId, password: "1234"},
                     hdPath: "m/44'/60'/0'/0/3",
-                    password: "1234"
                 }
             });
 
