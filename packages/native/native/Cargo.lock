@@ -428,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.5.1-rc6"
+version = "0.5.1-rc7"
 dependencies = [
  "chrono 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "emerald-vault 0.27.0 (git+https://github.com/emeraldpay/emerald-vault)",
