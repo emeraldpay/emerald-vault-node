@@ -188,6 +188,30 @@ describe("Wallets", () => {
                 expect(wallet.getEthereumEntries()[0].address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
             });
 
+            test("Uses current date", () => {
+                const start = new Date();
+                let id = vault.addWallet("Test 2");
+                let acc: AddEntry = {
+                    blockchain: 100,
+                    type: "raw-pk-hex",
+                    key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                    password: "test"
+                };
+                let entryId = vault.addEntry(id, acc);
+                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+
+                expect(wallet.value.createdAt).toBeDefined();
+                const walletCreatedAt = new Date(wallet.value.createdAt);
+                expect(walletCreatedAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
+                expect(walletCreatedAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+
+                expect(wallet.getEthereumEntries()[0].id).toBe(entryId);
+                expect(wallet.getEthereumEntries()[0].createdAt).toBeDefined();
+                const entryCreatedAt = new Date(wallet.getEthereumEntries()[0].createdAt);
+                expect(entryCreatedAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
+                expect(entryCreatedAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+            });
+
             test("Create and import 2 keys", () => {
                 let id = vault.addWallet("Test 3");
                 let acc1: AddEntry = {

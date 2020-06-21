@@ -14,7 +14,8 @@ import {
     IEmeraldVault,
     EntryId, EntryIdOp,
     SeedReference,
-    LedgerSeedReference
+    LedgerSeedReference,
+    CreateAddressBookItem
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -211,7 +212,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
             .filter((item) => item.blockchain == blockchain);
     }
 
-    addToAddressBook(item: AddressBookItem): boolean {
+    addToAddressBook(item: CreateAddressBookItem): boolean {
         let opts = Object.assign({}, this.conf);
         let status: Status<boolean> = addon.addrbook_add(opts, JSON.stringify(item));
         if (!status.succeeded) {

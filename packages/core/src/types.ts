@@ -47,7 +47,15 @@ export type AddressBookItem = {
     address: string,
     description?: string,
     name?: string,
-    blockchain: number
+    blockchain: number,
+    createdAt: Date,
+}
+
+export type CreateAddressBookItem = {
+    address: string,
+    description?: string,
+    name?: string,
+    blockchain: number,
 }
 
 export type ImportPrivateKey = {
@@ -68,7 +76,7 @@ export type SeedPKRef = {
     hdPath: string
 }
 
-export type EthereumEntry = {
+export interface BaseEntry {
     /**
      * String Id of the entry
      */
@@ -77,11 +85,6 @@ export type EthereumEntry = {
      * Blockchain Id
      */
     blockchain: number,
-    /**
-     * Address of the entry.
-     * It maybe undefined, for example if entry is created as HD Path on a Ledger which wasn't connected during creation
-     */
-    address: string | undefined,
     /**
      * Reference to the Private Key
      */
@@ -93,15 +96,22 @@ export type EthereumEntry = {
     /**
      * Optional user defined label for the entry
      */
-    label?: string | undefined
+    label?: string | undefined,
+    /**
+     * Creation timestamp of the entry
+     */
+    createdAt: Date,
 }
 
-export type BitcoinEntry = {
-    id: EntryId,
-    blockchain: number,
-    key: PKRef | SeedPKRef,
-    receiveDisabled?: boolean | undefined,
-    label?: string | undefined
+export interface EthereumEntry extends BaseEntry {
+    /**
+     * Address of the entry.
+     * It maybe undefined, for example if entry is created as HD Path on a Ledger which wasn't connected during creation
+     */
+    address: string | undefined,
+}
+
+export interface BitcoinEntry extends BaseEntry {
 }
 
 export type WalletEntry = EthereumEntry | BitcoinEntry;
@@ -111,7 +121,8 @@ export type Wallet = {
     name?: string | undefined,
     description?: string | undefined,
     entries: WalletEntry[],
-    reserved?: HDPathAccount[] | undefined
+    reserved?: HDPathAccount[] | undefined,
+    createdAt: Date,
 }
 
 /**
@@ -231,12 +242,16 @@ export type SeedEntry = {
 export type SeedDescription = {
     id?: Uuid,
     type: SeedType,
-    available: boolean
+    available: boolean,
+    label?: string,
+    createdAt: Date,
 }
 
 export interface BaseSeedDefinition {
     // Password to _encrypt_ seed data in the vault
     password?: string;
+    // optional label to save with the seed
+    label?: string;
 }
 
 export interface RawSeedDefinition extends BaseSeedDefinition {
@@ -330,7 +345,7 @@ export interface IEmeraldVault {
 
     listAddressBook(blockchain: number): AddressBookItem[];
 
-    addToAddressBook(item: AddressBookItem): boolean;
+    addToAddressBook(item: CreateAddressBookItem): boolean;
 
     removeFromAddressBook(blockchain: number, address: string): boolean;
 

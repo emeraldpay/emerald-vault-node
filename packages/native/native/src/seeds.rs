@@ -22,6 +22,7 @@ use emerald_vault::{
 use json::StatusResult;
 use emerald_vault::util::optional::none_if_empty;
 use std::collections::HashMap;
+use chrono::{Utc, DateTime};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
@@ -35,7 +36,10 @@ pub struct SeedJson {
     #[serde(rename = "type")]
     pub seed_type: SeedType,
     #[serde(rename = "available")]
-    pub is_available: bool
+    pub is_available: bool,
+    pub label: Option<String>,
+    #[serde(rename = "createdAt")]
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -51,6 +55,7 @@ pub struct SeedDefinitionOrReferenceJson {
     #[serde(flatten)]
     pub value: SeedDefinitionOrReferenceType,
     pub password: Option<String>,
+    pub label: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -81,7 +86,9 @@ impl From<Seed> for SeedJson {
             is_available: match value.source {
                 SeedSource::Bytes(_) => true,
                 SeedSource::Ledger(_) => false, //TODO
-            }
+            },
+            label: value.label,
+            created_at: value.created_at,
         }
     }
 }
@@ -89,11 +96,11 @@ impl From<Seed> for SeedJson {
 impl SeedDefinitionOrReferenceJson {
     fn clean(self) -> Self {
         SeedDefinitionOrReferenceJson {
-            value: self.value,
             password: match self.password {
                 None => None,
                 Some(s) => none_if_empty(s.as_str())
             },
+            ..self
         }
     }
 }
@@ -323,7 +330,12 @@ impl WrappedVault {
                 return Err(VaultError::UnsupportedDataError("Cannot create Seed from existing seed".to_string()))
             }
         };
-        let id = storage.seeds().add(Seed { id: Uuid::new_v4(), source: seed_source })?;
+        let id = storage.seeds().add(Seed {
+            id: Uuid::new_v4(),
+            source: seed_source,
+            label: seed.label,
+            created_at: Utc::now(),
+        })?;
         Ok(id)
     }
 }
@@ -343,6 +355,7 @@ mod tests {
             SeedDefinitionOrReferenceJson {
                 value: SeedDefinitionOrReferenceType::Ledger,
                 password: None,
+                label: None
             },
             parsed
         );
@@ -359,6 +372,7 @@ mod tests {
                     Uuid::from_str("4f3a7696-af3a-445d-9aa5-b556d78736da").unwrap()
                 ),
                 password: None,
+                label: None
             },
             parsed
         );
@@ -375,6 +389,7 @@ mod tests {
                     Uuid::from_str("4f3a7696-af3a-445d-9aa5-b556d78736da").unwrap()
                 ),
                 password: Some("test".to_string()),
+                label: None
             },
             parsed
         );
@@ -392,6 +407,25 @@ mod tests {
                     password: None,
                 }),
                 password: None,
+                label: None,
+            },
+            parsed
+        );
+    }
+
+    #[test]
+    fn parse_mnemonic_with_label() {
+        let json = "{\"type\": \"mnemonic\", \"value\": {\"value\": \"test test\"}, \"label\": \"My Seed\"}";
+        let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json).expect("parsed");
+
+        assert_eq!(
+            SeedDefinitionOrReferenceJson {
+                value: SeedDefinitionOrReferenceType::Mnemonic(MnemonicSeedJson {
+                    value: "test test".to_string(),
+                    password: None,
+                }),
+                password: None,
+                label: Some("My Seed".to_string()),
             },
             parsed
         );
@@ -409,6 +443,7 @@ mod tests {
                     password: Some("hello".to_string()),
                 }),
                 password: None,
+                label: None
             },
             parsed
         );
@@ -426,6 +461,7 @@ mod tests {
                     password: Some("hello".to_string()),
                 }),
                 password: Some("word!".to_string()),
+                label: None
             },
             parsed
         );

@@ -8,7 +8,8 @@ describe("Ops", () => {
             let data: Wallet = {
                 id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                 entries: [],
-                name: "test"
+                name: "test",
+                createdAt: new Date(),
             };
 
             let wallet = WalletOp.of(data);
@@ -26,7 +27,8 @@ describe("Ops", () => {
             let data: Wallet = {
                 id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                 entries: [],
-                name: "test"
+                name: "test",
+                createdAt: new Date(),
             };
 
             let wallet = WalletOp.of(data);
@@ -45,12 +47,14 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                     entries: [acc1],
-                    name: "test"
+                    name: "test",
+                    createdAt: new Date(),
                 };
 
                 let act = WalletOp.of(wallet1).getHDAccounts();
@@ -67,7 +71,8 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
                 let acc2: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
@@ -77,7 +82,8 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
@@ -87,7 +93,8 @@ describe("Ops", () => {
                         {seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 0},
                         {seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc', accountId: 1},
                         {seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892', accountId: 0}
-                    ]
+                    ],
+                    createdAt: new Date(),
                 };
 
                 let act = WalletOp.of(wallet1).getHDAccounts();
@@ -105,7 +112,8 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
                 let acc2: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
@@ -115,12 +123,14 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                     entries: [acc1, acc2],
-                    name: "test"
+                    name: "test",
+                    createdAt: new Date(),
                 };
 
                 let act = WalletOp.of(wallet1).getHDAccounts();
@@ -138,7 +148,8 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
 
                 let acc2: EthereumEntry = {
@@ -149,7 +160,8 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
                 let acc3: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
@@ -159,7 +171,8 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/1'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
                 let acc4: EthereumEntry = {
                     address: '0x343d1de24ac7a891575857855c5579f9de19b427',
@@ -169,7 +182,8 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/5'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
 
                 let acc5: EthereumEntry = {
@@ -180,14 +194,16 @@ describe("Ops", () => {
                         type: "seed-hd",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
-                    }
+                    },
+                    createdAt: new Date(),
                 };
 
                 let wallet1: Wallet = {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                     //acc5 is same path for different coin
                     entries: [acc1, acc2, acc3, acc4, acc5],
-                    name: "test"
+                    name: "test",
+                    createdAt: new Date(),
                 };
 
                 let act = WalletOp.of(wallet1).getHDAccounts();
@@ -205,11 +221,13 @@ describe("Ops", () => {
                 {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                     entries: [],
-                    name: "test"
+                    name: "test",
+                    createdAt: new Date(),
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    entries: []
+                    entries: [],
+                    createdAt: new Date(),
                 }
             ];
 
@@ -229,11 +247,13 @@ describe("Ops", () => {
                 {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                     entries: [],
-                    name: "test"
+                    name: "test",
+                    createdAt: new Date(),
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    entries: []
+                    entries: [],
+                    createdAt: new Date(),
                 }
             ];
 
@@ -248,11 +268,13 @@ describe("Ops", () => {
                 {
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea',
                     entries: [],
-                    name: "test"
+                    name: "test",
+                    createdAt: new Date(),
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    entries: []
+                    entries: [],
+                    createdAt: new Date(),
                 }
             ];
 
@@ -279,15 +301,18 @@ describe("Ops", () => {
                                 type: "seed-hd",
                                 hdPath: "m/44'/1",
                                 seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
-                            }
+                            },
+                            createdAt: new Date(),
                         }
                     ],
-                    name: "test"
+                    name: "test",
+                    createdAt: new Date(),
                 },
                 {
                     id: '6a79d3ff-7d96-42f8-bcff-000325f5e900',
-                    entries: []
-                }
+                    entries: [],
+                    createdAt: new Date(),
+                },
             ];
 
             let wallets = WalletsOp.of(data);

@@ -55,14 +55,14 @@ describe("Address Book", () => {
 
     describe('Add Item', () => {
 
-        let vault;
-        beforeAll(() => {
+        let vault: EmeraldVaultNative;
+        beforeEach(() => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("book-add")
             });
         });
 
-        test("list etc", () => {
+        test("create etc", () => {
             let entries = vault.listAddressBook(101);
             expect(entries.length).toBe(0);
             vault.addToAddressBook({
@@ -75,6 +75,22 @@ describe("Address Book", () => {
             expect(entries[0].address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase());
             expect(entries[0].name).toBe("test 1");
             expect(entries[0].description).toBeNull();
+        });
+
+        test("uses current date", () => {
+            const start = new Date();
+            vault.addToAddressBook({
+                name: "test 1",
+                address: "0xc2d7cf95645d33006175b78989035c7c9061d3f9",
+                blockchain: 101
+            });
+            const entries = vault.listAddressBook(101);
+            expect(entries.length).toBe(1);
+            expect(entries[0].createdAt).toBeDefined();
+            const createdAt = new Date(entries[0].createdAt);
+            expect(createdAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
+            expect(createdAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+
         });
     });
 

@@ -160,7 +160,41 @@ describe("Seeds", () => {
 
             let addresses = vault.listSeedAddresses(ref, "ethereum", ["m/44'/60'/0'/0/1"]);
             expect(addresses["m/44'/60'/0'/0/1"].toLowerCase()).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase())
-        })
+        });
+
+        test("Create with label", () => {
+            let id = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test",
+                label: "Hello World!",
+            });
+            expect(id).toBeDefined();
+            let seed = vault.listSeeds()[0];
+            expect(seed.id).toBe(id);
+            expect(seed.label).toBe("Hello World!");
+        });
+
+        test("Uses current date", () => {
+            const start = new Date();
+            let id = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test",
+            });
+            expect(id).toBeDefined();
+            let seed = vault.listSeeds()[0];
+            expect(seed.id).toBe(id);
+            expect(seed.createdAt).toBeDefined();
+            const createdAt = new Date(seed.createdAt);
+            expect(createdAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
+            expect(createdAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+        });
+
     });
 
     describe("Create Entry", () => {

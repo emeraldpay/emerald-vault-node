@@ -18,13 +18,16 @@ use emerald_vault::{
 };
 use json::StatusResult;
 use std::convert::TryFrom;
+use chrono::{Utc, DateTime};
 
 #[derive(Serialize, Clone)]
 struct AddressBookmarkJson {
     pub address: String,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub blockchain: u32
+    pub blockchain: u32,
+    #[serde(rename = "createdAt")]
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -45,7 +48,8 @@ impl From<&AddressBookmark> for AddressBookmarkJson {
             },
             name: value.details.label.clone(),
             description: value.details.description.clone(),
-            blockchain: value.details.blockchain as u32
+            blockchain: value.details.blockchain as u32,
+            created_at: value.details.created_at,
         }
     }
 }
@@ -58,7 +62,8 @@ impl NewAddressBookItem {
                 blockchain,
                 label: self.name,
                 description: self.description,
-                address: AddressRef::EthereumAddress(self.address)
+                address: AddressRef::EthereumAddress(self.address),
+                created_at: Utc::now(),
             }
         }
     }

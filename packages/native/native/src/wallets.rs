@@ -12,6 +12,7 @@ use json::StatusResult;
 use emerald_vault::structs::wallet::{EntryId, ReservedPath, PKType};
 use seeds::{SeedDefinitionOrReferenceType, SeedDefinitionOrReferenceJson};
 use emerald_vault::structs::seed::{SeedSource, Seed, LedgerSource};
+use chrono::{DateTime, Utc};
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -53,6 +54,8 @@ pub struct WalletEntryJson {
     pub receive_disabled: bool,
     pub label: Option<String>,
     pub key: KeyRefJson,
+    #[serde(rename = "createdAt")]
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Clone)]
@@ -84,6 +87,8 @@ pub struct WalletJson {
     pub name: Option<String>,
     pub entries: Vec<WalletEntryJson>,
     pub reserved: Vec<ReservedAccountJson>,
+    #[serde(rename = "createdAt")]
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -144,6 +149,7 @@ impl From<Wallet> for WalletJson {
                         )
                     }
                 },
+                created_at: a.created_at,
             })
             .collect();
         let reserved: Vec<ReservedAccountJson> = wallet.reserved.iter()
@@ -154,6 +160,7 @@ impl From<Wallet> for WalletJson {
             name: wallet.label,
             entries,
             reserved,
+            created_at: wallet.created_at
         }
     }
 }
@@ -234,6 +241,8 @@ impl WrappedVault {
                             None => storage.seeds().add(Seed {
                                 id: Uuid::new_v4(),
                                 source: SeedSource::Ledger(LedgerSource { fingerprints: vec![] }),
+                                label: None,
+                                created_at: Utc::now(),
                             })?
                         };
                         storage.add_entry(wallet_id)

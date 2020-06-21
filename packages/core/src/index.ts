@@ -13,6 +13,7 @@ export {
     UnsignedTx,
 
     AddressBookItem,
+    CreateAddressBookItem,
     Wallet,
     WalletCreateOptions,
     WalletEntry,
