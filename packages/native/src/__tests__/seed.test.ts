@@ -191,8 +191,8 @@ describe("Seeds", () => {
             expect(seed.id).toBe(id);
             expect(seed.createdAt).toBeDefined();
             const createdAt = new Date(seed.createdAt);
-            expect(createdAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
-            expect(createdAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+            expect(createdAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
+            expect(createdAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
         });
 
     });

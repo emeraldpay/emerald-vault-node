@@ -202,14 +202,14 @@ describe("Wallets", () => {
 
                 expect(wallet.value.createdAt).toBeDefined();
                 const walletCreatedAt = new Date(wallet.value.createdAt);
-                expect(walletCreatedAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
-                expect(walletCreatedAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+                expect(walletCreatedAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
+                expect(walletCreatedAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
 
                 expect(wallet.getEthereumEntries()[0].id).toBe(entryId);
                 expect(wallet.getEthereumEntries()[0].createdAt).toBeDefined();
                 const entryCreatedAt = new Date(wallet.getEthereumEntries()[0].createdAt);
-                expect(entryCreatedAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
-                expect(entryCreatedAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+                expect(entryCreatedAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
+                expect(entryCreatedAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
             });
 
             test("Create and import 2 keys", () => {

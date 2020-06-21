@@ -88,8 +88,8 @@ describe("Address Book", () => {
             expect(entries.length).toBe(1);
             expect(entries[0].createdAt).toBeDefined();
             const createdAt = new Date(entries[0].createdAt);
-            expect(createdAt.getMilliseconds()).toBeGreaterThanOrEqual(start.getMilliseconds());
-            expect(createdAt.getMilliseconds()).toBeLessThanOrEqual(new Date().getMilliseconds());
+            expect(createdAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
+            expect(createdAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
 
         });
     });
