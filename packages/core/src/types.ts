@@ -303,15 +303,23 @@ export function isReference(seed: Uuid | SeedDefinition | SeedReference): seed i
 }
 
 export function isRawSeed(value: RawSeed | MnemonicSeed, parent: SeedDefinition): value is RawSeed {
-    return parent.type === "raw";
+    return typeof parent == "object" && typeof value == "string" && parent.type === "raw";
 }
 
 export function isMnemonic(value: RawSeed | MnemonicSeed, parent: SeedDefinition): value is MnemonicSeed {
-    return parent.type === "mnemonic";
+    return typeof parent == "object" && typeof value == "object" && parent.type === "mnemonic";
 }
 
 export function isLedger(value: SeedReference): value is LedgerSeedReference {
-    return value.type === "ledger";
+    return isSeedReference(value) && value.type === "ledger";
+}
+
+export function isIdSeedReference(value: SeedReference): value is IdSeedReference {
+    return isSeedReference(value) && value.type === "id";
+}
+
+export function isSeedReference(value: Uuid | SeedReference | SeedDefinition): value is SeedReference {
+    return typeof value === "object" && (value.type == "id" || value.type == "ledger");
 }
 
 export interface IEmeraldVault {
