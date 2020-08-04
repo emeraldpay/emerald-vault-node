@@ -93,6 +93,8 @@ jobs:
         env:
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
+          # support macOS High Sierra
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
 
       - name: Show lib details
         run: |
