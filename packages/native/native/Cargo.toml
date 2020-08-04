@@ -25,7 +25,3 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
-
-[target.x86_64-apple-darwin]
-# support macOS High Sierra
-rustflags=["-C", "link-arg=-mmacosx-version-min=10.13"]
