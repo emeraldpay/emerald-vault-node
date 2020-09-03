@@ -1,14 +1,10 @@
 use neon::prelude::{Context, Handle, JsObject, JsValue, Object, Value};
 
-use emerald_vault::{
-    storage::{
-        error::VaultError
-    }
-};
+use emerald_vault::storage::error::VaultError;
 
 #[derive(Debug, Copy, Clone)]
 pub enum JsonError {
-    InvalidData
+    InvalidData,
 }
 
 impl std::convert::From<hex::FromHexError> for JsonError {
@@ -20,46 +16,49 @@ impl std::convert::From<hex::FromHexError> for JsonError {
 #[derive(Serialize)]
 pub struct StatusErrorJson {
     pub code: u32,
-    pub message: String
+    pub message: String,
 }
 
 #[derive(Serialize)]
 pub struct StatusJson<T> {
     pub succeeded: bool,
     pub result: Option<T>,
-    pub error: Option<StatusErrorJson>
+    pub error: Option<StatusErrorJson>,
 }
 
 pub enum StatusResult<T> {
     Ok(T),
-    Error(u32, String)
+    Error(u32, String),
 }
 
-impl <T> StatusResult<T> where T: Clone {
+impl<T> StatusResult<T>
+    where
+        T: Clone,
+{
     pub fn as_json(&self) -> StatusJson<T> {
         match self {
             StatusResult::Ok(ref t) => StatusJson {
                 succeeded: true,
                 result: Some(t.clone()),
-                error: None
+                error: None,
             },
             StatusResult::Error(code, message) => StatusJson {
                 succeeded: false,
                 result: None,
                 error: Some(StatusErrorJson {
                     code: *code,
-                    message: message.clone()
-                })
-            }
+                    message: message.clone(),
+                }),
+            },
         }
     }
 }
 
-impl <T> From<Result<T, VaultError>> for StatusResult<T> {
+impl<T> From<Result<T, VaultError>> for StatusResult<T> {
     fn from(r: Result<T, VaultError>) -> Self {
         match r {
             Ok(t) => StatusResult::Ok(t),
-            Err(_) => StatusResult::Error(2, "Vault Error".to_string())
+            Err(_) => StatusResult::Error(2, "Vault Error".to_string()),
         }
     }
 }
@@ -68,9 +67,12 @@ pub trait AsJsObject {
     fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue>;
 }
 
-impl<T> AsJsObject for StatusResult<T> where T: AsJsObject {
+impl<T> AsJsObject for StatusResult<T>
+    where
+        T: AsJsObject,
+{
     fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue> {
-        let mut js = JsObject::new(cx);
+        let js = JsObject::new(cx);
 
         match self {
             StatusResult::Ok(t) => {
@@ -79,7 +81,7 @@ impl<T> AsJsObject for StatusResult<T> where T: AsJsObject {
 
                 let handle = t.as_js_object(cx);
                 js.set(cx, "result", handle).unwrap();
-            },
+            }
             StatusResult::Error(code, msg) => {
                 let handle = cx.boolean(false);
                 js.set(cx, "succeeded", handle).unwrap();

@@ -1,18 +1,21 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use neon::prelude::{FunctionContext, JsObject, JsResult, JsString, JsNumber};
+use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString};
 use uuid::Uuid;
 
-use access::{VaultConfig, WrappedVault, args_get_str};
-use emerald_vault::{convert::{
-    json::keyfile::EthereumJsonV3File
-}, core::chains::Blockchain, mnemonic::HDPath, storage::error::VaultError, trim_hex, structs::wallet::Wallet, PrivateKey, Address};
-use json::StatusResult;
-use emerald_vault::structs::wallet::{EntryId, ReservedPath, PKType};
-use seeds::{SeedDefinitionOrReferenceType, SeedDefinitionOrReferenceJson};
-use emerald_vault::structs::seed::{SeedSource, Seed, LedgerSource};
+use access::{args_get_str, VaultConfig, WrappedVault};
 use chrono::{DateTime, Utc};
+use emerald_vault::structs::seed::{LedgerSource, Seed, SeedSource};
+use emerald_vault::structs::wallet::{EntryId, PKType, ReservedPath};
+use emerald_vault::{
+    blockchain::chains::Blockchain, convert::json::keyfile::EthereumJsonV3File,
+    storage::error::VaultError, structs::wallet::Wallet, trim_hex, EthereumAddress,
+    EthereumPrivateKey,
+};
+use hdpath::StandardHDPath;
+use json::StatusResult;
+use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -69,7 +72,7 @@ pub struct SeedHDPathJson {
 #[derive(Serialize, Clone)]
 pub struct PkIdJson {
     #[serde(rename = "keyId")]
-    pub id: String
+    pub id: String,
 }
 
 #[derive(Serialize, Clone)]
@@ -125,7 +128,9 @@ impl From<ReservedAccountJson> for ReservedPath {
 
 impl From<Wallet> for WalletJson {
     fn from(wallet: Wallet) -> Self {
-        let entries: Vec<WalletEntryJson> = wallet.entries.iter()
+        let entries: Vec<WalletEntryJson> = wallet
+            .entries
+            .iter()
             .map(|a| WalletEntryJson {
                 id: EntryId::from(&wallet, a).to_string(),
                 blockchain: a.blockchain as u32,
@@ -133,26 +138,20 @@ impl From<Wallet> for WalletJson {
                 receive_disabled: a.receive_disabled,
                 label: a.label.clone(),
                 key: match &a.key {
-                    PKType::SeedHd(seed) => {
-                        KeyRefJson::HdPath(
-                            SeedHDPathJson {
-                                seed_id: seed.seed_id.to_string(),
-                                hd_path: seed.hd_path.to_string(),
-                            }
-                        )
-                    },
-                    PKType::PrivateKeyRef(pk_id) => {
-                        KeyRefJson::PrivateKey(
-                            PkIdJson {
-                                id: pk_id.to_string()
-                            }
-                        )
-                    }
+                    PKType::SeedHd(seed) => KeyRefJson::HdPath(SeedHDPathJson {
+                        seed_id: seed.seed_id.to_string(),
+                        hd_path: seed.hd_path.to_string(),
+                    }),
+                    PKType::PrivateKeyRef(pk_id) => KeyRefJson::PrivateKey(PkIdJson {
+                        id: pk_id.to_string(),
+                    }),
                 },
                 created_at: a.created_at,
             })
             .collect();
-        let reserved: Vec<ReservedAccountJson> = wallet.reserved.iter()
+        let reserved: Vec<ReservedAccountJson> = wallet
+            .reserved
+            .iter()
             .map(|x| ReservedAccountJson::from(x.clone()))
             .collect();
         WalletJson {
@@ -160,22 +159,31 @@ impl From<Wallet> for WalletJson {
             name: wallet.label,
             entries,
             reserved,
-            created_at: wallet.created_at
+            created_at: wallet.created_at,
         }
     }
 }
 
 fn read_wallet_id(cx: &mut FunctionContext, pos: i32) -> Uuid {
-    let wallet_id = cx.argument::<JsString>(pos).expect("wallet_id is not provided").value();
+    let wallet_id = cx
+        .argument::<JsString>(pos)
+        .expect("wallet_id is not provided")
+        .value();
     let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
     wallet_id
 }
 
 fn read_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usize) {
-    let wallet_id = cx.argument::<JsString>(pos).expect("wallet_id is not provided").value();
+    let wallet_id = cx
+        .argument::<JsString>(pos)
+        .expect("wallet_id is not provided")
+        .value();
     let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
 
-    let entry_id = cx.argument::<JsNumber>(pos + 1).expect("entry_id is not provided").value();
+    let entry_id = cx
+        .argument::<JsNumber>(pos + 1)
+        .expect("entry_id is not provided")
+        .value();
     let entry_id = entry_id as usize;
 
     (wallet_id, entry_id)
@@ -185,17 +193,21 @@ impl WrappedVault {
     fn create_wallet(&self, options: AddWalletJson) -> Result<Uuid, VaultError> {
         let storage = &self.cfg.get_storage();
         let id = Uuid::new_v4();
-        let reserved = options.reserved
+        let reserved = options
+            .reserved
             .unwrap_or(Vec::new())
             .iter()
             .map(|r| ReservedPath::from(r.clone()))
             .collect();
-        storage.wallets().add(Wallet {
-            id: id.clone(),
-            label: options.name,
-            reserved,
-            ..Wallet::default()
-        }).map(|_| id)
+        storage
+            .wallets()
+            .add(Wallet {
+                id: id.clone(),
+                label: options.name,
+                reserved,
+                ..Wallet::default()
+            })
+            .map(|_| id)
     }
 
     fn create_entry(&self, wallet_id: Uuid, entry: AddEntryJson) -> Result<usize, VaultError> {
@@ -204,66 +216,75 @@ impl WrappedVault {
         let result = match entry.key_value {
             AddEntryType::EthereumJson(json) => {
                 let json = EthereumJsonV3File::try_from(json)?;
-                let id = storage.add_entry(wallet_id)
-                    .ethereum(&json, blockchain)?;
+                let id = storage.add_entry(wallet_id).ethereum(&json, blockchain)?;
                 id
-            },
+            }
             AddEntryType::RawHex(hex) => {
                 if entry.password.is_none() {
                     panic!("Password is required".to_string())
                 }
                 let hex = trim_hex(hex.as_str());
                 let hex = hex::decode(hex)?;
-                storage.add_entry(wallet_id)
-                    .raw_pk(hex, entry.password.unwrap().as_str(), blockchain)?
-            },
+                storage.add_entry(wallet_id).raw_pk(
+                    hex,
+                    entry.password.unwrap().as_str(),
+                    blockchain,
+                )?
+            }
             AddEntryType::HdPath(hd) => {
-                let expected_address = hd.address
-                    .and_then(|s| Address::from_str(s.as_str()).ok());
+                let expected_address = hd
+                    .address
+                    .and_then(|s| EthereumAddress::from_str(s.as_str()).ok());
                 match hd.seed.value {
                     SeedDefinitionOrReferenceType::Reference(seed_id) => {
-                        storage.add_entry(wallet_id)
-                            .seed_hd(seed_id,
-                                     HDPath::try_from(hd.hd_path.as_str())?,
-                                     blockchain,
-                                     hd.seed.password,
-                                     expected_address)?
-                    },
+                        storage.add_entry(wallet_id).seed_hd(
+                            seed_id,
+                            StandardHDPath::try_from(hd.hd_path.as_str())?,
+                            blockchain,
+                            hd.seed.password,
+                            expected_address,
+                        )?
+                    }
                     SeedDefinitionOrReferenceType::Ledger => {
                         let seeds = storage.seeds().list_entries()?;
-                        let ledger = seeds.iter()
-                            .find(|s| match s.source {
-                                SeedSource::Ledger(_) => true,
-                                _ => false
-                            });
+                        let ledger = seeds.iter().find(|s| match s.source {
+                            SeedSource::Ledger(_) => true,
+                            _ => false,
+                        });
                         let seed_id = match ledger {
                             Some(seed) => seed.id,
                             None => storage.seeds().add(Seed {
                                 id: Uuid::new_v4(),
-                                source: SeedSource::Ledger(LedgerSource { fingerprints: vec![] }),
+                                source: SeedSource::Ledger(LedgerSource {
+                                    fingerprints: vec![],
+                                }),
                                 label: None,
                                 created_at: Utc::now(),
-                            })?
+                            })?,
                         };
-                        storage.add_entry(wallet_id)
-                            .seed_hd(seed_id,
-                                     HDPath::try_from(hd.hd_path.as_str())?,
-                                     blockchain,
-                                     hd.seed.password,
-                                     expected_address)?
-                    },
-                    SeedDefinitionOrReferenceType::Mnemonic(_) => {
-                        panic!("Direct creation from Mnemonic is not implemented. Create Seed first")
+                        storage.add_entry(wallet_id).seed_hd(
+                            seed_id,
+                            StandardHDPath::try_from(hd.hd_path.as_str())?,
+                            blockchain,
+                            hd.seed.password,
+                            expected_address,
+                        )?
                     }
+                    SeedDefinitionOrReferenceType::Mnemonic(_) => panic!(
+                        "Direct creation from Mnemonic is not implemented. Create Seed first"
+                    ),
                 }
-            },
+            }
             AddEntryType::GenerateRandom => {
                 if entry.password.is_none() {
                     panic!("Password is required".to_string())
                 }
-                let pk = PrivateKey::gen();
-                storage.add_entry(wallet_id)
-                    .raw_pk(pk.0.to_vec(), entry.password.unwrap().as_str(), blockchain)?
+                let pk = EthereumPrivateKey::gen();
+                storage.add_entry(wallet_id).raw_pk(
+                    pk.0.to_vec(),
+                    entry.password.unwrap().as_str(),
+                    blockchain,
+                )?
             }
         };
         Ok(result)
@@ -282,7 +303,7 @@ impl WrappedVault {
         let mut wallet = storage.wallets().get(wallet_id)?;
         let index = wallet.entries.iter().position(|a| a.id == entry_id);
         if index.is_none() {
-            return Ok(false)
+            return Ok(false);
         }
         wallet.entries.remove(index.unwrap());
         storage.wallets().update(wallet)
@@ -314,8 +335,12 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let json = cx.argument::<JsString>(1).expect("Input JSON with options is not provided").value();
-    let parsed: AddWalletJson = serde_json::from_str(json.as_str()).expect("Invalid JSON with options");
+    let json = cx
+        .argument::<JsString>(1)
+        .expect("Input JSON with options is not provided")
+        .value();
+    let parsed: AddWalletJson =
+        serde_json::from_str(json.as_str()).expect("Invalid JSON with options");
 
     let id = vault.create_wallet(parsed).expect("Wallet not created");
 
@@ -329,11 +354,16 @@ pub fn add_entry_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = read_wallet_id(&mut cx, 1);
-    let json = cx.argument::<JsString>(2).expect("Input JSON is not provided").value();
+    let json = cx
+        .argument::<JsString>(2)
+        .expect("Input JSON is not provided")
+        .value();
 
     let parsed: AddEntryJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
-    let id = vault.create_entry(wallet_id, parsed).expect("Entry not created");
+    let id = vault
+        .create_entry(wallet_id, parsed)
+        .expect("Entry not created");
 
     let status = StatusResult::Ok(id).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
@@ -359,7 +389,9 @@ pub fn remove_entry(mut cx: FunctionContext) -> JsResult<JsObject> {
 
     let (wallet_id, entry_id) = read_wallet_and_entry_ids(&mut cx, 1);
 
-    let result = vault.remove_entry(wallet_id, entry_id).expect("Not deleted");
+    let result = vault
+        .remove_entry(wallet_id, entry_id)
+        .expect("Not deleted");
     let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status)?;
     Ok(js_value.downcast().unwrap())

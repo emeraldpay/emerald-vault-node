@@ -1,4 +1,4 @@
-use neon::prelude::{FunctionContext, JsArray, JsResult, JsNumber};
+use neon::prelude::{FunctionContext, JsArray, JsNumber, JsResult};
 
 use access::{MigrationConfig, VaultConfig};
 

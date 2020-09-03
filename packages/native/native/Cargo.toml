@@ -16,11 +16,12 @@ neon-build = "0.3.2"
 [dependencies]
 neon = "0.3.2"
 neon-serde = "0.3.0"
-emerald-vault = "0.27.0"
+#emerald-vault = "0.27.0"
 #emerald-vault = { path = "../../../../emerald-rs" }
-#emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
-uuid = { version = "0.6", features = ["serde", "v4"] }
-hex = "0.3.2"
+emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
+uuid = { version = "0.8.1", features = ["serde", "v4"] }
+hex = "0.4.2"
+hdpath = "0.2.1"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
