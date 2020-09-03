@@ -23,6 +23,10 @@ describe("Compatibility", () => {
         test('List seeds', () => {
             let seeds = vault.listSeeds();
             expect(seeds.length).toBe(2);
+
+            // sort for testing
+            seeds.sort((a, b) => a.id.localeCompare(b.id));
+
             expect(seeds[0].id).toBe("14780c33-0364-4bff-9244-a7a495c0cf33");
             expect(seeds[0].label).toBe("Seed 1");
             expect(seeds[0].type).toBe("bytes");
