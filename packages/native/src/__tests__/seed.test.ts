@@ -231,7 +231,7 @@ describe("Seeds", () => {
             expect(wallet.entries[0].blockchain).toBe(100);
             expect(wallet.entries[0].receiveDisabled).toBeFalsy();
             let entry = wallet.entries[0] as EthereumEntry;
-            expect(entry.address).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
+            expect(entry.address.value).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
             let reserved = WalletOp.of(wallet).getHDAccounts();
             let expReserved = {};
             expReserved[id] = [0];

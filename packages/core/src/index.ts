@@ -12,6 +12,12 @@ export {
 
     UnsignedTx,
 
+    AddressSingle,
+    AddressXPub,
+    AddressRef,
+    isAddressXPub,
+    isAddressSingle,
+
     AddressBookItem,
     CreateAddressBookItem,
     Wallet,
@@ -54,5 +60,5 @@ export {
 } from './types';
 
 export {
-    WalletOp, WalletsOp, EntryIdOp
+    WalletOp, WalletsOp, EntryIdOp, AddressRefOp
 } from './ops'

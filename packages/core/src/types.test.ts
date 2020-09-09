@@ -5,7 +5,7 @@ import {
     isMnemonic,
     isSeedReference,
     SeedDefinition,
-    isRawSeed
+    isRawSeed, isAddressSingle, isAddressXPub
 } from "./types";
 
 describe("Types", () => {
@@ -139,5 +139,23 @@ describe("Types", () => {
             expect(isRawSeed(seed.value, undefined)).toBeFalsy();
         });
     })
+
+    describe("isAddressSingle", () => {
+        expect(
+            isAddressSingle({type: "single", value: ""})
+        ).toBeTruthy();
+        expect(
+            isAddressSingle({type: "xpub", value: ""})
+        ).toBeFalsy();
+    });
+
+    describe("isAddressXPub", () => {
+        expect(
+            isAddressXPub({type: "single", value: ""})
+        ).toBeFalsy();
+        expect(
+            isAddressXPub({type: "xpub", value: ""})
+        ).toBeTruthy();
+    });
 
 });

@@ -1,5 +1,13 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {EthereumEntry, WalletsOp, WalletOp, EntryIdOp, PKRef, SeedPKRef} from "@emeraldpay/emerald-vault-core";
+import {
+    EthereumEntry,
+    WalletsOp,
+    WalletOp,
+    EntryIdOp,
+    PKRef,
+    SeedPKRef,
+    AddressRefOp
+} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 
@@ -148,18 +156,18 @@ describe("Entries", () => {
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 expect(entries.length).toBe(2);
-                expect(entries[0].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(entries[0].address.value).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
                 expect(entries[0].receiveDisabled).toBeFalsy();
-                expect(entries[1].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+                expect(entries[1].address.value).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
                 expect(entries[1].receiveDisabled).toBeFalsy();
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(10002)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 expect(entries.length).toBe(0);
             });
 
@@ -178,28 +186,28 @@ describe("Entries", () => {
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(100)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
 
                 expect(entries.length).toBe(3);
-                expect(entries[0].address).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
+                expect(entries[0].address.value).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
                 expect(entries[0].receiveDisabled).toBeFalsy();
-                expect(entries[1].address).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
+                expect(entries[1].address.value).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
                 expect(entries[1].receiveDisabled).toBeFalsy();
-                expect(entries[2].address).toBe("0xBD5222391BBB9F17484F2565455FB6610D9E145F".toLowerCase());
+                expect(entries[2].address.value).toBe("0xBD5222391BBB9F17484F2565455FB6610D9E145F".toLowerCase());
                 expect(entries[2].receiveDisabled).toBeFalsy();
             });
 
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => a.address.localeCompare(b.address));
-                expect(entries[0].address).toBe("0x5B30DE96FDF94AC6C5B4A8C243F991C649D66FA1".toLowerCase());
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
+                expect(entries[0].address.value).toBe("0x5B30DE96FDF94AC6C5B4A8C243F991C649D66FA1".toLowerCase());
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(10002)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 expect(entries.length).toBe(0);
             });
 
@@ -218,11 +226,11 @@ describe("Entries", () => {
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(100)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 expect(entries.length).toBe(2);
-                expect(entries[0].address).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
+                expect(entries[0].address.value).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
                 expect(entries[0].receiveDisabled).toBeFalsy();
-                expect(entries[1].address).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
+                expect(entries[1].address.value).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
                 expect(entries[1].receiveDisabled).toBeFalsy();
 
                 let entry = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3").value;
@@ -233,15 +241,15 @@ describe("Entries", () => {
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 expect(entries.length).toBe(1);
-                expect(entries[0].address).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
+                expect(entries[0].address.value).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(10002)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 expect(entries.length).toBe(0);
             });
 
@@ -257,21 +265,21 @@ describe("Entries", () => {
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(100)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 // console.log("entries", entries);
             });
 
             test("list eth", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 // console.log("entries", entries);
             });
 
             test("list kovan", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(10002)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 // console.log("entries", entries);
             });
 
@@ -290,10 +298,10 @@ describe("Entries", () => {
             test("list etc", () => {
                 let wallets = WalletsOp.of(vault.listWallets());
                 let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => a.address.localeCompare(b.address));
+                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
                 expect(entries.length).toBe(2);
-                expect(entries[0].address).toBe("0x1e728c6d055380b69ac1c0fdc27425158621f109");
-                expect(entries[1].address).toBe("0xca1c2e76f2122fdda9f97da0c4e37674727645cc");
+                expect(entries[0].address.value).toBe("0x1e728c6d055380b69ac1c0fdc27425158621f109");
+                expect(entries[1].address.value).toBe("0xca1c2e76f2122fdda9f97da0c4e37674727645cc");
             });
 
         });
@@ -419,7 +427,7 @@ describe("Entries", () => {
 
             let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
 
-            expect(entry.address).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
+            expect(entry.address.value).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
             expect(entry.receiveDisabled).toBeFalsy();
         });
 
@@ -455,7 +463,7 @@ describe("Entries", () => {
             });
 
             let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
-            expect(entry.address).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
+            expect(entry.address.value).toBe("0xc2d7cf95645d33006175b78989035c7c9061d3f9");
         });
 
         //TODO
@@ -491,7 +499,7 @@ describe("Entries", () => {
 
             let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
 
-            expect(entry.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            expect(entry.address.value).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
         });
 
         test("import pbkdf2 - c2d7cf95", () => {
@@ -525,7 +533,7 @@ describe("Entries", () => {
             });
 
             let entry = vault.getWallet(walletId).entries[0] as EthereumEntry;
-            expect(entry.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            expect(entry.address.value).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
         })
     });
 
@@ -547,7 +555,7 @@ describe("Entries", () => {
             });
             let wallet = vault.getWallet(walletId);
             let entry = wallet.entries[0] as EthereumEntry;
-            expect(entry.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+            expect(entry.address.value).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
 
             let tx1 = vault.signTx(entryId, {
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
@@ -571,7 +579,7 @@ describe("Entries", () => {
             });
             let wallet = vault.getWallet(walletId);
             let entry = wallet.entries[0] as EthereumEntry;
-            expect(entry.address).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+            expect(entry.address.value).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
 
             let tx1 = vault.signTx(entryId, {
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
@@ -595,7 +603,7 @@ describe("Entries", () => {
             });
             let wallet = vault.getWallet(walletId);
             let entry = wallet.entries[0] as EthereumEntry;
-            expect(entry.address).toBe("0xdb365e2b984128f5d187dbc8df1f947aa6e03361");
+            expect(entry.address.value).toBe("0xdb365e2b984128f5d187dbc8df1f947aa6e03361");
 
             let tx1 = vault.signTx(entryId, {
                 from: "0xdb365e2b984128f5d187dbc8df1f947aa6e03361",
@@ -757,7 +765,7 @@ describe("Entries", () => {
             expect(wallet.entries.length).toBe(1);
             expect(wallet.entries[0].blockchain).toBe(101);
             let entry = wallet.entries[0] as EthereumEntry;
-            expect(entry.address).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+            expect(entry.address.value).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
 
             let removed = vault.removeEntry(entry.id);
             expect(removed).toBeTruthy();

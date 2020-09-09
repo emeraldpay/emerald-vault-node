@@ -12,11 +12,12 @@ use emerald_vault::{
     EthereumAddress,
 };
 use json::StatusResult;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
+use address::AddressRefJson;
 
 #[derive(Serialize, Clone)]
 struct AddressBookmarkJson {
-    pub address: String,
+    pub address: AddressRefJson,
     pub name: Option<String>,
     pub description: Option<String>,
     pub blockchain: u32,
@@ -28,16 +29,14 @@ struct AddressBookmarkJson {
 pub struct NewAddressBookItem {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub address: EthereumAddress,
+    pub address: AddressRefJson,
     pub blockchain: u32,
 }
 
 impl From<&AddressBookmark> for AddressBookmarkJson {
     fn from(value: &AddressBookmark) -> Self {
         AddressBookmarkJson {
-            address: match &value.details.address {
-                AddressRef::EthereumAddress(address) => address.to_string(),
-            },
+            address: value.details.address.clone().into(),
             name: value.details.label.clone(),
             description: value.details.description.clone(),
             blockchain: value.details.blockchain as u32,
@@ -54,7 +53,7 @@ impl NewAddressBookItem {
                 blockchain,
                 label: self.name,
                 description: self.description,
-                address: AddressRef::EthereumAddress(self.address),
+                address: self.address.try_into().expect("Invalid address"),
                 created_at: Utc::now(),
             },
         }
@@ -89,6 +88,7 @@ impl WrappedVault {
         let list = self.list_addressbook();
         let found = list.iter().find(|x| match x.details.address {
             AddressRef::EthereumAddress(a) => a == *address,
+            AddressRef::ExtendedPub(_) => false
         });
 
         if found.is_some() {

@@ -43,8 +43,28 @@ export type ImportMnemonic = {
     hdPath: string,
 }
 
+export type AddressSingle = {
+    type: 'single',
+    value: string
+}
+
+export type AddressXPub = {
+    type: 'xpub',
+    value: string
+}
+
+export type AddressRef = AddressSingle | AddressXPub;
+
+export function isAddressSingle(value: AddressRef): value is AddressSingle {
+    return value.type == 'single';
+}
+
+export function isAddressXPub(value: AddressRef): value is AddressXPub {
+    return value.type == 'xpub';
+}
+
 export type AddressBookItem = {
-    address: string,
+    address: AddressRef,
     description?: string,
     name?: string,
     blockchain: number,
@@ -52,7 +72,7 @@ export type AddressBookItem = {
 }
 
 export type CreateAddressBookItem = {
-    address: string,
+    address: AddressRef,
     description?: string,
     name?: string,
     blockchain: number,
@@ -108,10 +128,11 @@ export interface EthereumEntry extends BaseEntry {
      * Address of the entry.
      * It maybe undefined, for example if entry is created as HD Path on a Ledger which wasn't connected during creation
      */
-    address: string | undefined,
+    address: AddressSingle | undefined,
 }
 
 export interface BitcoinEntry extends BaseEntry {
+    address: AddressRef | undefined,
 }
 
 export type WalletEntry = EthereumEntry | BitcoinEntry;

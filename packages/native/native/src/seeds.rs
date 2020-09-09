@@ -4,16 +4,10 @@ use uuid::Uuid;
 use access::{VaultConfig, WrappedVault};
 use chrono::{DateTime, Utc};
 use emerald_vault::util::none_if_empty;
-use emerald_vault::{
-    hdwallet::WManager,
-    mnemonic::{generate_key, Language, Mnemonic, MnemonicSize},
-    storage::error::VaultError,
-    structs::{
-        crypto::Encrypted,
-        seed::{LedgerSource, Seed, SeedSource},
-    },
-    EthereumAddress,
-};
+use emerald_vault::{hdwallet::WManager, mnemonic::{Language, Mnemonic, MnemonicSize}, storage::error::VaultError, structs::{
+    crypto::Encrypted,
+    seed::{LedgerSource, Seed, SeedSource},
+}, EthereumAddress, sign::bip32::generate_key, EthereumPrivateKey};
 use hdpath::StandardHDPath;
 use json::StatusResult;
 use std::collections::HashMap;
@@ -296,6 +290,7 @@ impl WrappedVault {
             let hd_path =
                 StandardHDPath::try_from(item.as_str()).expect("Failed to create address");
             let pk = generate_key(&hd_path, &seed).expect("Unable to generate private key");
+            let pk: EthereumPrivateKey = pk.private_key.key.into();
             let address = pk.to_address();
             result.push(HDPathAddress {
                 address,

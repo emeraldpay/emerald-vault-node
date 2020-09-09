@@ -13,6 +13,7 @@ extern crate uuid;
 use neon::prelude::*;
 
 mod access;
+mod address;
 mod addressbook;
 mod admin;
 mod entries;

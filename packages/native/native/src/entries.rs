@@ -10,6 +10,7 @@ use emerald_vault::{
     EthereumPrivateKey,
 };
 use json::StatusResult;
+use emerald_vault::structs::book::AddressRef;
 
 #[derive(Deserialize)]
 pub struct UpdateAccount {
@@ -67,7 +68,10 @@ impl WrappedVault {
             .expect("Wallet without address")
             .address
         {
-            Some(e) => Ok(e.clone()),
+            Some(e) => match e {
+                AddressRef::EthereumAddress(address) => Ok(address.clone()),
+                _ => Err(VaultError::UnsupportedDataError("No ethereum".to_string()))
+            },
             None => Err(VaultError::IncorrectIdError),
         }
     }

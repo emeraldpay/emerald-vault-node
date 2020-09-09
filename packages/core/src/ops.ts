@@ -1,8 +1,9 @@
 import {
+    AddressRef,
     EntryId,
     EthereumEntry,
     extractEntryInternalId,
-    extractWalletId, getAccountId, HDPathAccount, HDPathAccounts, isEntryId,
+    extractWalletId, getAccountId, HDPathAccount, HDPathAccounts, isAddressSingle, isAddressXPub, isEntryId,
     isEthereumEntry, isSeedPkRef,
     Uuid,
     Wallet,
@@ -129,7 +130,7 @@ export class WalletsOp {
         let wallet = this.value.find((wallet) =>
             (wallet.entries || []).some((a) =>
                 isEthereumEntry(a)
-                && a.address.toLowerCase() === address
+                && AddressRefOp.of(a.address).isSame(address)
                 && (typeof blockchain === 'undefined' || a.blockchain === blockchain)
             )
         );
@@ -226,7 +227,7 @@ export class WalletOp {
     findEntryByAddress(address: string, blockchain?: number): WalletEntry | undefined {
         return this.value.entries.find((e) =>
             isEthereumEntry(e)
-            && e.address === address
+            && AddressRefOp.of(e.address).isSame(address)
             && (typeof blockchain === 'undefined' || e.blockchain === blockchain)
         );
     }
@@ -365,4 +366,73 @@ export class EntryIdOp {
     extractEntryInternalId(): number {
         return extractEntryInternalId(this.value)
     }
+}
+
+export class AddressRefOp {
+    readonly value: AddressRef;
+    private readonly kind = "emerald.AddressRefOp";
+
+    constructor(value: AddressRef) {
+        this.value = value;
+    }
+
+    /**
+     * Check if passed argument is AddressRefOp
+     *
+     * @param value
+     */
+    static isOp(value: AddressRefOp | AddressRef): value is AddressRefOp {
+        return typeof value === 'object'
+            && value !== null
+            && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.AddressRefOp")
+    }
+
+    /**
+     * Returns a AddressRefOp for specified argument. If it's already an Op then return itself, or if it's am AddressRef, then creates new EntryIdOp for it.
+     *
+     * @param value
+     */
+    static of(value: AddressRef | AddressRefOp): AddressRefOp {
+        if (AddressRefOp.isOp(value)) {
+            return value
+        }
+        if (!(isAddressSingle(value) || isAddressXPub(value))) {
+            throw new Error("Not an address ref: " + value);
+        }
+        return new AddressRefOp(value)
+    }
+
+    isSame(exp: string): boolean {
+        if (isAddressSingle(this.value)) {
+            return this.value.value.toLowerCase() == exp.toLowerCase()
+        }
+        return false
+    }
+
+    isEqual(other: AddressRef | AddressRefOp): boolean {
+        let otherOp = AddressRefOp.of(other);
+        return this.value.type === otherOp.value.type && this.value.value === otherOp.value.value;
+    }
+
+    /**
+     * Sort order:
+     * - single comes before xpub
+     * - same types compared by value lexicographically
+     *
+     * @param b
+     */
+    compareTo(b: AddressRef | AddressRefOp): number {
+        let other = AddressRefOp.of(b);
+        if (isAddressSingle(this.value)) {
+            if (!isAddressSingle(other.value)) {
+                return -1
+            }
+        } else if (isAddressXPub(this.value)) {
+            if (!isAddressXPub(other.value)) {
+                return 1
+            }
+        }
+        return this.value.value.localeCompare(other.value.value)
+    }
+
 }

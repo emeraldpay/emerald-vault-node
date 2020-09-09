@@ -1,5 +1,5 @@
-import {EthereumEntry, Wallet} from "./types";
-import {EntryIdOp, WalletOp, WalletsOp} from "./ops";
+import {AddressRef, EthereumEntry, Wallet} from "./types";
+import {AddressRefOp, EntryIdOp, WalletOp, WalletsOp} from "./ops";
 
 describe("Ops", () => {
 
@@ -40,7 +40,7 @@ describe("Ops", () => {
         describe("return active HDPath entries", () => {
             test("single", () => {
                 let acc1: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {value: '0x343d1de24ac7a891575857855c5579f9de19b427', type: "single"},
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
@@ -64,7 +64,7 @@ describe("Ops", () => {
 
             test("stored as reserved, but doesn't exist as entry", () => {
                 let acc1: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {value: '0x343d1de24ac7a891575857855c5579f9de19b427', type: "single"},
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
@@ -75,7 +75,7 @@ describe("Ops", () => {
                     createdAt: new Date(),
                 };
                 let acc2: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {value: '0x343d1de24ac7a891575857855c5579f9de19b427', type: "single"},
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
@@ -105,7 +105,7 @@ describe("Ops", () => {
 
             test("two on different seed", () => {
                 let acc1: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {value: '0x343d1de24ac7a891575857855c5579f9de19b427', type: "single"},
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
@@ -116,7 +116,7 @@ describe("Ops", () => {
                     createdAt: new Date(),
                 };
                 let acc2: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {value: '0x343d1de24ac7a891575857855c5579f9de19b427', type: "single"},
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
@@ -141,7 +141,7 @@ describe("Ops", () => {
 
             test("multiple", () => {
                 let acc1: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {value: '0x343d1de24ac7a891575857855c5579f9de19b427', type: "single"},
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
@@ -153,7 +153,7 @@ describe("Ops", () => {
                 };
 
                 let acc2: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {value: '0x343d1de24ac7a891575857855c5579f9de19b427', type: "single"},
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
@@ -164,7 +164,7 @@ describe("Ops", () => {
                     createdAt: new Date(),
                 };
                 let acc3: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {type: 'single', value: '0x343d1de24ac7a891575857855c5579f9de19b427'},
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
@@ -175,7 +175,7 @@ describe("Ops", () => {
                     createdAt: new Date(),
                 };
                 let acc4: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {type: 'single', value: '0x343d1de24ac7a891575857855c5579f9de19b427'},
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
@@ -187,7 +187,7 @@ describe("Ops", () => {
                 };
 
                 let acc5: EthereumEntry = {
-                    address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                    address: {type: 'single', value: '0x343d1de24ac7a891575857855c5579f9de19b427'},
                     blockchain: 101,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
@@ -296,7 +296,7 @@ describe("Ops", () => {
                         {
                             id: '9ce1f45b-4a8e-46ee-b81f-1efd034feaea-1',
                             blockchain: 100,
-                            address: '0x343d1de24ac7a891575857855c5579f9de19b427',
+                            address: {type: 'single', value: '0x343d1de24ac7a891575857855c5579f9de19b427'},
                             key: {
                                 type: "seed-hd",
                                 hdPath: "m/44'/1",
@@ -363,6 +363,105 @@ describe("Ops", () => {
             expect(EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-0")).toBeDefined();
             expect(EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-1")).toBeDefined();
             expect(EntryIdOp.of("d0659bdd-8090-4b08-90a2-3b951cb98b37-51")).toBeDefined();
+        })
+
+    })
+
+    describe("AddressRefOp", () => {
+        test("typeof for op", () => {
+            expect(AddressRefOp.isOp({type: "single", value: ""})).toBeFalsy();
+            expect(AddressRefOp.isOp(null)).toBeFalsy();
+            expect(AddressRefOp.isOp(undefined)).toBeFalsy();
+        });
+
+        test("typeof for non-op", () => {
+            expect(AddressRefOp.isOp({type: "single", value: ""})).toBeFalsy();
+            expect(AddressRefOp.isOp(null)).toBeFalsy();
+            expect(AddressRefOp.isOp(undefined)).toBeFalsy();
+        });
+
+
+        test("Fails on invalid value", () => {
+            expect(() => {
+                AddressRefOp.of(null)
+            }).toThrow();
+
+            expect(() => {
+                AddressRefOp.of(undefined)
+            }).toThrow();
+
+            expect(() => {
+                // @ts-ignore
+                AddressRefOp.of("other")
+            }).toThrow();
+
+            expect(() => {
+                // @ts-ignore
+                AddressRefOp.of({})
+            }).toThrow();
+
+            expect(() => {
+                // @ts-ignore
+                AddressRefOp.of({type: "other", value: "nono"})
+            }).toThrow();
+        });
+
+        test("isSame for similar single address", () => {
+            expect(
+                AddressRefOp.of({type: "single", value: "ADDR"}).isSame("ADDR")
+            ).toBeTruthy();
+            expect(
+                AddressRefOp.of({type: "single", value: "ADDR"}).isSame("addr")
+            ).toBeTruthy();
+            expect(
+                AddressRefOp.of({type: "single", value: "ADDR"}).isSame("Addr")
+            ).toBeTruthy();
+        });
+
+        test("isSame for different single address", () => {
+            expect(
+                AddressRefOp.of({type: "single", value: "ADDR"}).isSame("Home")
+            ).toBeFalsy();
+        });
+
+        test("sort", () => {
+            let values: AddressRef[] = [
+                {type: "single", value: "123AB"},
+                {type: "xpub", value: "zpub1234"},
+                {type: "single", value: "99999"},
+                {type: "xpub", value: "xpub1234"},
+            ]
+            let sorted = values.sort((a, b) => AddressRefOp.of(a).compareTo(b));
+            expect(sorted).toEqual([
+                {type: "single", value: "123AB"},
+                {type: "single", value: "99999"},
+                {type: "xpub", value: "xpub1234"},
+                {type: "xpub", value: "zpub1234"},
+            ]);
+        })
+
+        test("equal for same values", () => {
+            expect(
+                AddressRefOp.of({type: "single", value: "ADDR"})
+                    .isEqual({type: "single", value: "ADDR"})
+            ).toBeTruthy();
+
+            expect(
+                AddressRefOp.of({type: "xpub", value: "ADDR"})
+                    .isEqual({type: "xpub", value: "ADDR"})
+            ).toBeTruthy();
+        })
+
+        test("equal for different values", () => {
+            expect(
+                AddressRefOp.of({type: "single", value: "ADDR"})
+                    .isEqual({type: "xpub", value: "ADDR"})
+            ).toBeFalsy();
+
+            expect(
+                AddressRefOp.of({type: "xpub", value: "ADDR"})
+                    .isEqual({type: "xpub", value: "addr"})
+            ).toBeFalsy();
         })
 
     })

@@ -16,6 +16,7 @@ use emerald_vault::{
 use hdpath::StandardHDPath;
 use json::StatusResult;
 use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
+use address::AddressRefJson;
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -52,7 +53,7 @@ pub struct SeedEntry {
 pub struct WalletEntryJson {
     pub id: String,
     pub blockchain: u32,
-    pub address: Option<String>,
+    pub address: Option<AddressRefJson>,
     #[serde(rename = "receiveDisabled")]
     pub receive_disabled: bool,
     pub label: Option<String>,
@@ -134,7 +135,7 @@ impl From<Wallet> for WalletJson {
             .map(|a| WalletEntryJson {
                 id: EntryId::from(&wallet, a).to_string(),
                 blockchain: a.blockchain as u32,
-                address: a.address.map(|v| v.to_string()),
+                address: a.address.as_ref().map(|v| v.clone().into()),
                 receive_disabled: a.receive_disabled,
                 label: a.label.clone(),
                 key: match &a.key {
@@ -216,7 +217,7 @@ impl WrappedVault {
         let result = match entry.key_value {
             AddEntryType::EthereumJson(json) => {
                 let json = EthereumJsonV3File::try_from(json)?;
-                let id = storage.add_entry(wallet_id).ethereum(&json, blockchain)?;
+                let id = storage.add_ethereum_entry(wallet_id).json(&json, blockchain)?;
                 id
             }
             AddEntryType::RawHex(hex) => {
@@ -225,7 +226,7 @@ impl WrappedVault {
                 }
                 let hex = trim_hex(hex.as_str());
                 let hex = hex::decode(hex)?;
-                storage.add_entry(wallet_id).raw_pk(
+                storage.add_ethereum_entry(wallet_id).raw_pk(
                     hex,
                     entry.password.unwrap().as_str(),
                     blockchain,
@@ -237,7 +238,7 @@ impl WrappedVault {
                     .and_then(|s| EthereumAddress::from_str(s.as_str()).ok());
                 match hd.seed.value {
                     SeedDefinitionOrReferenceType::Reference(seed_id) => {
-                        storage.add_entry(wallet_id).seed_hd(
+                        storage.add_ethereum_entry(wallet_id).seed_hd(
                             seed_id,
                             StandardHDPath::try_from(hd.hd_path.as_str())?,
                             blockchain,
@@ -262,7 +263,7 @@ impl WrappedVault {
                                 created_at: Utc::now(),
                             })?,
                         };
-                        storage.add_entry(wallet_id).seed_hd(
+                        storage.add_ethereum_entry(wallet_id).seed_hd(
                             seed_id,
                             StandardHDPath::try_from(hd.hd_path.as_str())?,
                             blockchain,
@@ -280,7 +281,7 @@ impl WrappedVault {
                     panic!("Password is required".to_string())
                 }
                 let pk = EthereumPrivateKey::gen();
-                storage.add_entry(wallet_id).raw_pk(
+                storage.add_ethereum_entry(wallet_id).raw_pk(
                     pk.0.to_vec(),
                     entry.password.unwrap().as_str(),
                     blockchain,

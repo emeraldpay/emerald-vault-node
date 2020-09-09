@@ -10,6 +10,7 @@ use emerald_vault::{
     align_bytes, to_arr, to_even_str, to_u64, trim_hex, EthereumAddress, EthereumTransaction,
 };
 use json::{JsonError, StatusResult};
+use emerald_vault::structs::book::AddressRef;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UnsignedTx {
@@ -72,8 +73,15 @@ impl WrappedVault {
         let from_address =
             EthereumAddress::from_str(unsigned_tx.from.as_str()).expect("Invalid from address");
 
-        if entry.address.is_some() && entry.address.unwrap() != from_address {
-            panic!("Different from address")
+        if let Some(address) = &entry.address {
+            match address {
+                AddressRef::EthereumAddress(current) => if current.ne(&from_address) {
+                    panic!("Different from address")
+                },
+                _ => {
+                    panic!("Unsupported wallet from address")
+                }
+            }
         }
 
         let tx: EthereumTransaction = unsigned_tx.try_into().expect("Invalid sign JSON");
