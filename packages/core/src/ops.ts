@@ -24,11 +24,14 @@ export class WalletsOp {
     }
 
     /**
-     * Create instance
+     * Returns a WalletsOp for specified argument. If it's already an Op then return itself, or if it's a structure, then creates new WalletsOp for it.
      *
      * @param wallets source wallets
      */
-    static of(wallets: Wallet[]): WalletsOp {
+    static of(wallets: Wallet[] | WalletsOp): WalletsOp {
+        if (WalletsOp.isOp(wallets)) {
+            return wallets
+        }
         return new WalletsOp(wallets)
     }
 
@@ -41,18 +44,6 @@ export class WalletsOp {
         return typeof value === 'object'
             && value !== null
             && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.WalletsOp")
-    }
-
-    /**
-     * Returns a WalletsOp for specified argument. If it's already an Op then return itself, or if it's a structure, then creates new WalletsOp for it.
-     *
-     * @param value
-     */
-    static asOp(value: Wallet[] | WalletsOp): WalletsOp {
-        if (WalletsOp.isOp(value)) {
-            return value
-        }
-        return WalletsOp.of(value)
     }
 
     /**
@@ -176,14 +167,16 @@ export class WalletOp {
 
     constructor(value: Wallet) {
         this.value = value;
-        this.value.entries = this.value.entries || [];
     }
 
     /**
-     * Create new instance of WalletOp
+     * Returns a WalletOp for specified argument. If it's already an Op then return itself, or if it's a structure, then creates new WalletOp for it.
      * @param wallet
      */
-    static of(wallet: Wallet): WalletOp {
+    static of(wallet: Wallet | WalletOp): WalletOp {
+        if (WalletOp.isOp(wallet)) {
+            return wallet
+        }
         return new WalletOp(wallet);
     }
 
@@ -196,18 +189,6 @@ export class WalletOp {
         return typeof value === 'object'
             && value !== null
             && Object.entries(value).some((a) => a[0] === 'kind' && a[1] === "emerald.WalletOp")
-    }
-
-    /**
-     * Returns a WalletOp for specified argument. If it's already an Op then return itself, or if it's a structure, then creates new WalletOp for it.
-     *
-     * @param value
-     */
-    static asOp(value: Wallet | WalletOp): WalletOp {
-        if (WalletOp.isOp(value)) {
-            return value
-        }
-        return WalletOp.of(value)
     }
 
     /**

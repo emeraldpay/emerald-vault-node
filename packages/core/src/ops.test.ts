@@ -33,8 +33,8 @@ describe("Ops", () => {
 
             let wallet = WalletOp.of(data);
 
-            expect(WalletOp.isOp(WalletOp.asOp(wallet))).toBeTruthy();
-            expect(WalletOp.isOp(WalletOp.asOp(data))).toBeTruthy();
+            expect(WalletOp.isOp(WalletOp.of(wallet))).toBeTruthy();
+            expect(WalletOp.isOp(WalletOp.of(data))).toBeTruthy();
         });
 
         describe("return active HDPath entries", () => {
@@ -259,8 +259,8 @@ describe("Ops", () => {
 
             let wallets = WalletsOp.of(data);
 
-            expect(WalletsOp.isOp(WalletsOp.asOp(wallets))).toBeTruthy();
-            expect(WalletsOp.isOp(WalletsOp.asOp(data))).toBeTruthy();
+            expect(WalletsOp.isOp(WalletsOp.of(wallets))).toBeTruthy();
+            expect(WalletsOp.isOp(WalletsOp.of(data))).toBeTruthy();
         });
 
         test("getWallet", () => {
