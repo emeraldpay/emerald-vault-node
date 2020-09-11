@@ -132,7 +132,7 @@ export interface EthereumEntry extends BaseEntry {
 }
 
 export interface BitcoinEntry extends BaseEntry {
-    address: AddressRef | undefined,
+    address: AddressXPub
 }
 
 export type WalletEntry = EthereumEntry | BitcoinEntry;
@@ -188,11 +188,13 @@ export function getAccountId(pk: SeedPKRef): number | undefined {
 }
 
 export function isEthereumEntry(acc: WalletEntry): acc is EthereumEntry {
-    return acc.blockchain === 100 || acc.blockchain === 101
+    return typeof acc === 'object' && typeof acc.blockchain === 'number' &&
+        acc.blockchain === 100 || acc.blockchain === 101;
 }
 
 export function isBitcoinEntry(acc: WalletEntry): acc is BitcoinEntry {
-    return false
+    return typeof acc === 'object' && typeof acc.blockchain === 'number' &&
+        acc.blockchain == 1 || acc.blockchain == 10003;
 }
 
 export function isSeedPkRef(acc: WalletEntry, key: PKRef | SeedPKRef | undefined): key is SeedPKRef {
