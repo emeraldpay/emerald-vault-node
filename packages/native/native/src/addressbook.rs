@@ -82,12 +82,14 @@ impl WrappedVault {
             .is_ok()
     }
 
+    //TODO support bitcoin addresses
     fn remove_addressbook_by_addr(&self, address: &EthereumAddress) -> bool {
         let storage = &self.cfg.get_storage();
 
         let list = self.list_addressbook();
         let found = list.iter().find(|x| match x.details.address {
             AddressRef::EthereumAddress(a) => a == *address,
+            AddressRef::BitcoinAddress(_) => false, //TODO
             AddressRef::ExtendedPub(_) => false
         });
 

@@ -9,6 +9,7 @@ extern crate chrono;
 extern crate hdpath;
 extern crate serde_json;
 extern crate uuid;
+extern crate bitcoin;
 
 use neon::prelude::*;
 
