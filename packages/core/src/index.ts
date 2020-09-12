@@ -1,10 +1,13 @@
 export {
-    Uuid, EntryId,
+    Uuid,
+    EntryId,
     isEntryId,
 
     BlockchainId,
-
     BlockchainType,
+    isBlockchainId,
+    getBlockchainType,
+
     EntryType,
     SeedType,
     SeedRefType,
@@ -25,6 +28,8 @@ export {
     WalletEntry,
     EthereumEntry,
     isEthereumEntry,
+    BitcoinEntry,
+    isBitcoinEntry,
 
     SeedPKRef,
     SeedEntry,
@@ -38,6 +43,8 @@ export {
     SeedReference,
     LedgerSeedReference,
     IdSeedReference,
+    isSeedReference,
+    isIdSeedReference,
 
     MnemonicSeedDefinition,
     RawSeedDefinition,

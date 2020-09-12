@@ -1,13 +1,31 @@
-export type BlockchainType = "ethereum";
+export type BlockchainType = "ethereum" | "bitcoin";
 export type SeedType = "raw" | "ledger" | "mnemonic";
 export type SeedRefType = "ledger" | "mnemonic" | "id";
 export type EntryType = "pk" | "seed-hd";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
 
 export enum BlockchainId {
+    BITCOIN = 1,
     ETHEREUM = 100,
     ETHEREUM_CLASSIC = 101,
-    KOVAN_TESTNET = 10002
+    KOVAN_TESTNET = 10002,
+    BITCOIN_TESTNET = 10003,
+}
+
+export function getBlockchainType(id: BlockchainId): BlockchainType {
+    if (id == BlockchainId.BITCOIN || id == BlockchainId.BITCOIN_TESTNET) {
+        return "bitcoin";
+    }
+    if (id == BlockchainId.ETHEREUM || id == BlockchainId.ETHEREUM_CLASSIC || id == BlockchainId.KOVAN_TESTNET) {
+        return "ethereum";
+    }
+    throw new Error("Unsupported id: " + id);
+}
+
+export function isBlockchainId(id: number): id is BlockchainId {
+    return id === BlockchainId.BITCOIN || id === BlockchainId.BITCOIN_TESTNET
+        || id === BlockchainId.ETHEREUM || id === BlockchainId.ETHEREUM_CLASSIC
+        || id === BlockchainId.KOVAN_TESTNET;
 }
 
 /**
@@ -188,13 +206,11 @@ export function getAccountId(pk: SeedPKRef): number | undefined {
 }
 
 export function isEthereumEntry(acc: WalletEntry): acc is EthereumEntry {
-    return typeof acc === 'object' && typeof acc.blockchain === 'number' &&
-        acc.blockchain === 100 || acc.blockchain === 101;
+    return typeof acc === 'object' && isBlockchainId(acc.blockchain) && getBlockchainType(acc.blockchain) == "ethereum";
 }
 
 export function isBitcoinEntry(acc: WalletEntry): acc is BitcoinEntry {
-    return typeof acc === 'object' && typeof acc.blockchain === 'number' &&
-        acc.blockchain == 1 || acc.blockchain == 10003;
+    return typeof acc === 'object' && isBlockchainId(acc.blockchain) && getBlockchainType(acc.blockchain) == "bitcoin";
 }
 
 export function isSeedPkRef(acc: WalletEntry, key: PKRef | SeedPKRef | undefined): key is SeedPKRef {
