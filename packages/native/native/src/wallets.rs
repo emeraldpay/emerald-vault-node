@@ -17,6 +17,7 @@ use hdpath::StandardHDPath;
 use json::StatusResult;
 use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 use address::AddressRefJson;
+use emerald_vault::blockchain::chains::BlockchainType;
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -238,13 +239,24 @@ impl WrappedVault {
                     .and_then(|s| EthereumAddress::from_str(s.as_str()).ok());
                 match hd.seed.value {
                     SeedDefinitionOrReferenceType::Reference(seed_id) => {
-                        storage.add_ethereum_entry(wallet_id).seed_hd(
-                            seed_id,
-                            StandardHDPath::try_from(hd.hd_path.as_str())?,
-                            blockchain,
-                            hd.seed.password,
-                            expected_address,
-                        )?
+                        //TODO duplicate with ledger
+                        match blockchain.get_type() {
+                            BlockchainType::Ethereum =>
+                                storage.add_ethereum_entry(wallet_id).seed_hd(
+                                    seed_id,
+                                    StandardHDPath::try_from(hd.hd_path.as_str())?,
+                                    blockchain,
+                                    hd.seed.password,
+                                    expected_address,
+                                )?,
+                            BlockchainType::Bitcoin =>
+                                storage.add_bitcoin_entry(wallet_id).seed_hd(
+                                    seed_id,
+                                    StandardHDPath::try_from(hd.hd_path.as_str())?,
+                                    blockchain,
+                                    hd.seed.password,
+                                )?
+                        }
                     }
                     SeedDefinitionOrReferenceType::Ledger => {
                         let seeds = storage.seeds().list_entries()?;
@@ -263,13 +275,23 @@ impl WrappedVault {
                                 created_at: Utc::now(),
                             })?,
                         };
-                        storage.add_ethereum_entry(wallet_id).seed_hd(
-                            seed_id,
-                            StandardHDPath::try_from(hd.hd_path.as_str())?,
-                            blockchain,
-                            hd.seed.password,
-                            expected_address,
-                        )?
+                        match blockchain.get_type() {
+                            BlockchainType::Ethereum =>
+                                storage.add_ethereum_entry(wallet_id).seed_hd(
+                                    seed_id,
+                                    StandardHDPath::try_from(hd.hd_path.as_str())?,
+                                    blockchain,
+                                    hd.seed.password,
+                                    expected_address,
+                                )?,
+                            BlockchainType::Bitcoin =>
+                                storage.add_bitcoin_entry(wallet_id).seed_hd(
+                                    seed_id,
+                                    StandardHDPath::try_from(hd.hd_path.as_str())?,
+                                    blockchain,
+                                    hd.seed.password,
+                                )?
+                        }
                     }
                     SeedDefinitionOrReferenceType::Mnemonic(_) => panic!(
                         "Direct creation from Mnemonic is not implemented. Create Seed first"

@@ -6,7 +6,7 @@ import {
     WalletsOp,
     WalletOp,
     SeedReference,
-    MnemonicSeedDefinition
+    MnemonicSeedDefinition, isBitcoinEntry, isEthereumEntry
 } from "@emeraldpay/emerald-vault-core";
 
 describe("Seeds", () => {
@@ -230,6 +230,7 @@ describe("Seeds", () => {
             expect(wallet.entries.length).toBe(1);
             expect(wallet.entries[0].blockchain).toBe(100);
             expect(wallet.entries[0].receiveDisabled).toBeFalsy();
+            expect(isEthereumEntry(wallet.entries[0])).toBeTruthy();
             let entry = wallet.entries[0] as EthereumEntry;
             expect(entry.address.value).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
             let reserved = WalletOp.of(wallet).getHDAccounts();
@@ -239,6 +240,39 @@ describe("Seeds", () => {
 
             // let key = wallet.entries[0].key as SeedPKRef;
             // expect(key.hdPath).toBe("m/44'/60'/0'/0/1");
+        })
+
+        test("Create bitcoin", () => {
+            let id = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/44'/60'/0'/0/1",
+                }
+            };
+            let accId = vault.addEntry(walletId, addEntry);
+            let wallets = vault.listWallets();
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
+            expect(wallet.entries.length).toBe(1);
+            expect(wallet.entries[0].blockchain).toBe(1);
+            expect(wallet.entries[0].receiveDisabled).toBeFalsy();
+            expect(isBitcoinEntry(wallet.entries[0])).toBeTruthy();
+
+            let reserved = WalletOp.of(wallet).getHDAccounts();
+            let expReserved = {};
+            expReserved[id] = [0];
+            expect(reserved).toStrictEqual(expReserved)
         })
     });
 });
