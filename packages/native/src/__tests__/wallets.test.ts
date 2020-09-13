@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {AddEntry, AddressRefOp, WalletOp, WalletsOp} from "@emeraldpay/emerald-vault-core";
+import {AddEntry, AddressRefOp, isEthereumEntry, WalletOp, WalletsOp} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 describe("Wallets", () => {
@@ -27,15 +27,21 @@ describe("Wallets", () => {
                 expect(eth.length).toBe(2);
                 expect(etc.length).toBe(1);
 
+                expect(isEthereumEntry(etc[0].entries[0])).toBeTruthy();
+
                 expect(etc[0].entries.length).toBe(1);
+                // @ts-ignore
                 expect(etc[0].entries[0].address?.value).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
 
                 eth = eth.sort((a, b) =>
+                    // @ts-ignore
                     AddressRefOp.of(a.entries[0].address).compareTo(b.entries[0].address)
                 );
 
+                // @ts-ignore
                 expect(eth[0].entries[0].address.value).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
                 expect(eth[0].name).toBe("foo bar");
+                // @ts-ignore
                 expect(eth[1].entries[0].address.value).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
             });
         });
