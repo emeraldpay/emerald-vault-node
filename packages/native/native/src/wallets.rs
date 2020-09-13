@@ -4,20 +4,21 @@ use std::str::FromStr;
 use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString};
 use uuid::Uuid;
 
-use access::{args_get_str, VaultConfig, WrappedVault};
+use access::{args_get_str, VaultConfig, WrappedVault, AccountIndex};
 use chrono::{DateTime, Utc};
 use emerald_vault::structs::seed::{LedgerSource, Seed, SeedSource};
-use emerald_vault::structs::wallet::{EntryId, PKType, ReservedPath};
+use emerald_vault::structs::wallet::{EntryId, PKType, ReservedPath, WalletEntry, AddressRole};
 use emerald_vault::{
     blockchain::chains::Blockchain, convert::json::keyfile::EthereumJsonV3File,
     storage::error::VaultError, structs::wallet::Wallet, trim_hex, EthereumAddress,
     EthereumPrivateKey,
 };
-use hdpath::StandardHDPath;
+use hdpath::{StandardHDPath, AccountHDPath};
 use json::StatusResult;
 use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 use address::AddressRefJson;
 use emerald_vault::blockchain::chains::BlockchainType;
+use bitcoin::Address;
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -61,6 +62,15 @@ pub struct WalletEntryJson {
     pub key: KeyRefJson,
     #[serde(rename = "createdAt")]
     pub created_at: DateTime<Utc>,
+    pub addresses: Vec<CurrentAddressJson>,
+}
+
+#[derive(Serialize, Clone)]
+pub struct CurrentAddressJson {
+    pub address: String,
+    #[serde(rename = "hdPath")]
+    pub hd_path: String,
+    pub role: String,
 }
 
 #[derive(Serialize, Clone)]
@@ -128,28 +138,45 @@ impl From<ReservedAccountJson> for ReservedPath {
     }
 }
 
-impl From<Wallet> for WalletJson {
-    fn from(wallet: Wallet) -> Self {
+impl From<(&WalletEntry, &Wallet, Option<&AccountIndex>)> for WalletEntryJson {
+    fn from(value: (&WalletEntry, &Wallet, Option<&AccountIndex>)) -> Self {
+        let a = value.0;
+        let wallet = value.1;
+        let index = value.2;
+        WalletEntryJson {
+            id: EntryId::from(wallet, a).to_string(),
+            blockchain: a.blockchain as u32,
+            address: a.address.as_ref().map(|v| v.clone().into()),
+            receive_disabled: a.receive_disabled,
+            label: a.label.clone(),
+            key: match &a.key {
+                PKType::SeedHd(seed) => KeyRefJson::HdPath(SeedHDPathJson {
+                    seed_id: seed.seed_id.to_string(),
+                    hd_path: seed.hd_path.to_string(),
+                }),
+                PKType::PrivateKeyRef(pk_id) => KeyRefJson::PrivateKey(PkIdJson {
+                    id: pk_id.to_string(),
+                }),
+            },
+            created_at: a.created_at,
+            addresses: with_std_addresses(a, index),
+        }
+    }
+}
+
+fn indexes_for_entry<'a>(wallet: &Wallet, entry: &WalletEntry, all: &'a Vec<AccountIndex>) -> Option<&'a AccountIndex> {
+    all.iter().find(|s| s.wallet_id == wallet.id && s.entry_id == entry.id)
+}
+
+impl From<(Wallet, &Vec<AccountIndex>)> for WalletJson {
+    fn from(value: (Wallet, &Vec<AccountIndex>)) -> Self {
+        let wallet = value.0;
+        let indexes = value.1;
         let entries: Vec<WalletEntryJson> = wallet
             .entries
             .iter()
-            .map(|a| WalletEntryJson {
-                id: EntryId::from(&wallet, a).to_string(),
-                blockchain: a.blockchain as u32,
-                address: a.address.as_ref().map(|v| v.clone().into()),
-                receive_disabled: a.receive_disabled,
-                label: a.label.clone(),
-                key: match &a.key {
-                    PKType::SeedHd(seed) => KeyRefJson::HdPath(SeedHDPathJson {
-                        seed_id: seed.seed_id.to_string(),
-                        hd_path: seed.hd_path.to_string(),
-                    }),
-                    PKType::PrivateKeyRef(pk_id) => KeyRefJson::PrivateKey(PkIdJson {
-                        id: pk_id.to_string(),
-                    }),
-                },
-                created_at: a.created_at,
-            })
+            .map(|a| (a, &wallet, indexes_for_entry(&wallet, &a, indexes)))
+            .map(|a| a.into())
             .collect();
         let reserved: Vec<ReservedAccountJson> = wallet
             .reserved
@@ -189,6 +216,52 @@ fn read_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usize
     let entry_id = entry_id as usize;
 
     (wallet_id, entry_id)
+}
+
+fn get_hd_account(entry: &WalletEntry) -> Option<AccountHDPath> {
+    match &entry.key {
+        PKType::SeedHd(seed) => Some(
+            AccountHDPath::new(
+                seed.hd_path.purpose().clone(), seed.hd_path.coin_type(), seed.hd_path.account(),
+            )
+        ),
+        _ => None
+    }
+}
+
+fn with_std_addresses(entry: &WalletEntry, index: Option<&AccountIndex>) -> Vec<CurrentAddressJson> {
+    let index = match index {
+        None =>
+        //start from beginning
+            AccountIndex {
+                wallet_id: Default::default(),
+                entry_id: 0,
+                receive: 0,
+                change: 0,
+            },
+        Some(value) => value.clone()
+    };
+    match entry.blockchain.get_type() {
+        BlockchainType::Bitcoin => {
+            let account_hd = match get_hd_account(entry) {
+                Some(value) => value,
+                None => return vec![]
+            };
+            entry.get_addresses::<Address>(AddressRole::Receive, index.receive, 1)
+                .or_else::<Vec<Address>, _>(|_| Ok(vec![]))
+                .unwrap()
+                .iter()
+                .enumerate()
+                .map(|(pos, a)| CurrentAddressJson {
+                    address: a.to_string(),
+                    hd_path: account_hd.address_at(0, index.receive + pos as u32)
+                        .expect("invalid hd path").to_string(),
+                    role: "receive".to_string(),
+                })
+                .collect()
+        },
+        _ => vec![]
+    }
 }
 
 impl WrappedVault {
@@ -340,12 +413,12 @@ impl WrappedVault {
 
 pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
+    let vault = WrappedVault::new(cfg.clone());
     let wallets = vault.load_wallets();
 
     let mut result = Vec::new();
     for w in wallets {
-        result.push(WalletJson::from(w));
+        result.push(WalletJson::from((w, &cfg.account_indexes)));
     }
 
     let status = StatusResult::Ok(result).as_json();

@@ -30,6 +30,8 @@ export {
     isEthereumEntry,
     BitcoinEntry,
     isBitcoinEntry,
+    CurrentAddress,
+    AddressRole,
 
     SeedPKRef,
     SeedEntry,
@@ -62,10 +64,12 @@ export {
     Update,
     ImportPrivateKey,
     PKRef,
-
-    IEmeraldVault
 } from './types';
 
 export {
     WalletOp, WalletsOp, EntryIdOp, AddressRefOp
 } from './ops'
+
+export {
+    IEmeraldVault, AccountIndex, WalletState
+} from './vault';

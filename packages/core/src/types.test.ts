@@ -15,10 +15,10 @@ import {
 } from "./types";
 
 let bitcoinEntry: BitcoinEntry = {
-    address: undefined, blockchain: BlockchainId.BITCOIN, createdAt: undefined, id: "", key: undefined
+    addresses: [], blockchain: BlockchainId.BITCOIN, createdAt: undefined, id: "", key: undefined
 };
 let bitcoinTestEntry: BitcoinEntry = {
-    address: undefined, blockchain: BlockchainId.BITCOIN_TESTNET, createdAt: undefined, id: "", key: undefined
+    addresses: [], blockchain: BlockchainId.BITCOIN_TESTNET, createdAt: undefined, id: "", key: undefined
 };
 let ethEntry: EthereumEntry = {
     address: undefined, blockchain: BlockchainId.ETHEREUM, createdAt: undefined, id: "", key: undefined

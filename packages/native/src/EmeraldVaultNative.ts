@@ -15,7 +15,10 @@ import {
     EntryId, EntryIdOp,
     SeedReference,
     LedgerSeedReference,
-    CreateAddressBookItem
+    CreateAddressBookItem,
+    WalletState,
+    CurrentAddress,
+    AddressRole
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -38,15 +41,26 @@ function statusOk<T>(result: T): Status<T> {
     }
 }
 
-export class EmeraldVaultNative implements IEmeraldVault {
-    private conf: Config;
+const DEFAULT_CONFIG: Config & WalletState = {
+    accountIndexes: []
+}
 
-    constructor(conf?: Config | undefined) {
-        this.conf = conf || {};
+export class EmeraldVaultNative implements IEmeraldVault {
+    private conf: Config & Partial<WalletState>;
+
+    constructor(conf?: (Config & Partial<WalletState>) | undefined) {
+        this.conf = conf || DEFAULT_CONFIG;
+        if (typeof this.conf.accountIndexes === "undefined") {
+            this.conf.accountIndexes = DEFAULT_CONFIG.accountIndexes
+        }
     }
 
     vaultVersion(): string {
         return "0.27.0"
+    }
+
+    setState(state: WalletState) {
+        this.conf.accountIndexes = state.accountIndexes || DEFAULT_CONFIG.accountIndexes;
     }
 
     /**
@@ -124,6 +138,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
         if (!status.succeeded) {
             throw Error(status.error.message)
         }
+    }
+
+    getEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): CurrentAddress[] {
+        return []
     }
 
     addEntry(walletId: Uuid, entry: AddEntry): EntryId {

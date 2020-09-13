@@ -3,8 +3,8 @@ use std::path::Path;
 use std::str::FromStr;
 
 use neon::handle::Handle;
-use neon::object::Object;
-use neon::prelude::{FunctionContext, JsObject, JsString};
+use neon::object::{Object};
+use neon::prelude::{FunctionContext, JsObject, JsString, JsArray};
 use neon::types::{JsNull, JsUndefined};
 
 use emerald_vault::{
@@ -12,15 +12,27 @@ use emerald_vault::{
     storage::{default_path, vault::VaultStorage},
     structs::wallet::Wallet,
 };
+use uuid::Uuid;
 
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct VaultConfig {
     pub chain: Option<EthereumChainId>,
     pub dir: String,
-    pub show_hidden: bool,
+    pub account_indexes: Vec<AccountIndex>,
 }
 
 pub struct MigrationConfig {
     pub dir: String,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Deserialize)]
+pub struct AccountIndex {
+    #[serde(rename = "walletId")]
+    pub wallet_id: Uuid,
+    #[serde(rename = "entryId")]
+    pub entry_id: usize,
+    pub receive: u32,
+    pub change: u32,
 }
 
 pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
@@ -59,6 +71,20 @@ impl VaultConfig {
         let config = cx
             .argument::<JsObject>(0)
             .expect("Vault Config is not provided");
+
+        let account_indexes: Vec<AccountIndex> = match config.get(cx, "accountIndexes") {
+            Ok(value) => {
+                let items: Handle<JsArray> = value.downcast().expect("accountIndexes is not an array");
+                items.to_vec(cx).expect("accountIndexes is not a vector").iter()
+                    .map(|it|
+                        neon_serde::from_value(cx, it.clone())
+                            .expect("invalid account index json")
+                    )
+                    .collect()
+            },
+            _ => vec![]
+        };
+
         let dir = match obj_get_str(cx, &config, "dir") {
             Some(val) => val,
             None => default_path()
@@ -75,7 +101,7 @@ impl VaultConfig {
         return VaultConfig {
             chain,
             dir: dir.to_string(),
-            show_hidden: false,
+            account_indexes,
         };
     }
 

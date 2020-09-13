@@ -6,7 +6,10 @@ import {
     EntryIdOp,
     PKRef,
     SeedPKRef,
-    AddressRefOp
+    AddressRefOp,
+    AddEntry,
+    isEthereumEntry, isBitcoinEntry,
+    BitcoinEntry
 } from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
@@ -133,6 +136,42 @@ describe("Entries", () => {
             expect(entry.receiveDisabled).toBeFalsy();
         });
 
+        test("Uses receive index on bitcoin", () => {
+            let id = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/84'/0'/0'/0/1",
+                }
+            };
+            vault.addEntry(walletId, addEntry);
+            vault.setState({
+                accountIndexes: [
+                    {walletId, entryId: 0, change: 0, receive: 5}
+                ]
+            })
+            let wallets = vault.listWallets();
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
+            let entry = wallet.entries[0] as BitcoinEntry;
+            expect(entry.addresses).toEqual([
+                {
+                    "address": "bc1qv0upcfs7j20xu83z9kmh7gvd7hfexdmnd37yxs",
+                    "hdPath": "m/84'/0'/0'/0/5",
+                    "role": "receive"
+                }
+            ]);
+        })
     });
 
     describe("List", () => {
@@ -775,6 +814,95 @@ describe("Entries", () => {
             expect(wallet2.entries.length).toBe(0);
         });
 
+    });
+
+    describe("Create from seed", () => {
+        let vault: EmeraldVaultNative;
+        beforeEach(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("seed-entry")
+            });
+        });
+
+        test("Create ethereum", () => {
+            let id = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: 100,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/44'/60'/0'/0/1",
+                }
+            };
+            let accId = vault.addEntry(walletId, addEntry);
+            let wallets = vault.listWallets();
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
+            expect(wallet.entries.length).toBe(1);
+            expect(wallet.entries[0].blockchain).toBe(100);
+            expect(wallet.entries[0].receiveDisabled).toBeFalsy();
+            expect(isEthereumEntry(wallet.entries[0])).toBeTruthy();
+            let entry = wallet.entries[0] as EthereumEntry;
+            expect(entry.address.value).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase());
+            let reserved = WalletOp.of(wallet).getHDAccounts();
+            let expReserved = {};
+            expReserved[id] = [0];
+            expect(reserved).toStrictEqual(expReserved)
+
+            // let key = wallet.entries[0].key as SeedPKRef;
+            // expect(key.hdPath).toBe("m/44'/60'/0'/0/1");
+        })
+
+        test("Create bitcoin", () => {
+            let id = vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/84'/0'/0'/0/1",
+                }
+            };
+            let accId = vault.addEntry(walletId, addEntry);
+            let wallets = vault.listWallets();
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
+            expect(wallet.entries.length).toBe(1);
+            expect(wallet.entries[0].blockchain).toBe(1);
+            expect(wallet.entries[0].receiveDisabled).toBeFalsy();
+
+            expect(isBitcoinEntry(wallet.entries[0])).toBeTruthy();
+            let entry = wallet.entries[0] as BitcoinEntry;
+
+            let reserved = WalletOp.of(wallet).getHDAccounts();
+            let expReserved = {};
+            expReserved[id] = [0];
+            expect(reserved).toStrictEqual(expReserved);
+
+            expect(entry.addresses).toEqual([
+                {
+                    "address": "bc1qxqz4qerrm662nt4hxh39mqltvqcffcvzzfc49z",
+                    "hdPath": "m/84'/0'/0'/0/0",
+                    "role": "receive"
+                }
+            ]);
+        })
     });
 
 });

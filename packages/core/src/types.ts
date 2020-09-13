@@ -3,6 +3,7 @@ export type SeedType = "raw" | "ledger" | "mnemonic";
 export type SeedRefType = "ledger" | "mnemonic" | "id";
 export type EntryType = "pk" | "seed-hd";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
+export type AddressRole = "receive" | "change";
 
 export enum BlockchainId {
     BITCOIN = 1,
@@ -150,7 +151,13 @@ export interface EthereumEntry extends BaseEntry {
 }
 
 export interface BitcoinEntry extends BaseEntry {
-    address: AddressXPub
+    addresses: CurrentAddress[]
+}
+
+export interface CurrentAddress {
+    address: string;
+    hdPath: string;
+    role: AddressRole;
 }
 
 export type WalletEntry = EthereumEntry | BitcoinEntry;
@@ -359,50 +366,4 @@ export function isIdSeedReference(value: SeedReference): value is IdSeedReferenc
 
 export function isSeedReference(value: Uuid | SeedReference | SeedDefinition): value is SeedReference {
     return typeof value === "object" && (value.type == "id" || value.type == "ledger");
-}
-
-export interface IEmeraldVault {
-    vaultVersion(): string;
-
-    listWallets(): Wallet[];
-
-    getWallet(id: Uuid): Wallet | undefined;
-
-    addWallet(label: string | undefined): Uuid;
-
-    setWalletLabel(walletId: Uuid, label: string): boolean;
-
-    removeWallet(walletId: Uuid): void;
-
-    addEntry(walletId: Uuid, entry: AddEntry): EntryId;
-
-    removeEntry(entryId: EntryId): boolean;
-
-    setEntryLabel(entryFullId: EntryId, label: string | null): boolean;
-
-    setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): boolean;
-
-    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string;
-
-    exportRawPk(entryId: EntryId, password: string): string;
-
-    exportJsonPk(entryId: EntryId, password?: string): string;
-
-    generateMnemonic(size: number): string;
-
-    listAddressBook(blockchain: number): AddressBookItem[];
-
-    addToAddressBook(item: CreateAddressBookItem): boolean;
-
-    removeFromAddressBook(blockchain: number, address: string): boolean;
-
-    listSeeds(): SeedDescription[];
-
-    getConnectedHWSeed(create: boolean): SeedDescription | undefined;
-
-    importSeed(seed: SeedDefinition | LedgerSeedReference): Uuid;
-
-    isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): boolean;
-
-    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string };
 }
