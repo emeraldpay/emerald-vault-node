@@ -890,6 +890,10 @@ describe("Entries", () => {
             expect(isBitcoinEntry(wallet.entries[0])).toBeTruthy();
             let entry = wallet.entries[0] as BitcoinEntry;
 
+            expect(entry.address).toBeDefined();
+            expect(entry.address.type).toBe("xpub");
+            expect(entry.address.value).toBe("zpub6rgquuQgjiNdUjkU7qZck9t3JU5K9U9EG2aVAwzDy2BJKHKMekVNsyZF2e4dw9L9AoT9WHy5iDVdUHz2XkrANy5LRVGLt3XMkar752N2hvq")
+
             let reserved = WalletOp.of(wallet).getHDAccounts();
             let expReserved = {};
             expReserved[id] = [0];

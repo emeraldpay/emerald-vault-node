@@ -151,6 +151,16 @@ export interface EthereumEntry extends BaseEntry {
 }
 
 export interface BitcoinEntry extends BaseEntry {
+    /**
+     * Address as XPub covering all types of addresses for the entry, i.e. starts from Account level and includes both
+     * external and internal (receive and change) sets. For an actual address to receive refer to .addresses property.
+     * May be undefined.
+     */
+    address: AddressXPub | undefined;
+    /**
+     * Current addresses to use, can include multiple available addresses (depending on the configuration and implementation).
+     * May be empty, when xpub is unavailable or the entry is not supposed to receive any transaction.
+     */
     addresses: CurrentAddress[]
 }
 
