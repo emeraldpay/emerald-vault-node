@@ -59,8 +59,9 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return "0.27.0"
     }
 
-    setState(state: WalletState) {
+    setState(state: WalletState): Promise<void> {
         this.conf.accountIndexes = state.accountIndexes || DEFAULT_CONFIG.accountIndexes;
+        return Promise.resolve()
     }
 
     /**
@@ -95,207 +96,256 @@ export class EmeraldVaultNative implements IEmeraldVault {
         addon.admin_autofix(opts);
     }
 
-    listWallets(): Wallet[] {
-        let status: Status<Wallet[]> = addon.wallets_list(this.conf);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
+    listWallets(): Promise<Wallet[]> {
+        return new Promise((resolve, reject) => {
+            let status: Status<Wallet[]> = addon.wallets_list(this.conf);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message))
+            }
+            resolve(status.result);
+        });
     }
 
-    getWallet(id: Uuid): Wallet | undefined {
-        let status: Status<Wallet[]> = addon.wallets_list(this.conf);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return WalletsOp.of(status.result).getWallet(id).value
+    getWallet(id: Uuid): Promise<Wallet | undefined> {
+        return new Promise((resolve, reject) => {
+            let status: Status<Wallet[]> = addon.wallets_list(this.conf);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message))
+            }
+            resolve(WalletsOp.of(status.result).getWallet(id).value)
+        });
     }
 
-    addWallet(labelOrOptions: string | WalletCreateOptions | undefined): Uuid {
-        let options: WalletCreateOptions = {};
-        if (typeof labelOrOptions === 'string') {
-            options = {name: labelOrOptions}
-        } else if (typeof labelOrOptions === 'object') {
-            options = labelOrOptions
-        }
-        let status: Status<Uuid> = addon.wallets_add(this.conf, JSON.stringify(options));
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
+    addWallet(labelOrOptions: string | WalletCreateOptions | undefined): Promise<Uuid> {
+        return new Promise((resolve, reject) => {
+            let options: WalletCreateOptions = {};
+            if (typeof labelOrOptions === 'string') {
+                options = {name: labelOrOptions}
+            } else if (typeof labelOrOptions === 'object') {
+                options = labelOrOptions
+            }
+            let status: Status<Uuid> = addon.wallets_add(this.conf, JSON.stringify(options));
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
     }
 
-    setWalletLabel(walletId: Uuid, label: string): boolean {
-        let status: Status<boolean> = addon.wallets_updateLabel(this.conf, walletId, label);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
+    setWalletLabel(walletId: Uuid, label: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let status: Status<boolean> = addon.wallets_updateLabel(this.conf, walletId, label);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
     }
 
-    removeWallet(walletId: Uuid) {
-        let status: Status<boolean> = addon.wallets_remove(this.conf, walletId);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
+    removeWallet(walletId: Uuid): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let status: Status<boolean> = addon.wallets_remove(this.conf, walletId);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
     }
 
-    getEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): CurrentAddress[] {
-        return []
-    }
-
-    addEntry(walletId: Uuid, entry: AddEntry): EntryId {
-        let status: Status<number> = addon.wallets_addEntry(this.conf, walletId, JSON.stringify(entry));
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return EntryIdOp.create(walletId, status.result).value
-    }
-
-    removeEntry(entryFullId: EntryId) {
-        let op = EntryIdOp.of(entryFullId);
-        let status: Status<boolean> = addon.wallets_removeEntry(this.conf, op.extractWalletId(), op.extractEntryInternalId());
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-    }
-
-    setEntryLabel(entryFullId: EntryId, label: string | null): boolean {
-        let op = EntryIdOp.of(entryFullId);
-        let status: Status<boolean> = addon.entries_updateLabel(this.conf,
-            op.extractWalletId(), op.extractEntryInternalId(),
-            label
-        );
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-    }
-
-    setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): boolean {
-        let op = EntryIdOp.of(entryFullId);
-        let status: Status<boolean> = addon.entries_updateReceiveDisabled(this.conf,
-            op.extractWalletId(), op.extractEntryInternalId(),
-            disabled
-        );
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-    }
-
-    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string {
-        let op = EntryIdOp.of(entryId);
-        let status: Status<string> = addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return "0x" + status.result;
-    }
-
-    exportRawPk(entryId: EntryId, password: string): string {
-        let op = EntryIdOp.of(entryId);
-        let status: Status<string> = addon.entries_exportPk(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result;
-    }
-
-    exportJsonPk(entryId: EntryId, password?: string): string {
-        let op = EntryIdOp.of(entryId);
-        let status: Status<string> = addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result;
-    }
-
-    generateMnemonic(size: number): string {
-        let status: Status<string> = addon.seed_generateMnemonic(size);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-    }
-
-    listAddressBook(blockchain: number): AddressBookItem[] {
-        let opts = Object.assign({}, this.conf);
-        let status: Status<AddressBookItem[]> = addon.addrbook_list(opts);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-            .filter((item) => item.blockchain == blockchain);
-    }
-
-    addToAddressBook(item: CreateAddressBookItem): boolean {
-        let opts = Object.assign({}, this.conf);
-        let status: Status<boolean> = addon.addrbook_add(opts, JSON.stringify(item));
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-    }
-
-    removeFromAddressBook(blockchain: number, address: string): boolean {
-        let opts = Object.assign({}, this.conf);
-        let status: Status<boolean> = addon.addrbook_remove(opts, address);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-    }
-
-    listSeeds(): SeedDescription[] {
-        let status: Status<SeedDescription[]> = addon.seed_list(this.conf);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result;
-    }
-
-    getConnectedHWSeed(create: boolean): SeedDescription | undefined {
+    getEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]> {
         //TODO
-        return undefined
+        return Promise.resolve([]);
     }
 
-    importSeed(seed: SeedDefinition | LedgerSeedReference): Uuid {
-        let status: Status<Uuid> = addon.seed_add(this.conf, JSON.stringify(seed));
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result
-    }
-
-    isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): boolean {
-        let ref = seed;
-        if (isReference(seed)) {
-            ref = {
-                type: "id",
-                value: seed
+    addEntry(walletId: Uuid, entry: AddEntry): Promise<EntryId> {
+        return new Promise((resolve, reject) => {
+            let status: Status<number> = addon.wallets_addEntry(this.conf, walletId, JSON.stringify(entry));
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
             }
-        }
-        let status: Status<boolean> = addon.seed_isAvailable(this.conf, JSON.stringify(ref));
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result;
+            resolve(EntryIdOp.create(walletId, status.result).value)
+        });
     }
 
-    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string } {
-        let ref = seed;
-        if (isReference(seed)) {
-            ref = {
-                type: "id",
-                value: seed
+    removeEntry(entryFullId: EntryId): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let op = EntryIdOp.of(entryFullId);
+            let status: Status<boolean> = addon.wallets_removeEntry(this.conf, op.extractWalletId(), op.extractEntryInternalId());
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message))
             }
-        }
-        let status: Status<{ [key: string]: string }> = addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath);
-        if (!status.succeeded) {
-            throw Error(status.error.message)
-        }
-        return status.result;
+            resolve(status.result);
+        });
+    }
+
+    setEntryLabel(entryFullId: EntryId, label: string | null): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let op = EntryIdOp.of(entryFullId);
+            let status: Status<boolean> = addon.entries_updateLabel(this.conf,
+                op.extractWalletId(), op.extractEntryInternalId(),
+                label
+            );
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let op = EntryIdOp.of(entryFullId);
+            let status: Status<boolean> = addon.entries_updateReceiveDisabled(this.conf,
+                op.extractWalletId(), op.extractEntryInternalId(),
+                disabled
+            );
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result)
+        });
+    }
+
+    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let op = EntryIdOp.of(entryId);
+            let status: Status<string> = addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve("0x" + status.result);
+        });
+    }
+
+    exportRawPk(entryId: EntryId, password: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let op = EntryIdOp.of(entryId);
+            let status: Status<string> = addon.entries_exportPk(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    exportJsonPk(entryId: EntryId, password?: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let op = EntryIdOp.of(entryId);
+            let status: Status<string>;
+            try {
+                status = addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
+            } catch (e) {
+                return reject(e);
+            }
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    generateMnemonic(size: number): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let status: Status<string> = addon.seed_generateMnemonic(size);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    listAddressBook(blockchain: number): Promise<AddressBookItem[]> {
+        return new Promise((resolve, reject) => {
+            let opts = Object.assign({}, this.conf);
+            let status: Status<AddressBookItem[]> = addon.addrbook_list(opts);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(
+                status.result
+                    .filter((item) => item.blockchain == blockchain)
+            );
+        });
+    }
+
+    addToAddressBook(item: CreateAddressBookItem): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let opts = Object.assign({}, this.conf);
+            let status: Status<boolean> = addon.addrbook_add(opts, JSON.stringify(item));
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    removeFromAddressBook(blockchain: number, address: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let opts = Object.assign({}, this.conf);
+            let status: Status<boolean> = addon.addrbook_remove(opts, address);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    listSeeds(): Promise<SeedDescription[]> {
+        return new Promise((resolve, reject) => {
+            let status: Status<SeedDescription[]> = addon.seed_list(this.conf);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    getConnectedHWSeed(create: boolean): Promise<SeedDescription | undefined> {
+        //TODO
+        return Promise.resolve(undefined);
+    }
+
+    importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid> {
+        return new Promise((resolve, reject) => {
+            let status: Status<Uuid> = addon.seed_add(this.conf, JSON.stringify(seed));
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let ref = seed;
+            if (isReference(seed)) {
+                ref = {
+                    type: "id",
+                    value: seed
+                }
+            }
+            let status: Status<boolean> = addon.seed_isAvailable(this.conf, JSON.stringify(ref));
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
+    }
+
+    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): Promise<{ [key: string]: string }> {
+        return new Promise((resolve, reject) => {
+            let ref = seed;
+            if (isReference(seed)) {
+                ref = {
+                    type: "id",
+                    value: seed
+                }
+            }
+            let status: Status<{ [key: string]: string }> = addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
     }
 }

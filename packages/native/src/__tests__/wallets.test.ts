@@ -16,8 +16,8 @@ describe("Wallets", () => {
                 vault.open();
             });
 
-            test("list items", () => {
-                let wallets = vault.listWallets();
+            test("list items", async () => {
+                let wallets = await vault.listWallets();
 
                 expect(wallets.length).toBe(3);
 
@@ -56,36 +56,36 @@ describe("Wallets", () => {
                     dir: tempPath("wallet-create")
                 });
             });
-            test("without label", () => {
-                let id = vault.addWallet(undefined);
-                let wallets = vault.listWallets();
+            test("without label", async () => {
+                let id = await vault.addWallet(undefined);
+                let wallets = await vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
                 expect(created.name).toBeNull()
             });
 
-            test("with empty label", () => {
-                let id = vault.addWallet("");
-                let wallets = vault.listWallets();
+            test("with empty label", async () => {
+                let id = await vault.addWallet("");
+                let wallets = await vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
                 expect(created.name).toBeNull();
             });
 
-            test("with label", () => {
-                let id = vault.addWallet("Test 1111");
-                let wallets = vault.listWallets();
+            test("with label", async () => {
+                let id = await vault.addWallet("Test 1111");
+                let wallets = await vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
                 expect(created.name).toBe("Test 1111");
             });
 
-            test("with label as options", () => {
-                let id = vault.addWallet({name: "Test 1111"});
-                let wallets = vault.listWallets();
+            test("with label as options", async () => {
+                let id = await vault.addWallet({name: "Test 1111"});
+                let wallets = await vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
@@ -93,12 +93,12 @@ describe("Wallets", () => {
                 expect(created.reserved).toEqual([]);
             });
 
-            test("with reserved seed", () => {
-                let id = vault.addWallet({
+            test("with reserved seed", async () => {
+                let id = await vault.addWallet({
                     name: "Test 1111",
                     reserved: [{seedId: "95d3953b-6df0-424e-93ad-61e463564bff", accountId: 1}]
                 });
-                let wallets = vault.listWallets();
+                let wallets = await vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
@@ -108,8 +108,8 @@ describe("Wallets", () => {
                 expect(created.reserved.length).toBe(1);
             });
 
-            test("with few reserved seeds", () => {
-                let id = vault.addWallet(
+            test("with few reserved seeds", async () => {
+                let id = await vault.addWallet(
                     {
                         name: "Test 1111",
                         reserved: [
@@ -118,7 +118,7 @@ describe("Wallets", () => {
                             {seedId: "2c9f98b3-0499-4550-b5f5-086a0264ebd5", accountId: 2},
                         ]
                     });
-                let wallets = vault.listWallets();
+                let wallets = await vault.listWallets();
                 expect(wallets.length).toBeGreaterThan(0);
                 let created = WalletsOp.of(wallets).getWallet(id).value;
                 expect(created).toBeDefined();
@@ -139,17 +139,17 @@ describe("Wallets", () => {
                 });
             });
 
-            test("Create and import JSON", () => {
+            test("Create and import JSON", async () => {
                 //https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
                 let key = {
                     "address": "008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
-                    "crypto" : {
-                        "cipher" : "aes-128-ctr",
-                        "cipherparams" : {
-                            "iv" : "6087dab2f9fdbbfaddc31a909735c1e6"
+                    "crypto": {
+                        "cipher": "aes-128-ctr",
+                        "cipherparams": {
+                            "iv": "6087dab2f9fdbbfaddc31a909735c1e6"
                         },
-                        "ciphertext" : "5318b4d5bcd28de64ee5559e671353e16f075ecae9f99c7a79a38af5f869aa46",
-                        "kdf" : "pbkdf2",
+                        "ciphertext": "5318b4d5bcd28de64ee5559e671353e16f075ecae9f99c7a79a38af5f869aa46",
+                        "kdf": "pbkdf2",
                         "kdfparams" : {
                             "c" : 262144,
                             "dklen" : 32,
@@ -162,47 +162,47 @@ describe("Wallets", () => {
                     "version" : 3
                 };
 
-                let id = vault.addWallet("Test 2");
+                let id = await vault.addWallet("Test 2");
                 let acc: AddEntry = {
                     blockchain: 100,
                     type: "ethereum-json",
                     key: JSON.stringify(key)
                 };
-                let result = vault.addEntry(id, acc);
+                let result = await vault.addEntry(id, acc);
 
                 expect(result).toBe(id + "-0");
 
-                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id).value;
+                let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id).value;
                 expect(wallet.entries.length).toBe(1);
             });
 
-            test("Create and import raw", () => {
-                let id = vault.addWallet("Test 2");
+            test("Create and import raw", async () => {
+                let id = await vault.addWallet("Test 2");
                 let acc: AddEntry = {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test"
                 };
-                let result = vault.addEntry(id, acc);
+                let result = await vault.addEntry(id, acc);
 
                 expect(result).toBe(id + "-0");
-                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+                let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id);
                 expect(wallet.value.entries.length).toBe(1);
                 expect(wallet.getEthereumEntries()[0].address.value).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
             });
 
-            test("Uses current date", () => {
+            test("Uses current date", async () => {
                 const start = new Date();
-                let id = vault.addWallet("Test 2");
+                let id = await vault.addWallet("Test 2");
                 let acc: AddEntry = {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test"
                 };
-                let entryId = vault.addEntry(id, acc);
-                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+                let entryId = await vault.addEntry(id, acc);
+                let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id);
 
                 expect(wallet.value.createdAt).toBeDefined();
                 const walletCreatedAt = new Date(wallet.value.createdAt);
@@ -216,27 +216,27 @@ describe("Wallets", () => {
                 expect(entryCreatedAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
             });
 
-            test("Create and import 2 keys", () => {
-                let id = vault.addWallet("Test 3");
+            test("Create and import 2 keys", async () => {
+                let id = await vault.addWallet("Test 3");
                 let acc1: AddEntry = {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test1"
                 };
-                let result1 = vault.addEntry(id, acc1);
+                let result1 = await vault.addEntry(id, acc1);
                 let acc2: AddEntry = {
                     blockchain: 101,
                     type: "raw-pk-hex",
                     key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
                     password: "test2"
                 };
-                let result2 = vault.addEntry(id, acc2);
+                let result2 = await vault.addEntry(id, acc2);
 
                 expect(result1).toBe(id + "-0");
                 expect(result2).toBe(id + "-1");
 
-                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+                let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id);
                 expect(wallet.value.entries.length).toBe(2);
                 expect(wallet.getEthereumEntries()[0].address.value).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
                 expect(wallet.getEthereumEntries()[0].blockchain).toBe(100);
@@ -244,27 +244,27 @@ describe("Wallets", () => {
                 expect(wallet.getEthereumEntries()[1].blockchain).toBe(101);
             });
 
-            test("Create and import from seed", () => {
-                let id = vault.addWallet("Test 3");
+            test("Create and import from seed", async () => {
+                let id = await vault.addWallet("Test 3");
                 let acc1: AddEntry = {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test1"
                 };
-                let result1 = vault.addEntry(id, acc1);
+                let result1 = await vault.addEntry(id, acc1);
                 let acc2: AddEntry = {
                     blockchain: 101,
                     type: "raw-pk-hex",
                     key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
                     password: "test2"
                 };
-                let result2 = vault.addEntry(id, acc2);
+                let result2 = await vault.addEntry(id, acc2);
 
                 expect(result1).toBe(id + "-0");
                 expect(result2).toBe(id + "-1");
 
-                let wallet = WalletsOp.of(vault.listWallets()).getWallet(id);
+                let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id);
                 expect(wallet.value.entries.length).toBe(2);
                 expect(wallet.getEthereumEntries()[0].address.value).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
                 expect(wallet.getEthereumEntries()[0].blockchain).toBe(100);
@@ -283,28 +283,28 @@ describe("Wallets", () => {
             });
         });
 
-        test("Update label", () => {
+        test("Update label", async () => {
 
-            let walletId = vault.addWallet("test 1");
-            let wallet1 = vault.getWallet(walletId);
+            let walletId = await vault.addWallet("test 1");
+            let wallet1 = await vault.getWallet(walletId);
 
             expect(wallet1.name).toBe("test 1");
 
-            vault.setWalletLabel(walletId, "Test 2");
-            let wallet2 = vault.getWallet(walletId);
+            await vault.setWalletLabel(walletId, "Test 2");
+            let wallet2 = await vault.getWallet(walletId);
             expect(wallet2.name).toBe("Test 2");
 
-            vault.setWalletLabel(walletId, "");
-            let wallet3 = vault.getWallet(walletId);
+            await vault.setWalletLabel(walletId, "");
+            let wallet3 = await vault.getWallet(walletId);
             expect(wallet3.name).toBeNull();
 
-            vault.setWalletLabel(walletId, null);
-            let wallet4 = vault.getWallet(walletId);
+            await vault.setWalletLabel(walletId, null);
+            let wallet4 = await vault.getWallet(walletId);
             expect(wallet4.name).toBeNull();
         });
 
-        test("Keep seed reserved after removing entry", () => {
-            let id = vault.importSeed({
+        test("Keep seed reserved after removing entry", async () => {
+            let id = await vault.importSeed({
                 type: "mnemonic",
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
@@ -313,7 +313,7 @@ describe("Wallets", () => {
             });
             expect(id).toBeDefined();
 
-            let walletId = vault.addWallet("test seed");
+            let walletId = await vault.addWallet("test seed");
             let acc: AddEntry = {
                 blockchain: 100,
                 type: "hd-path",
@@ -322,10 +322,10 @@ describe("Wallets", () => {
                     hdPath: "m/44'/60'/1'/0/1",
                 }
             };
-            let entryId = vault.addEntry(walletId, acc);
-            vault.removeEntry(entryId);
+            let entryId = await vault.addEntry(walletId, acc);
+            await vault.removeEntry(entryId);
 
-            let wallets = vault.listWallets();
+            let wallets = await vault.listWallets();
             let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
             expect(wallet.entries.length).toBe(0);
 
@@ -344,71 +344,65 @@ describe("Wallets", () => {
             });
         });
 
-        test("empty", () => {
-            let walletId = vault.addWallet("test 1");
-            let wallet = vault.getWallet(walletId);
+        test("empty", async () => {
+            let walletId = await vault.addWallet("test 1");
+            let wallet = await vault.getWallet(walletId);
             expect(wallet).toBeDefined();
             expect(wallet.name).toBe("test 1");
 
-            vault.removeWallet(walletId);
+            await vault.removeWallet(walletId);
 
-            expect(() => {
-                vault.getWallet(walletId)
-            }).toThrowError("No wallet with id");
+            await expect(vault.getWallet(walletId)).rejects.toThrowError("No wallet with id");
         });
 
-        test("with entries", () => {
-            let walletId = vault.addWallet("test 1");
-            vault.addEntry(walletId, {
+        test("with entries", async () => {
+            let walletId = await vault.addWallet("test 1");
+            await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
             });
-            vault.addEntry(walletId, {
+            await vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "raw-pk-hex",
                 key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
             });
 
-            let wallet = vault.getWallet(walletId);
+            let wallet = await vault.getWallet(walletId);
             expect(wallet).toBeDefined();
 
-            vault.removeWallet(walletId);
+            await vault.removeWallet(walletId);
 
-            expect(() => {
-                vault.getWallet(walletId)
-            }).toThrowError("No wallet with id");
+            await expect(vault.getWallet(walletId)).rejects.toThrowError("No wallet with id");
         });
 
-        test("keep others", () => {
-            let walletId1 = vault.addWallet("test 1");
-            vault.addEntry(walletId1, {
+        test("keep others", async () => {
+            let walletId1 = await vault.addWallet("test 1");
+            await vault.addEntry(walletId1, {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
             });
 
-            let walletId2 = vault.addWallet("test 2");
-            vault.addEntry(walletId2, {
+            let walletId2 = await vault.addWallet("test 2");
+            await vault.addEntry(walletId2, {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                 password: "test"
             });
 
-            let wallet = vault.getWallet(walletId1);
+            let wallet = await vault.getWallet(walletId1);
             expect(wallet).toBeDefined();
 
-            vault.removeWallet(walletId1);
+            await vault.removeWallet(walletId1);
 
-            expect(() => {
-                vault.getWallet(walletId1)
-            }).toThrowError("No wallet with id");
+            await expect(vault.getWallet(walletId1)).rejects.toThrowError("No wallet with id");
 
-            wallet = vault.getWallet(walletId2);
+            wallet = await vault.getWallet(walletId2);
             expect(wallet).toBeDefined();
         });
     });

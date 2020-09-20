@@ -27,8 +27,8 @@ describe("Seeds", () => {
             };
 
             describe('Check connection', () => {
-                test("Always connected", () => {
-                    const act = vault.isSeedAvailable(type);
+                test("Always connected", async () => {
+                    const act = await vault.isSeedAvailable(type);
                     expect(act).toBeTruthy();
                 });
             });
@@ -36,8 +36,8 @@ describe("Seeds", () => {
 
             describe('List addresses', () => {
 
-                test("List ethereum", () => {
-                    const act = vault.listSeedAddresses(type, "ethereum", [
+                test("List ethereum", async () => {
+                    const act = await vault.listSeedAddresses(type, "ethereum", [
                         "m/44'/60'/0'/0/0",
                         "m/44'/60'/0'/0/1",
                         "m/44'/60'/0'/0/2",
@@ -69,16 +69,16 @@ describe("Seeds", () => {
             };
 
             describe('Check connection', () => {
-                test("Always connected", () => {
-                    const act = vault.isSeedAvailable(type);
+                test("Always connected", async () => {
+                    const act = await vault.isSeedAvailable(type);
                     expect(act).toBeTruthy();
                 });
             });
 
             describe('List addresses', () => {
 
-                test("List ethereum", () => {
-                    const act = vault.listSeedAddresses(type, "ethereum", [
+                test("List ethereum", async () => {
+                    const act = await vault.listSeedAddresses(type, "ethereum", [
                         "m/44'/60'/0'/0/0",
                         "m/44'/60'/0'/0/1",
                         "m/44'/60'/0'/0/2",
@@ -103,8 +103,8 @@ describe("Seeds", () => {
 
             describe('List addresses', () => {
 
-                test("List ethereum", () => {
-                    const act = vault.listSeedAddresses(type, "ethereum", [
+                test("List ethereum", async () => {
+                    const act = await vault.listSeedAddresses(type, "ethereum", [
                         "m/44'/61'/1'/0/0",
                         "m/44'/61'/1'/0/1",
                         "m/44'/61'/1'/0/2",
@@ -127,13 +127,13 @@ describe("Seeds", () => {
             });
         });
 
-        test("List empty", () => {
-            let seeds = vault.listSeeds();
+        test("List empty", async () => {
+            let seeds = await vault.listSeeds();
             expect(seeds.length).toBe(0);
         });
 
-        test("Import mnemonic", () => {
-            let id = vault.importSeed({
+        test("Import mnemonic", async () => {
+            let id = await vault.importSeed({
                 type: "mnemonic",
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
@@ -142,10 +142,10 @@ describe("Seeds", () => {
             });
             expect(id).toBeDefined();
 
-            let seeds = vault.listSeeds();
+            let seeds = await vault.listSeeds();
             expect(seeds.length).toBe(1);
 
-            let available = vault.isSeedAvailable(id);
+            let available = await vault.isSeedAvailable(id);
             expect(available).toBeTruthy();
 
             let ref: SeedReference = {
@@ -154,12 +154,12 @@ describe("Seeds", () => {
                 password: "test"
             }
 
-            let addresses = vault.listSeedAddresses(ref, "ethereum", ["m/44'/60'/0'/0/1"]);
+            let addresses = await vault.listSeedAddresses(ref, "ethereum", ["m/44'/60'/0'/0/1"]);
             expect(addresses["m/44'/60'/0'/0/1"].toLowerCase()).toBe("0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950".toLowerCase())
         });
 
-        test("Create with label", () => {
-            let id = vault.importSeed({
+        test("Create with label", async () => {
+            let id = await vault.importSeed({
                 type: "mnemonic",
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
@@ -168,14 +168,14 @@ describe("Seeds", () => {
                 label: "Hello World!",
             });
             expect(id).toBeDefined();
-            let seed = vault.listSeeds()[0];
+            let seed = (await vault.listSeeds())[0];
             expect(seed.id).toBe(id);
             expect(seed.label).toBe("Hello World!");
         });
 
-        test("Uses current date", () => {
+        test("Uses current date", async () => {
             const start = new Date();
-            let id = vault.importSeed({
+            let id = await vault.importSeed({
                 type: "mnemonic",
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
@@ -183,7 +183,7 @@ describe("Seeds", () => {
                 password: "test",
             });
             expect(id).toBeDefined();
-            let seed = vault.listSeeds()[0];
+            let seed = (await vault.listSeeds())[0];
             expect(seed.id).toBe(id);
             expect(seed.createdAt).toBeDefined();
             const createdAt = new Date(seed.createdAt);

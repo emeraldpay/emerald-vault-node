@@ -36,21 +36,19 @@ describe('Multiple clients', () => {
         let runs = vaults.map( (vault: EmeraldVaultNative) => {
             return new Promise((resolve, reject) => {
                 let run = () => {
-                    try {
-                        let walletId = vault.addWallet("test");
-                        let entryId = vault.addEntry(walletId, {
+                    vault.addWallet("test").then((walletId) =>
+                        vault.addEntry(walletId, {
                             blockchain: 100,
                             type: "ethereum-json",
                             key: JSON.stringify(data)
-                        });
-                        // vault.updateAccount("eth",data.address, {name: "foo bar"} );
-                        let current = JSON.parse(vault.exportJsonPk(entryId));
+                        })
+                    ).then((entryId) =>
+                        vault.exportJsonPk(entryId)
+                    ).then((entry) => {
+                        let current = JSON.parse(entry);
                         expect(current.address).toBe(data.address);
                         resolve(current.address);
-                    } catch (e) {
-                        console.error(e);
-                        reject(e);
-                    }
+                    }).catch(reject);
                 };
                setTimeout(run, 100)
             });

@@ -28,14 +28,14 @@ describe('Verify connection', () => {
         type: "ledger",
     };
 
-    test("As simple reference", () => {
-        const act = vault.isSeedAvailable(ledgerReference);
+    test("As simple reference", async () => {
+        const act = await vault.isSeedAvailable(ledgerReference);
         expect(act).toBe(IS_CONNECTED);
     });
 
-    test("When created as seed", () => {
-        let id: Uuid = vault.importSeed(ledgerReference)
-        const act = vault.isSeedAvailable(id);
+    test("When created as seed", async () => {
+        let id: Uuid = await vault.importSeed(ledgerReference)
+        const act = await vault.isSeedAvailable(id);
         expect(act).toBe(IS_CONNECTED);
     });
 
@@ -54,12 +54,12 @@ describe('List addresses', () => {
         type: "ledger",
     };
 
-    test("List ethereum", () => {
+    test("List ethereum", async () => {
         if (!IS_CONNECTED) {
             console.warn("Ignore Ledger tests");
             return;
         }
-        const act = vault.listSeedAddresses(ledgerReference, "ethereum", [
+        const act = await vault.listSeedAddresses(ledgerReference, "ethereum", [
             "m/44'/60'/0'/0/0",
             "m/44'/60'/0'/0/1",
             "m/44'/60'/0'/0/2",
@@ -71,13 +71,13 @@ describe('List addresses', () => {
     });
 
 
-    test("List ethereum with created ledger", () => {
+    test("List ethereum with created ledger", async () => {
         if (!IS_CONNECTED) {
             console.warn("Ignore Ledger tests");
             return;
         }
-        let id: Uuid = vault.importSeed(ledgerReference)
-        const act = vault.listSeedAddresses(id, "ethereum", [
+        let id: Uuid = await vault.importSeed(ledgerReference)
+        const act = await vault.listSeedAddresses(id, "ethereum", [
             "m/44'/60'/0'/0/0",
             "m/44'/60'/0'/0/1",
             "m/44'/60'/0'/0/2",
@@ -99,16 +99,16 @@ describe('Create entries', () => {
         vault.open();
     });
 
-    test("Create entry", () => {
+    test("Create entry", async () => {
         if (!IS_CONNECTED) {
             console.warn("Ignore Ledger tests");
             return;
         }
-        let walletId = vault.addWallet("wallet 1");
-        let seedId = vault.importSeed({
+        let walletId = await vault.addWallet("wallet 1");
+        let seedId = await vault.importSeed({
             type: "ledger",
         })
-        let entryId = vault.addEntry(walletId, {
+        let entryId = await vault.addEntry(walletId, {
             type: "hd-path",
             blockchain: 100,
             key: {
@@ -117,25 +117,25 @@ describe('Create entries', () => {
                 address: testAddresses["m/44'/60'/0'/0/0"]
             },
         });
-        let wallet = vault.getWallet(walletId);
+        let wallet = await vault.getWallet(walletId);
         let entry = wallet.entries[0] as EthereumEntry;
         expect(entry.key.type).toBe("hd-path");
         let key = entry.key as SeedPKRef;
         expect(key.seedId).toBe(seedId);
         expect(key.hdPath).toBe("m/44'/60'/0'/0/0");
-        expect(entry.address).toBe(testAddresses["m/44'/60'/0'/0/0"]);
+        expect(entry.address).toEqual({type: "single", value: testAddresses["m/44'/60'/0'/0/0"]});
     });
 
-    test("Cannot create entry if expected address is not equal", () => {
+    test("Cannot create entry if expected address is not equal", async () => {
         if (!IS_CONNECTED) {
             console.warn("Ignore Ledger tests");
             return;
         }
-        let walletId = vault.addWallet("wallet 1");
-        let seedId = vault.importSeed({
+        let walletId = await vault.addWallet("wallet 1");
+        let seedId = await vault.importSeed({
             type: "ledger",
         })
-        expect(() => {
+        await expect(
             vault.addEntry(walletId, {
                 type: "hd-path",
                 blockchain: 100,
@@ -145,22 +145,22 @@ describe('Create entries', () => {
                     // use wrong address
                     address: testAddresses["m/44'/60'/0'/0/2"]
                 },
-            });
-        }).toThrow()
-        let wallet = vault.getWallet(walletId);
+            })
+        ).rejects.toThrow()
+        let wallet = await vault.getWallet(walletId);
         expect(wallet.entries.length).toBe(0);
     });
 
-    test("Create few entries", () => {
+    test("Create few entries", async () => {
         if (!IS_CONNECTED) {
             console.warn("Ignore Ledger tests");
             return;
         }
-        let walletId = vault.addWallet("wallet 1");
-        let seedId = vault.importSeed({
+        let walletId = await vault.addWallet("wallet 1");
+        let seedId = await vault.importSeed({
             type: "ledger",
         })
-        vault.addEntry(walletId, {
+        await vault.addEntry(walletId, {
             type: "hd-path",
             blockchain: 100,
             key: {
@@ -168,7 +168,7 @@ describe('Create entries', () => {
                 hdPath: "m/44'/60'/0'/0/0"
             }
         });
-        vault.addEntry(walletId, {
+        await vault.addEntry(walletId, {
             type: "hd-path",
             blockchain: 100,
             key: {
@@ -176,7 +176,7 @@ describe('Create entries', () => {
                 hdPath: "m/44'/60'/0'/0/1"
             }
         });
-        vault.addEntry(walletId, {
+        await vault.addEntry(walletId, {
             type: "hd-path",
             blockchain: 100,
             key: {
@@ -185,24 +185,24 @@ describe('Create entries', () => {
             }
         });
 
-        let wallet = vault.getWallet(walletId);
+        let wallet = await vault.getWallet(walletId);
         expect(wallet.entries.length).toBe(3);
         let entry = wallet.entries[0] as EthereumEntry;
-        expect(entry.address).toBe(testAddresses["m/44'/60'/0'/0/0"]);
+        expect(entry.address).toEqual({type: "single", value: testAddresses["m/44'/60'/0'/0/0"]});
         entry = wallet.entries[1] as EthereumEntry;
-        expect(entry.address).toBe(testAddresses["m/44'/60'/0'/0/1"]);
+        expect(entry.address).toEqual({type: "single", value: testAddresses["m/44'/60'/0'/0/1"]});
         entry = wallet.entries[2] as EthereumEntry;
-        expect(entry.address).toBe(testAddresses["m/44'/60'/0'/0/2"]);
+        expect(entry.address).toEqual({type: "single", value: testAddresses["m/44'/60'/0'/0/2"]});
     });
 
-    test("Create entries right from ledger", () => {
+    test("Create entries right from ledger", async () => {
         if (!IS_CONNECTED) {
             console.warn("Ignore Ledger tests");
             return;
         }
-        expect(vault.listSeeds().length).toBe(0);
-        let walletId = vault.addWallet("wallet from ledger");
-        let entryId = vault.addEntry(walletId, {
+        expect((await vault.listSeeds()).length).toBe(0);
+        let walletId = await vault.addWallet("wallet from ledger");
+        let entryId = await vault.addEntry(walletId, {
             type: "hd-path",
             blockchain: 100,
             key: {
@@ -211,29 +211,29 @@ describe('Create entries', () => {
             }
         });
 
-        let seeds = vault.listSeeds();
+        let seeds = await vault.listSeeds();
         expect(seeds.length).toBe(1);
         expect(seeds[0].type).toBe("ledger");
         expect(seeds[0].available).toBeTruthy();
 
 
-        let entry = vault.getWallet(walletId).entries[0];
+        let entry = (await vault.getWallet(walletId)).entries[0];
         let entryKey = entry.key as SeedPKRef;
         expect(entryKey.type).toBe("hd-path");
         expect(entryKey.seedId).toBe(seeds[0].id);
     });
 
-    test("Create entries from existing ledger by referring", () => {
+    test("Create entries from existing ledger by referring", async () => {
         if (!IS_CONNECTED) {
             console.warn("Ignore Ledger tests");
             return;
         }
-        expect(vault.listSeeds().length).toBe(0);
-        let walletId = vault.addWallet("wallet from ledger");
-        let seedId = vault.importSeed({
+        expect((await vault.listSeeds()).length).toBe(0);
+        let walletId = await vault.addWallet("wallet from ledger");
+        let seedId = await vault.importSeed({
             type: "ledger",
         })
-        let entryId = vault.addEntry(walletId, {
+        let entryId = await vault.addEntry(walletId, {
             type: "hd-path",
             blockchain: 100,
             key: {
@@ -242,11 +242,11 @@ describe('Create entries', () => {
             }
         });
 
-        let seeds = vault.listSeeds();
+        let seeds = await vault.listSeeds();
         expect(seeds.length).toBe(1);
         expect(seeds[0].id).toBe(seedId);
 
-        let entry = vault.getWallet(walletId).entries[0];
+        let entry = (await vault.getWallet(walletId)).entries[0];
         let entryKey = entry.key as SeedPKRef;
         expect(entryKey.seedId).toBe(seedId);
     });

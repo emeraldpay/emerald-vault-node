@@ -15,13 +15,13 @@ describe("Compatibility", () => {
             vault.open();
         });
 
-        test('List wallets', () => {
-            let wallets = WalletsOp.of(vault.listWallets());
+        test('List wallets', async () => {
+            let wallets = WalletsOp.of(await vault.listWallets());
             expect(wallets.size).toBe(3);
         });
 
-        test('List seeds', () => {
-            let seeds = vault.listSeeds();
+        test('List seeds', async () => {
+            let seeds = await vault.listSeeds();
             expect(seeds.length).toBe(2);
 
             // sort for testing
@@ -38,8 +38,8 @@ describe("Compatibility", () => {
             expect(seeds[1].available).toBeFalsy();
         });
 
-        test('Open wallet 1', () => {
-            let wallets = WalletsOp.of(vault.listWallets());
+        test('Open wallet 1', async () => {
+            let wallets = WalletsOp.of(await vault.listWallets());
 
             let wallet = wallets.getWallet("ccf06549-ab79-4ccb-a0fd-17d6904d4db1").value;
             expect(wallet.id).toBe("ccf06549-ab79-4ccb-a0fd-17d6904d4db1");
@@ -63,8 +63,8 @@ describe("Compatibility", () => {
             });
         });
 
-        test('Open wallet 2', () => {
-            let wallets = WalletsOp.of(vault.listWallets());
+        test('Open wallet 2', async () => {
+            let wallets = WalletsOp.of(await vault.listWallets());
 
             let wallet = wallets.getWallet("8c80fc09-f20d-42db-9fea-1df4353af82a").value;
             expect(wallet.id).toBe("8c80fc09-f20d-42db-9fea-1df4353af82a");
@@ -81,8 +81,8 @@ describe("Compatibility", () => {
             });
         });
 
-        test('Open wallet 3', () => {
-            let wallets = WalletsOp.of(vault.listWallets());
+        test('Open wallet 3', async () => {
+            let wallets = WalletsOp.of(await vault.listWallets());
 
             let wallet = wallets.getWallet("80ce0681-b506-4d0b-ae8e-5e7876625604").value;
             expect(wallet.id).toBe("80ce0681-b506-4d0b-ae8e-5e7876625604");
@@ -105,8 +105,8 @@ describe("Compatibility", () => {
             });
         });
 
-        test('Sign wallet 1', () => {
-            let wallets = WalletsOp.of(vault.listWallets());
+        test('Sign wallet 1', async () => {
+            let wallets = WalletsOp.of(await vault.listWallets());
 
             let entry = wallets.getWallet("ccf06549-ab79-4ccb-a0fd-17d6904d4db1")
                 .getEthereumEntries()[0];
@@ -119,7 +119,7 @@ describe("Compatibility", () => {
                 gasPrice: "0x77359400",
                 nonce: "0x2"
             };
-            let raw = vault.signTx(entry.id, tx, "test");
+            let raw = await vault.signTx(entry.id, tx, "test");
             expect(raw).toBe("0xf865028477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38210518026a0a8f7aacd400789614602925c4331cf7ccf83548401632da7ee36b634fd5e2ce1a05c554688d38bd762af2e4885b70a2b3e608dffe80a2c33c93606afe4add040c6");
         });
 

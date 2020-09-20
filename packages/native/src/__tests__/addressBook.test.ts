@@ -12,8 +12,8 @@ describe("Address Book", () => {
             vault.open();
         });
 
-        test("list eth", () => {
-            let entries = vault.listAddressBook(100);
+        test("list eth", async () => {
+            let entries = await vault.listAddressBook(100);
             expect(entries.length).toBe(2);
 
             expect(entries[0].address).toEqual({
@@ -31,8 +31,8 @@ describe("Address Book", () => {
             expect(entries[1].description).toBeNull();
         });
 
-        test("list etc", () => {
-            let entries = vault.listAddressBook(101);
+        test("list etc", async () => {
+            let entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(0);
         });
 
@@ -47,13 +47,13 @@ describe("Address Book", () => {
             });
         });
 
-        test("list eth", () => {
-            let entries = vault.listAddressBook(100);
+        test("list eth", async () => {
+            let entries = await vault.listAddressBook(100);
             expect(entries.length).toBe(0);
         });
 
-        test("list etc", () => {
-            let entries = vault.listAddressBook(101);
+        test("list etc", async () => {
+            let entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(0);
         });
 
@@ -68,23 +68,23 @@ describe("Address Book", () => {
             });
         });
 
-        test("create etc", () => {
-            let entries = vault.listAddressBook(101);
+        test("create etc", async () => {
+            let entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(0);
             vault.addToAddressBook({
                 name: "test 1",
                 address: {type: 'single', value: "0xc2d7cf95645d33006175b78989035c7c9061d3f9"},
                 blockchain: 101
             });
-            entries = vault.listAddressBook(101);
+            entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(1);
             expect(entries[0].address).toEqual({type: 'single', value: "0xc2d7cf95645d33006175b78989035c7c9061d3f9"});
             expect(entries[0].name).toBe("test 1");
             expect(entries[0].description).toBeNull();
         });
 
-        test("create xpub", () => {
-            let entries = vault.listAddressBook(1);
+        test("create xpub", async () => {
+            let entries = await vault.listAddressBook(1);
             expect(entries.length).toBe(0);
             vault.addToAddressBook({
                 name: "test 1",
@@ -94,7 +94,7 @@ describe("Address Book", () => {
                 },
                 blockchain: 1
             });
-            entries = vault.listAddressBook(1);
+            entries = await vault.listAddressBook(1);
             expect(entries.length).toBe(1);
             expect(entries[0].address).toEqual({
                 type: 'xpub',
@@ -104,10 +104,10 @@ describe("Address Book", () => {
             expect(entries[0].description).toBeNull();
         });
 
-        test("create xpub for witness address", () => {
-            let entries = vault.listAddressBook(1);
+        test("create xpub for witness address", async () => {
+            let entries = await vault.listAddressBook(1);
             expect(entries.length).toBe(0);
-            vault.addToAddressBook({
+            await vault.addToAddressBook({
                 name: "test 1",
                 address: {
                     type: 'xpub',
@@ -115,7 +115,7 @@ describe("Address Book", () => {
                 },
                 blockchain: 1
             });
-            entries = vault.listAddressBook(1);
+            entries = await vault.listAddressBook(1);
             expect(entries.length).toBe(1);
             expect(entries[0].address).toEqual({
                 type: 'xpub',
@@ -125,14 +125,14 @@ describe("Address Book", () => {
             expect(entries[0].description).toBeNull();
         });
 
-        test("uses current date", () => {
+        test("uses current date", async () => {
             const start = new Date();
-            vault.addToAddressBook({
+            await vault.addToAddressBook({
                 name: "test 1",
                 address: {type: 'single', value: "0xc2d7cf95645d33006175b78989035c7c9061d3f9"},
                 blockchain: 101
             });
-            const entries = vault.listAddressBook(101);
+            const entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(1);
             expect(entries[0].createdAt).toBeDefined();
             const createdAt = new Date(entries[0].createdAt);
@@ -151,23 +151,23 @@ describe("Address Book", () => {
             });
         });
 
-        test("add and delete", () => {
-            let entries = vault.listAddressBook(101);
+        test("add and delete", async () => {
+            let entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(0);
-            vault.addToAddressBook({
+            await vault.addToAddressBook({
                 name: "test 1",
                 address: {type: 'single', value: "0xc2d7cf95645d33006175b78989035c7c9061d3f9"},
                 blockchain: 101
             });
-            entries = vault.listAddressBook(101);
+            entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(1);
             expect(entries[0].address).toEqual({
                 type: 'single',
                 value: "0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase()
             });
 
-            vault.removeFromAddressBook("etc", "0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase());
-            entries = vault.listAddressBook(101);
+            await vault.removeFromAddressBook("etc", "0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase());
+            entries = await vault.listAddressBook(101);
             expect(entries.length).toBe(0);
         });
     });

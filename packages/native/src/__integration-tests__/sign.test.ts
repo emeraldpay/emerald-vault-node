@@ -1,5 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {EntryId, WalletOp} from "@emeraldpay/emerald-vault-core";
+import {EntryId, UnsignedTx, WalletOp} from "@emeraldpay/emerald-vault-core";
 import Common from "ethereumjs-common";
 import {Transaction} from "ethereumjs-tx";
 
@@ -29,7 +29,7 @@ function hexQuantity(hex: string): string {
 
 describe('Sign different tx combinations (slow to execute)', () => {
 
-    let vault;
+    let vault: EmeraldVaultNative;
     beforeAll(() => {
         vault = new EmeraldVaultNative({
             dir: "./testdata/tmp-sign-tx-variants"
@@ -59,17 +59,18 @@ describe('Sign different tx combinations (slow to execute)', () => {
     };
 
 
-    function testAll(entryId: EntryId, chainId: number) {
+    function testAll(entryId: EntryId, chainId: number): Promise<any> {
         let chainConfig = {};
         if (chainId !== 1) {
             chainConfig = {common: Common.forCustomChain(1, {chainId}, 'byzantium')};
         }
+        let result = [];
         ["0x0", "0x1", "0xff", "0x100", "0xde0b6b3a7640000", "0xab5461ca4b100000"].forEach((value) => {
             ["0x5208", "0x1fbd0", "0x1", "0xb7", "0x100"].forEach((gas) => {
                 ["0x77359400", "0x1", "0x0", "0x80"].forEach((gasPrice) => {
                     ["0x0", "0x1", "0x1f", "0xff", "0x38ae"].forEach((nonce) => {
                         ["", "d0e30db0", "095ea7b300000000000000000000000036a8ce9b0b86361a02070e4303d5e24d6c63b3f10000000000000000000000000000000000000000033b2e3c9fd0803ce8000000"].forEach((data) => {
-                            ["0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"].forEach((to) => {
+                            ["0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"].forEach(async (to) => {
                                 let tx = {
                                     from: "0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1",
                                     to,
@@ -79,78 +80,83 @@ describe('Sign different tx combinations (slow to execute)', () => {
                                     nonce,
                                     data
                                 };
-                                let raw = vault.signTx(entryId, tx, "123456");
-                                expect(raw).toBeDefined();
-                                let parsed;
-                                try {
-                                    parsed = new Transaction(raw, chainConfig);
-                                } catch (e) {
-                                    console.error("Invalid signature", tx);
-                                    console.error("Raw", raw);
-                                    console.error(e);
-                                }
+                                result.push(
+                                    vault.signTx(entryId, tx, "123456")
+                                        .then((raw) => {
+                                            expect(raw).toBeDefined();
+                                            let parsed;
+                                            try {
+                                                parsed = new Transaction(raw, chainConfig);
+                                            } catch (e) {
+                                                console.error("Invalid signature", tx);
+                                                console.error("Raw", raw);
+                                                console.error(e);
+                                            }
 
-                                expect(parsed).toBeDefined();
-                                expect(convertHex(parsed.getSenderAddress())).toBe("0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1");
-                                expect(convertHex(parsed.to)).toBe(to);
-                                expect(hexQuantity(convertHex(parsed.value))).toBe(value);
-                                expect(hexQuantity(convertHex(parsed.gasLimit))).toBe(gas);
-                                expect(hexQuantity(convertHex(parsed.gasPrice))).toBe(gasPrice);
-                                expect(hexQuantity(convertHex(parsed.nonce))).toBe(nonce);
-                                expect(parsed.data.toString('hex')).toBe(data);
-                                expect(convertNum(parsed.v)).toBeGreaterThanOrEqual(chainId * 2 + 35);
-                                expect(convertNum(parsed.v)).toBeLessThanOrEqual(chainId * 2 + 36);
+                                            expect(parsed).toBeDefined();
+                                            expect(convertHex(parsed.getSenderAddress())).toBe("0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1");
+                                            expect(convertHex(parsed.to)).toBe(to);
+                                            expect(hexQuantity(convertHex(parsed.value))).toBe(value);
+                                            expect(hexQuantity(convertHex(parsed.gasLimit))).toBe(gas);
+                                            expect(hexQuantity(convertHex(parsed.gasPrice))).toBe(gasPrice);
+                                            expect(hexQuantity(convertHex(parsed.nonce))).toBe(nonce);
+                                            expect(parsed.data.toString('hex')).toBe(data);
+                                            expect(convertNum(parsed.v)).toBeGreaterThanOrEqual(chainId * 2 + 35);
+                                            expect(convertNum(parsed.v)).toBeLessThanOrEqual(chainId * 2 + 36);
+                                        })
+                                );
                             })
                         })
                     })
                 })
             })
         });
+        return Promise.all(result)
     }
 
-    test("ETH", () => {
-        let walletId = vault.addWallet("slow sign ETH");
-        let entryId = vault.addEntry(walletId, {
+    test("ETH", async () => {
+        let walletId = await vault.addWallet("slow sign ETH");
+        let entryId = await vault.addEntry(walletId, {
             blockchain: 100,
             type: "ethereum-json",
             key: JSON.stringify(pk)
         });
-        testAll(entryId, 1);
+        await testAll(entryId, 1);
     });
 
-    test("ETC", () => {
-        let walletId = vault.addWallet("slow sign ETC");
-        let entryId = vault.addEntry(walletId, {
+    test("ETC", async () => {
+        let walletId = await vault.addWallet("slow sign ETC");
+        let entryId = await vault.addEntry(walletId, {
             blockchain: 101,
             type: "ethereum-json",
             key: JSON.stringify(pk)
         });
-        testAll(entryId, 61);
+        await testAll(entryId, 61);
     });
 
-    test("Kovan", () => {
-        let walletId = vault.addWallet("slow sign Kovan");
-        let entryId = vault.addEntry(walletId, {
+    test("Kovan", async () => {
+        let walletId = await vault.addWallet("slow sign Kovan");
+        let entryId = await vault.addEntry(walletId, {
             blockchain: 10002,
             type: "ethereum-json",
             key: JSON.stringify(pk)
         });
-        testAll(entryId, 42);
+        await testAll(entryId, 42);
     })
 
 });
 
 describe('Sign different key combinations (slow to execute)', () => {
 
-    let vault;
+    let vault: EmeraldVaultNative;
     beforeAll(() => {
         vault = new EmeraldVaultNative({
             dir: "./testdata/tmp-sign-key-variants"
         });
     });
 
-    test("500 keys on same mnemonic", () => {
-        let seedId = vault.importSeed({
+    test("500 keys on same mnemonic", async () => {
+        let seedId = await vault.importSeed({
             type: "mnemonic",
             password: "testtest",
             value: {
@@ -159,24 +165,24 @@ describe('Sign different key combinations (slow to execute)', () => {
         });
 
         let chainId = 1;
-        let walletId = vault.addWallet("test");
+        let walletId = await vault.addWallet("test");
 
         for (let i = 0; i < 500; i++) {
-            vault.addEntry(walletId, {
+            await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
+                    seed: {type: "id", value: seedId, password: "testtest"},
                     hdPath: "m/44'/60'/0'/0/" + i,
-                    seedId: seedId,
-                    password: "testtest"
                 }
             });
         }
-        let entries = WalletOp.of(vault.getWallet(walletId)).getEthereumEntries();
+        let entries = WalletOp.of(await vault.getWallet(walletId)).getEthereumEntries();
         expect(entries.length).toBe(500);
-        entries.forEach(entry => {
-            let tx = {
-                from: entry.address,
+        for (let i = 0; i < entries.length; i++) {
+            let entry = entries[i];
+            let tx: UnsignedTx = {
+                from: entry.address.value,
                 to: "0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1",
                 value: "0x1234",
                 gas: "0x5678",
@@ -184,7 +190,7 @@ describe('Sign different key combinations (slow to execute)', () => {
                 nonce: "0x0"
             };
 
-            let raw = vault.signTx(entry.id, tx, "testtest");
+            let raw = await vault.signTx(entry.id, tx, "testtest");
             expect(raw).toBeDefined();
             let parsed;
             try {
@@ -196,7 +202,7 @@ describe('Sign different key combinations (slow to execute)', () => {
             }
 
             expect(parsed).toBeDefined();
-            expect(convertHex(parsed.getSenderAddress())).toBe(entry.address);
+            expect(convertHex(parsed.getSenderAddress())).toBe(entry.address.value);
             expect(convertHex(parsed.to)).toBe("0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1");
             expect(hexQuantity(convertHex(parsed.value))).toBe("0x1234");
             expect(hexQuantity(convertHex(parsed.gasLimit))).toBe("0x5678");
@@ -206,7 +212,7 @@ describe('Sign different key combinations (slow to execute)', () => {
             expect(convertNum(parsed.v)).toBeGreaterThanOrEqual(chainId * 2 + 35);
             expect(convertNum(parsed.v)).toBeLessThanOrEqual(chainId * 2 + 36);
 
-        });
+        }
     });
 
 

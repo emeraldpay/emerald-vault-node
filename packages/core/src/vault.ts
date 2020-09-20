@@ -23,49 +23,49 @@ export interface WalletState {
 export interface IEmeraldVault {
     vaultVersion(): string;
 
-    setState(state: WalletState): void;
+    setState(state: WalletState): Promise<void>;
 
-    listWallets(): Wallet[];
+    listWallets(): Promise<Wallet[]>;
 
-    getWallet(id: Uuid): Wallet | undefined;
+    getWallet(id: Uuid): Promise<Wallet | undefined>;
 
-    addWallet(label: string | undefined): Uuid;
+    addWallet(label: string | undefined): Promise<Uuid>;
 
-    setWalletLabel(walletId: Uuid, label: string): boolean;
+    setWalletLabel(walletId: Uuid, label: string): Promise<boolean>;
 
-    removeWallet(walletId: Uuid): void;
+    removeWallet(walletId: Uuid): Promise<boolean>;
 
-    getEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): CurrentAddress[];
+    getEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]>;
 
-    addEntry(walletId: Uuid, entry: AddEntry): EntryId;
+    addEntry(walletId: Uuid, entry: AddEntry): Promise<EntryId>;
 
-    removeEntry(entryId: EntryId): boolean;
+    removeEntry(entryId: EntryId): Promise<boolean>;
 
-    setEntryLabel(entryFullId: EntryId, label: string | null): boolean;
+    setEntryLabel(entryFullId: EntryId, label: string | null): Promise<boolean>;
 
-    setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): boolean;
+    setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): Promise<boolean>;
 
-    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): string;
+    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<string>;
 
-    exportRawPk(entryId: EntryId, password: string): string;
+    exportRawPk(entryId: EntryId, password: string): Promise<string>;
 
-    exportJsonPk(entryId: EntryId, password?: string): string;
+    exportJsonPk(entryId: EntryId, password?: string): Promise<string>;
 
-    generateMnemonic(size: number): string;
+    generateMnemonic(size: number): Promise<string>;
 
-    listAddressBook(blockchain: number): AddressBookItem[];
+    listAddressBook(blockchain: number): Promise<AddressBookItem[]>;
 
-    addToAddressBook(item: CreateAddressBookItem): boolean;
+    addToAddressBook(item: CreateAddressBookItem): Promise<boolean>;
 
-    removeFromAddressBook(blockchain: number, address: string): boolean;
+    removeFromAddressBook(blockchain: number, address: string): Promise<boolean>;
 
-    listSeeds(): SeedDescription[];
+    listSeeds(): Promise<SeedDescription[]>;
 
-    getConnectedHWSeed(create: boolean): SeedDescription | undefined;
+    getConnectedHWSeed(create: boolean): Promise<SeedDescription | undefined>;
 
-    importSeed(seed: SeedDefinition | LedgerSeedReference): Uuid;
+    importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid>;
 
-    isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): boolean;
+    isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean>;
 
-    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): { [key: string]: string };
+    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): Promise<{ [key: string]: string }>;
 }
