@@ -116,7 +116,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
-    addWallet(labelOrOptions: string | WalletCreateOptions | undefined): Promise<Uuid> {
+    addWallet(labelOrOptions?: string | WalletCreateOptions | undefined): Promise<Uuid> {
         return new Promise((resolve, reject) => {
             let options: WalletCreateOptions = {};
             if (typeof labelOrOptions === 'string') {
@@ -332,7 +332,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
-    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): Promise<{ [key: string]: string }> {
+    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: number, hdpath: string[]): Promise<{ [key: string]: string }> {
         return new Promise((resolve, reject) => {
             let ref = seed;
             if (isReference(seed)) {

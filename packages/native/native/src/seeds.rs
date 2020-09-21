@@ -12,10 +12,14 @@ use hdpath::StandardHDPath;
 use json::StatusResult;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use emerald_vault::blockchain::chains::BlockchainType;
+use emerald_vault::chains::Blockchain;
+use bitcoin::Address;
+use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
-    address: EthereumAddress,
+    address: String,
     hd_path: String,
 }
 
@@ -119,7 +123,14 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
         .value();
     let parsed: SeedDefinitionOrReferenceJson =
         serde_json::from_str(json.as_str()).expect("Invalid JSON");
-    // blockchain (#1) is dropped
+
+    let blockchain = cx
+        .argument::<JsNumber>(2)
+        .expect("Input JSON is not provided")
+        .value();
+    let blockchain = Blockchain::try_from(blockchain as u32)
+        .expect("Invalid blockchain id");
+
     let hd_path_all = cx
         .argument::<JsArray>(3)
         .expect("List of HD Path is not provided")
@@ -136,7 +147,7 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
-    let status = match vault.list_addresses(parsed, hd_path_all) {
+    let status = match vault.list_addresses(parsed, hd_path_all, blockchain) {
         Ok(addresses) => {
             let mut result = HashMap::new();
             for address in addresses {
@@ -255,88 +266,60 @@ impl WrappedVault {
         Ok(connected)
     }
 
-    fn list_ledger_addresses(hd_path_all: Vec<String>) -> Vec<HDPathAddress> {
-        let mut result = vec![];
-
-        let id = StandardHDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
-        let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
-        wallet_manager
-            .update(Some(id.to_bytes()))
-            .expect("Devices list not loaded");
-        if !wallet_manager.open().is_ok() {
-            return result;
-        }
-
-        let fd = &wallet_manager.devices()[0].1;
-
-        for item in hd_path_all {
-            let hd_path =
-                StandardHDPath::try_from(item.as_str()).expect("Failed to create address");
-            let address = wallet_manager
-                .get_address(fd.as_str(), Some(hd_path.to_bytes()))
-                .expect("Filed to get address from Ledger");
-            result.push(HDPathAddress {
-                address,
-                hd_path: item,
-            })
-        }
-
-        result
-    }
-
-    fn list_seed_addresses(hd_path_all: Vec<String>, seed: Vec<u8>) -> Vec<HDPathAddress> {
-        let mut result = vec![];
-        for item in hd_path_all {
-            let hd_path =
-                StandardHDPath::try_from(item.as_str()).expect("Failed to create address");
-            let pk = generate_key(&hd_path, &seed).expect("Unable to generate private key");
-            let pk: EthereumPrivateKey = pk.private_key.key.into();
-            let address = pk.to_address();
-            result.push(HDPathAddress {
-                address,
-                hd_path: item,
-            })
-        }
-        result
-    }
-
-    fn list_mnemonic_addresses(
-        hd_path_all: Vec<String>,
-        mnemonic: Mnemonic,
-        password: Option<String>,
-    ) -> Vec<HDPathAddress> {
-        let seed = match password {
-            Some(p) => mnemonic.seed(Some(p.as_str())),
-            None => mnemonic.seed(None),
+    fn list_seed_addresses(&self,
+                           seed: SeedSource,
+                           password: Option<String>,
+                           hd_path_all: Vec<String>,
+                           blockchain: Blockchain) -> Result<Vec<HDPathAddress>, VaultError> {
+        let hd_path_all = hd_path_all.iter()
+            .map(|s| StandardHDPath::from_str(s.as_str().clone()))
+            .filter(|a| a.is_ok())
+            .map(|a| a.unwrap())
+            .collect();
+        let addresses = match blockchain.get_type() {
+            BlockchainType::Bitcoin => {
+                seed.get_addresses::<Address>(password, &hd_path_all, blockchain)?
+                    .iter()
+                    .map(|a| HDPathAddress {
+                        hd_path: a.0.to_string(),
+                        address: a.1.to_string(),
+                    })
+                    .collect()
+            },
+            BlockchainType::Ethereum => {
+                seed.get_addresses::<EthereumAddress>(password, &hd_path_all, blockchain)?
+                    .iter()
+                    .map(|a| HDPathAddress {
+                        hd_path: a.0.to_string(),
+                        address: a.1.to_string(),
+                    })
+                    .collect()
+            }
         };
-        WrappedVault::list_seed_addresses(hd_path_all, seed)
+        Ok(addresses)
     }
 
     fn list_addresses(
         &self,
         seed_ref: SeedDefinitionOrReferenceJson,
         hd_path_all: Vec<String>,
+        blockchain: Blockchain,
     ) -> Result<Vec<HDPathAddress>, VaultError> {
+
         let storage = &self.cfg.get_storage();
         let addresses = match seed_ref.value {
             SeedDefinitionOrReferenceType::Reference(id) => {
                 let seed = storage.seeds().get(id)?;
-                match seed.source {
-                    SeedSource::Bytes(source) => {
-                        let password = seed_ref.password.expect("Password is required");
-                        let source = source.decrypt(password.as_str())?;
-                        WrappedVault::list_seed_addresses(hd_path_all, source)
-                    }
-                    SeedSource::Ledger(_) => WrappedVault::list_ledger_addresses(hd_path_all),
-                }
+                self.list_seed_addresses(seed.source, seed_ref.password, hd_path_all, blockchain)?
             }
             SeedDefinitionOrReferenceType::Mnemonic(m) => {
                 let mnemonic = Mnemonic::try_from(Language::English, m.value.as_str())
                     .expect("Failed to parse mnemonic phrase");
-                WrappedVault::list_mnemonic_addresses(hd_path_all, mnemonic, m.password)
+                let temp_seed = SeedSource::create_bytes(mnemonic.seed(m.password), "temp")?;
+                self.list_seed_addresses(temp_seed, Some("temp".to_string()), hd_path_all, blockchain)?
             }
             SeedDefinitionOrReferenceType::Ledger => {
-                WrappedVault::list_ledger_addresses(hd_path_all)
+                self.list_seed_addresses(SeedSource::Ledger(LedgerSource::default()), None, hd_path_all, blockchain)?
             }
         };
         Ok(addresses)
@@ -359,9 +342,7 @@ impl WrappedVault {
                 }
                 let mnemonic = Mnemonic::try_from(Language::English, value.value.as_str())
                     .map_err(|_| VaultError::InvalidDataError("mnemonic".to_string()))?;
-                //                let mnemonic_password = value.password.as_deref();
-                let mnemonic_password = value.password.as_ref().map(|x| &**x);
-                let raw = mnemonic.seed(mnemonic_password);
+                let raw = mnemonic.seed(value.password);
                 SeedSource::Bytes(Encrypted::encrypt(raw, seed.password.unwrap().as_str())?)
             }
             SeedDefinitionOrReferenceType::Reference(_) => {

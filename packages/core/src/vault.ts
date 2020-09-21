@@ -7,6 +7,7 @@ import {
     UnsignedTx,
     Uuid,
     Wallet,
+    WalletCreateOptions
 } from "./types";
 
 export interface AccountIndex {
@@ -29,7 +30,7 @@ export interface IEmeraldVault {
 
     getWallet(id: Uuid): Promise<Wallet | undefined>;
 
-    addWallet(label: string | undefined): Promise<Uuid>;
+    addWallet(labelOrOptions?: string | WalletCreateOptions | undefined): Promise<Uuid>;
 
     setWalletLabel(walletId: Uuid, label: string): Promise<boolean>;
 
@@ -67,5 +68,5 @@ export interface IEmeraldVault {
 
     isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean>;
 
-    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: BlockchainType, hdpath: string[]): Promise<{ [key: string]: string }>;
+    listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: number, hdpath: string[]): Promise<{ [key: string]: string }>;
 }

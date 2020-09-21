@@ -59,7 +59,7 @@ describe('List addresses', () => {
             console.warn("Ignore Ledger tests");
             return;
         }
-        const act = await vault.listSeedAddresses(ledgerReference, "ethereum", [
+        const act = await vault.listSeedAddresses(ledgerReference, 100, [
             "m/44'/60'/0'/0/0",
             "m/44'/60'/0'/0/1",
             "m/44'/60'/0'/0/2",
@@ -77,7 +77,7 @@ describe('List addresses', () => {
             return;
         }
         let id: Uuid = await vault.importSeed(ledgerReference)
-        const act = await vault.listSeedAddresses(id, "ethereum", [
+        const act = await vault.listSeedAddresses(id, 100, [
             "m/44'/60'/0'/0/0",
             "m/44'/60'/0'/0/1",
             "m/44'/60'/0'/0/2",
