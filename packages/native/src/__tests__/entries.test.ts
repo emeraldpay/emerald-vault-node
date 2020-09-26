@@ -9,7 +9,8 @@ import {
     AddressRefOp,
     AddEntry,
     isEthereumEntry, isBitcoinEntry,
-    BitcoinEntry
+    BitcoinEntry,
+    BlockchainId
 } from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
@@ -915,7 +916,54 @@ describe("Entries", () => {
                     "role": "receive"
                 }
             ]);
-        })
+        });
+
+        test("Create testnet bitcoin", async () => {
+            let id = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = await vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: BlockchainId.BITCOIN_TESTNET,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/84'/1'/0'/0/1",
+                }
+            };
+            let entryId = await vault.addEntry(walletId, addEntry);
+            let wallets = await vault.listWallets();
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
+            expect(wallet.entries.length).toBe(1);
+            expect(wallet.entries[0].blockchain).toBe(10003);
+            expect(wallet.entries[0].receiveDisabled).toBeFalsy();
+
+            expect(isBitcoinEntry(wallet.entries[0])).toBeTruthy();
+            let entry = wallet.entries[0] as BitcoinEntry;
+
+            expect(entry.address).toBeDefined();
+            expect(entry.address.type).toBe("xpub");
+            expect(entry.address.value).toBe("vpub5YGnqbekLbxqX6ZSAVY9KNwAiLraqvMUqzHDzKUKAD2XBFN2Lgk7DqLSroEwDt2KWna3ZYvAdbok7LVrFuvkefh71Ck4CxhapMg9qK1rxGr")
+
+            let reserved = WalletOp.of(wallet).getHDAccounts();
+            let expReserved = {};
+            expReserved[id] = [0];
+            expect(reserved).toStrictEqual(expReserved);
+
+            expect(entry.addresses).toEqual([
+                {
+                    "address": "tb1qqc860epsueh8zzhx9r8p4e5zk8z09zcm3l47u6",
+                    "hdPath": "m/84'/1'/0'/0/0",
+                    "role": "receive"
+                }
+            ]);
+        });
     });
 
 });
