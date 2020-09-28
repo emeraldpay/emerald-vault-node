@@ -31,6 +31,7 @@ export {
     BitcoinEntry,
     isBitcoinEntry,
     CurrentAddress,
+    CurrentXpub,
     AddressRole,
 
     SeedPKRef,

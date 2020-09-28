@@ -19,6 +19,7 @@ use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 use address::AddressRefJson;
 use emerald_vault::blockchain::chains::BlockchainType;
 use bitcoin::Address;
+use emerald_vault::structs::book::AddressRef;
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -63,6 +64,7 @@ pub struct WalletEntryJson {
     #[serde(rename = "createdAt")]
     pub created_at: DateTime<Utc>,
     pub addresses: Vec<CurrentAddressJson>,
+    pub xpub: Vec<CurrentXpubJson>
 }
 
 #[derive(Serialize, Clone)]
@@ -70,6 +72,12 @@ pub struct CurrentAddressJson {
     pub address: String,
     #[serde(rename = "hdPath")]
     pub hd_path: String,
+    pub role: String,
+}
+
+#[derive(Serialize, Clone)]
+pub struct CurrentXpubJson {
+    pub xpub: String,
     pub role: String,
 }
 
@@ -160,6 +168,37 @@ impl From<(&WalletEntry, &Wallet, Option<&AccountIndex>)> for WalletEntryJson {
             },
             created_at: a.created_at,
             addresses: with_std_addresses(a, index),
+            xpub: match &a.address {
+                Some(address) => {
+                    match address {
+                        AddressRef::ExtendedPub(xpub) => {
+                            if xpub.is_account() {
+                                vec![
+                                    CurrentXpubJson {
+                                        xpub: xpub.for_receiving()
+                                            .expect("no receive address").to_string(),
+                                        role: "receive".to_string(),
+                                    },
+                                    CurrentXpubJson {
+                                        xpub: xpub.for_change()
+                                            .expect("no change address").to_string(),
+                                        role: "change".to_string(),
+                                    }
+                                ]
+                            } else {
+                                vec![
+                                    CurrentXpubJson {
+                                        xpub: xpub.to_string(),
+                                        role: "receive".to_string(),
+                                    }
+                                ]
+                            }
+                        },
+                        _ => vec![]
+                    }
+                },
+                None => vec![]
+            }
         }
     }
 }

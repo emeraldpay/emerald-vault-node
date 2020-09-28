@@ -916,6 +916,16 @@ describe("Entries", () => {
                     "role": "receive"
                 }
             ]);
+            expect(entry.xpub).toEqual([
+                {
+                    "xpub": "zpub6sXHdUYpJWwCnjiAafTAeNr2qKuL9pfgKce4bzWRTEZd3eWcNbAHrx3Uo44r3Q7SkenhqnTavxXc2y2pytMJLQQSTvU9Ge5cjTUGmWg57e6",
+                    "role": "receive"
+                },
+                {
+                    "xpub": "zpub6sXHdUYpJWwCqyDaxzmDaJ1GVxz392nQwEnCbx1E1LLqbq9SBL63YDaN3z6K2rCNjxcVgm54m8E9NRzo1vfTVLvo6mg3CMyH8jcg72vixuQ",
+                    "role": "change"
+                }
+            ])
         });
 
         test("Create testnet bitcoin", async () => {

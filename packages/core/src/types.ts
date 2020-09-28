@@ -161,12 +161,21 @@ export interface BitcoinEntry extends BaseEntry {
      * Current addresses to use, can include multiple available addresses (depending on the configuration and implementation).
      * May be empty, when xpub is unavailable or the entry is not supposed to receive any transaction.
      */
-    addresses: CurrentAddress[]
+    addresses: CurrentAddress[];
+    /**
+     * Current xpub to use and fetch balance
+     */
+    xpub: CurrentXpub[];
 }
 
 export interface CurrentAddress {
     address: string;
     hdPath: string;
+    role: AddressRole;
+}
+
+export interface CurrentXpub {
+    xpub: string;
     role: AddressRole;
 }
 
