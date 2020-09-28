@@ -401,17 +401,17 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.6.0-alpha"
+version = "0.6.0-alpha.3"
 dependencies = [
- "bitcoin 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
- "emerald-vault 0.28.0-alpha (git+https://github.com/emeraldpay/emerald-vault)",
- "hdpath 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "neon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "neon-build 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "neon-serde 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
+    "bitcoin 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
+    "chrono 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
+    "emerald-vault 0.28.0-alpha (git+https://github.com/emeraldpay/emerald-vault)",
+    "hdpath 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+    "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+    "neon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+    "neon-build 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+    "neon-serde 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+    "serde 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.57 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
