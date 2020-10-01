@@ -63,6 +63,15 @@ impl<T> From<Result<T, VaultError>> for StatusResult<T> {
     }
 }
 
+impl<T> From<Result<T, String>> for StatusResult<T> {
+    fn from(r: Result<T, String>) -> Self {
+        match r {
+            Ok(t) => StatusResult::Ok(t),
+            Err(msg) => StatusResult::Error(2, msg),
+        }
+    }
+}
+
 pub trait AsJsObject {
     fn as_js_object<'a, C: Context<'a>>(&self, cx: &mut C) -> Handle<'a, JsValue>;
 }

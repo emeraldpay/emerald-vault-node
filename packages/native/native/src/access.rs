@@ -13,6 +13,8 @@ use emerald_vault::{
     structs::wallet::Wallet,
 };
 use uuid::Uuid;
+use emerald_vault::structs::wallet::WalletEntry;
+use emerald_vault::storage::error::VaultError;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct VaultConfig {
@@ -156,5 +158,13 @@ impl WrappedVault {
             .map(|w| w.unwrap())
             .collect();
         wallets
+    }
+
+    pub fn get_entry(&self, wallet_id: Uuid, entry_id: usize) -> Result<WalletEntry, VaultError> {
+        let storage = &self.cfg.get_storage();
+        let wallet = storage
+            .wallets()
+            .get(wallet_id)?;
+        wallet.get_entry(entry_id)
     }
 }

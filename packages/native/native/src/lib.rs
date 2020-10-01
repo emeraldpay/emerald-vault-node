@@ -52,7 +52,7 @@ register_module!(mut cx, {
     .expect("entries_updateReceiveDisabled not exported");
 
     cx.export_function("sign_tx", sign::sign_tx)
-        .expect("sign_txTx not exported");
+        .expect("sign_tx not exported");
 
     cx.export_function("addrbook_list", addressbook::list)
         .expect("addrbook_list not exported");

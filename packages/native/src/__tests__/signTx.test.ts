@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {WalletsOp} from "@emeraldpay/emerald-vault-core";
+import {UnsignedBitcoinTx, WalletsOp} from "@emeraldpay/emerald-vault-core";
 
 
 describe("Sign transaction", () => {
@@ -200,6 +200,98 @@ describe("Sign transaction", () => {
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808025a02eab8b290050239e77329cb6d0d663c9bdbf0fe15918e4937be727dd67a0c593a05dda8f7b748b5907c0b414be260809f9c2dcfcd35a4a9b1cc801a7f4fe2154eb");
         });
+
+        test("sign bitcoin tx", async () => {
+            let walletId = await vault.addWallet("test sign 2");
+            let seedId = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
+                },
+                password: "1234"
+            });
+            let entryId = await vault.addEntry(walletId, {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: seedId, password: "1234"},
+                    hdPath: "m/84'/0'/2'/0/0",
+                }
+            });
+
+            let tx: UnsignedBitcoinTx = {
+                inputs: [
+                    {
+                        txid: "041d573943b6dad1eaec93b639882dfef140d79aa8c56890ed3d4e0f37160bae",
+                        vout: 1,
+                        amount: 40006493,
+                        address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4"
+                    }
+                ],
+                outputs: [
+                    {
+                        address: "bc1q9sxk9zqjfjjtsfq4hp2xf5y9xca6tmszju9jy6",
+                        amount: 40006493 - 500
+                    }
+                ],
+                fee: 500
+            };
+
+            let raw = await vault.signTx(entryId, tx, "1234");
+
+            expect(raw).toBe("01000000000101ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d040100000000000000000169716202000000001600142c0d6288124ca4b82415b85464d085363ba5ee0202483045022100ab503cc1c4634c87efe18462e77ed20b19d04a08a6b401bc12ddebe995eaa37702203e97c3596b288d06d5e24b93c1081535534dfaeed08f69426dfadae7dcb2e53d0121037e64c1dac5bd62039e22822f14c2c4c7a7b9bc254cb64176eb139a8bd065cdbe00000000");
+        });
+
+        test("sign bitcoin tx - multiple in/out", async () => {
+            let walletId = await vault.addWallet("test sign 2");
+            let seedId = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
+                },
+                password: "1234"
+            });
+            let entryId = await vault.addEntry(walletId, {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: seedId, password: "1234"},
+                    hdPath: "m/84'/0'/2'/0/0",
+                }
+            });
+
+            let tx: UnsignedBitcoinTx = {
+                inputs: [
+                    {
+                        txid: "041d573943b6dad1eaec93b639882dfef140d79aa8c56890ed3d4e0f37160bae",
+                        vout: 1,
+                        amount: 40006493,
+                        address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4"
+                    },
+                    {
+                        txid: "882dfef140d79aa8c56041d573943b6dad1eaec93b639890ed3d4e0f37160bae",
+                        vout: 2,
+                        amount: 15076493,
+                        address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4"
+                    }
+                ],
+                outputs: [
+                    {
+                        address: "bc1q9sxk9zqjfjjtsfq4hp2xf5y9xca6tmszju9jy6",
+                        amount: 10000000
+                    },
+                    {
+                        address: "bc1qenw3e6ex90je7gnlaxsm58u343u6f4yhj42yy4",
+                        amount: 40006493 + 15076493 - 800
+                    }
+                ],
+                fee: 800
+            };
+
+            let raw = await vault.signTx(entryId, tx, "1234");
+
+            expect(raw).toBe("01000000000102ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d04010000000000000000ae0b16370f4e3ded9098633bc9ae1ead6d3b9473d54160c5a89ad740f1fe2d880200000000000000000280969800000000001600142c0d6288124ca4b82415b85464d085363ba5ee02ca7c480300000000160014ccdd1ceb262be59f227fe9a1ba1f91ac79a4d4970247304402204e31afd8ed07a0c55fcf53f156db905777bdb20ac399a5529aa8b3d735196473022076c70e715080397464be4cb0bab9eb3fe43cb5177932d2de73caad6a3a1227d80121037e64c1dac5bd62039e22822f14c2c4c7a7b9bc254cb64176eb139a8bd065cdbe0247304402202d62ef37b5196634d70b86db63ad870b888f25746da23346087ed7c5e7c83e4302202691b8ae221bd69aafc7d34d1e18f8d3b02f1daa3dc30d494eac624320b4d5750121037e64c1dac5bd62039e22822f14c2c4c7a7b9bc254cb64176eb139a8bd065cdbe00000000");
+        })
     });
 });
 

@@ -44,7 +44,7 @@ export type Update = {
     description?: string | null
 }
 
-export type UnsignedTx = {
+export interface UnsignedEthereumTx {
     from: string,
     to?: string | null,
     gas: string,
@@ -52,6 +52,31 @@ export type UnsignedTx = {
     value: string,
     data?: string | null,
     nonce: string,
+}
+
+export interface UnsignedBitcoinTx {
+    inputs: {
+        txid: string;
+        vout: number;
+        amount: number;
+        hdPath?: string;
+        address?: string;
+    }[];
+    outputs: {
+        address: string;
+        amount: number;
+    }[];
+    fee: number;
+}
+
+export type UnsignedTx = UnsignedBitcoinTx | UnsignedEthereumTx;
+
+export function isBitcoinTx(tx: UnsignedTx): tx is UnsignedBitcoinTx {
+    return typeof tx == "object" && Object.keys(tx).indexOf("inputs") >= 0;
+}
+
+export function isEthereumTx(tx: UnsignedTx): tx is UnsignedEthereumTx {
+    return typeof tx == "object" && Object.keys(tx).indexOf("from") >= 0;
 }
 
 export type ImportMnemonic = {

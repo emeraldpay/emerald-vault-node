@@ -14,6 +14,10 @@ export {
     isReference,
 
     UnsignedTx,
+    UnsignedBitcoinTx,
+    UnsignedEthereumTx,
+    isBitcoinTx,
+    isEthereumTx,
 
     AddressSingle,
     AddressXPub,

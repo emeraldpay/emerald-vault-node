@@ -7,7 +7,7 @@ use emerald_vault::util::none_if_empty;
 use emerald_vault::{hdwallet::WManager, mnemonic::{Language, Mnemonic, MnemonicSize}, storage::error::VaultError, structs::{
     crypto::Encrypted,
     seed::{LedgerSource, Seed, SeedSource},
-}, EthereumAddress, sign::bip32::generate_key, EthereumPrivateKey};
+}, EthereumAddress};
 use hdpath::StandardHDPath;
 use json::StatusResult;
 use std::collections::HashMap;

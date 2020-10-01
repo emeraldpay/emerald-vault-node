@@ -18,7 +18,7 @@ import {
     CreateAddressBookItem,
     WalletState,
     CurrentAddress,
-    AddressRole
+    AddressRole, getBlockchainType, isEthereumTx
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -213,7 +213,11 @@ export class EmeraldVaultNative implements IEmeraldVault {
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
-            resolve("0x" + status.result);
+            if (isEthereumTx(tx)) {
+                resolve("0x" + status.result);
+            } else {
+                resolve(status.result);
+            }
         });
     }
 
