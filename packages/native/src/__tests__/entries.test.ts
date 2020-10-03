@@ -928,6 +928,63 @@ describe("Entries", () => {
             ])
         });
 
+        test("Create bitcoin - acc 2", async () => {
+            let id = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = await vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/84'/0'/2'/0/1",
+                }
+            };
+            let accId = await vault.addEntry(walletId, addEntry);
+            let wallets = await vault.listWallets();
+            let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
+            expect(wallet.entries.length).toBe(1);
+            expect(wallet.entries[0].blockchain).toBe(1);
+            expect(wallet.entries[0].receiveDisabled).toBeFalsy();
+
+            expect(isBitcoinEntry(wallet.entries[0])).toBeTruthy();
+            let entry = wallet.entries[0] as BitcoinEntry;
+
+            expect(entry.address).toBeDefined();
+            expect(entry.address.type).toBe("xpub");
+            expect(entry.address.value).toBe("zpub6rgquuQgjiNdbjGmbMT98k1CtY7bBAQYRkLypM8KPBjiK6Dwqqq4ePDx2Xp5PZ8AzjUxrzZbrhYW2vy4QnJA5iYwxsmzThe5JzAMD6xDY1D")
+
+            let reserved = WalletOp.of(wallet).getHDAccounts();
+            let expReserved = {};
+            expReserved[id] = [2];
+            expect(reserved).toStrictEqual(expReserved);
+
+            expect(entry.addresses).toEqual([
+                {
+                    "address": "bc1q74z03fz8lhy87zx3gfwu4k3t57yew2yefreakn",
+                    "hdPath": "m/84'/0'/2'/0/0",
+                    "role": "receive"
+                }
+            ]);
+            expect(entry.xpub).toEqual([
+                {
+                    "xpub": "zpub6sFWF5HYGtpUCYb2CWGzYNLE7iEV9EDSTBXX8GP8Sq9XReGGGZYgGAhxbjT5n4omfegYRdr6VMGBNte8zYGZBB2xjPBGturjDTNqibUfdMU",
+                    "role": "receive"
+                },
+                {
+                    "xpub": "zpub6sFWF5HYGtpUFaaFXRbKLRjDrQycNQPqvQeUjw476oMaRL1c9m2NNqTCTuoMX6C3eLGfKSidx1RCZk7NAoaDd1MbfUmEyCnVAzpWG8gRm6g",
+                    "role": "change"
+                }
+            ])
+        });
+
         test("Create testnet bitcoin", async () => {
             let id = await vault.importSeed({
                 type: "mnemonic",
