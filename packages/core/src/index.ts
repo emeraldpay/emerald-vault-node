@@ -18,6 +18,7 @@ export {
     UnsignedEthereumTx,
     isBitcoinTx,
     isEthereumTx,
+    DEFAULT_BITCOIN_SEQ,
 
     AddressSingle,
     AddressXPub,

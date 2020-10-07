@@ -13,6 +13,8 @@ export enum BlockchainId {
     BITCOIN_TESTNET = 10003,
 }
 
+export const DEFAULT_BITCOIN_SEQ = 0xfffffffe;
+
 export function getBlockchainType(id: BlockchainId): BlockchainType {
     if (id == BlockchainId.BITCOIN || id == BlockchainId.BITCOIN_TESTNET) {
         return "bitcoin";
@@ -58,6 +60,8 @@ export interface UnsignedBitcoinTx {
     inputs: {
         txid: string;
         vout: number;
+        // see DEFAULT_BITCOIN_SEQ
+        sequence?: number;
         amount: number;
         hdPath?: string;
         address?: string;

@@ -1,5 +1,10 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {EntryId, UnsignedTx, WalletOp} from "@emeraldpay/emerald-vault-core";
+import {
+    AddEntry,
+    EntryId,
+    UnsignedTx,
+    WalletOp
+} from "@emeraldpay/emerald-vault-core";
 import Common from "ethereumjs-common";
 import {Transaction} from "ethereumjs-tx";
 

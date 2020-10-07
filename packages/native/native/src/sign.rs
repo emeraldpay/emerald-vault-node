@@ -45,9 +45,15 @@ pub struct InputJson {
     pub txid: String,
     pub vout: u32,
     pub amount: u64,
+    #[serde(default = "default_sequence")]
+    pub sequence: u32,
     #[serde(rename = "hdPath")]
     pub hd_path: Option<String>,
     pub address: Option<String>,
+}
+
+fn default_sequence() -> u32 {
+    0xffff_fffe
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -107,7 +113,7 @@ fn convert_inputs(inputs: Vec<InputJson>, xpub: &XPub, seed_id: Uuid, hd_account
             },
             script_source: InputScriptSource::HD(seed_id, hd_path),
             expected_value: input.amount,
-            sequence: 0,
+            sequence: input.sequence,
         };
         result.push(value);
     }
@@ -185,7 +191,7 @@ impl WrappedVault {
         let hd_account = AccountHDPath::new(
             seed_ref.hd_path.purpose().clone(),
             seed_ref.hd_path.coin_type(),
-            seed_ref.hd_path.index(),
+            seed_ref.hd_path.account(),
         );
         let xpub = match &entry.address {
             Some(ar) => match ar {
@@ -204,7 +210,12 @@ impl WrappedVault {
             change: entry.clone(),
             expected_fee: unsigned_tx.fee,
         };
-        entry.sign_bitcoin(proposal).map_err(|_| "Failed to sign".to_string())
+        let valid = proposal.validate();
+        if valid.is_ok() {
+            entry.sign_bitcoin(proposal).map_err(|_| "Failed to sign".to_string())
+        } else {
+            Err(format!("Invalid tx: {:?}", valid.expect_err("no_error_on_invalid")))
+        }
     }
 }
 

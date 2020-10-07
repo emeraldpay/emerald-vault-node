@@ -225,6 +225,7 @@ describe("Sign transaction", () => {
                         txid: "041d573943b6dad1eaec93b639882dfef140d79aa8c56890ed3d4e0f37160bae",
                         vout: 1,
                         amount: 40006493,
+                        // pubkey must be 02e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb
                         address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4"
                     }
                 ],
@@ -239,7 +240,7 @@ describe("Sign transaction", () => {
 
             let raw = await vault.signTx(entryId, tx, "1234");
 
-            expect(raw).toBe("01000000000101ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d040100000000000000000169716202000000001600142c0d6288124ca4b82415b85464d085363ba5ee0202483045022100ab503cc1c4634c87efe18462e77ed20b19d04a08a6b401bc12ddebe995eaa37702203e97c3596b288d06d5e24b93c1081535534dfaeed08f69426dfadae7dcb2e53d0121037e64c1dac5bd62039e22822f14c2c4c7a7b9bc254cb64176eb139a8bd065cdbe00000000");
+            expect(raw).toBe("01000000000101ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d040100000000feffffff0169716202000000001600142c0d6288124ca4b82415b85464d085363ba5ee020247304402205d9d09bcf731d1842b6e0d4bef4c71ceff471fd6a6439042e669c8abb64de69202206865babae800f53c3d1bf04c13062e2b42302aeaed03e2390b0cb6b3430c64f1012102e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb00000000");
         });
 
         test("sign bitcoin tx - multiple in/out", async () => {
@@ -266,13 +267,16 @@ describe("Sign transaction", () => {
                         txid: "041d573943b6dad1eaec93b639882dfef140d79aa8c56890ed3d4e0f37160bae",
                         vout: 1,
                         amount: 40006493,
-                        address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4"
+                        // pubkey must be 02e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb
+                        address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4",
+                        sequence: 0
                     },
                     {
                         txid: "882dfef140d79aa8c56041d573943b6dad1eaec93b639890ed3d4e0f37160bae",
                         vout: 2,
                         amount: 15076493,
-                        address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4"
+                        address: "bc1q5c4g4njf4g7a2ugu0tq5rjjdg3j0yexus7x3f4",
+                        sequence: 0x00112233
                     }
                 ],
                 outputs: [
@@ -282,15 +286,14 @@ describe("Sign transaction", () => {
                     },
                     {
                         address: "bc1qenw3e6ex90je7gnlaxsm58u343u6f4yhj42yy4",
-                        amount: 40006493 + 15076493 - 800
+                        amount: 40006493 + 15076493 - 10000000 - 800
                     }
                 ],
                 fee: 800
             };
 
             let raw = await vault.signTx(entryId, tx, "1234");
-
-            expect(raw).toBe("01000000000102ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d04010000000000000000ae0b16370f4e3ded9098633bc9ae1ead6d3b9473d54160c5a89ad740f1fe2d880200000000000000000280969800000000001600142c0d6288124ca4b82415b85464d085363ba5ee02ca7c480300000000160014ccdd1ceb262be59f227fe9a1ba1f91ac79a4d4970247304402204e31afd8ed07a0c55fcf53f156db905777bdb20ac399a5529aa8b3d735196473022076c70e715080397464be4cb0bab9eb3fe43cb5177932d2de73caad6a3a1227d80121037e64c1dac5bd62039e22822f14c2c4c7a7b9bc254cb64176eb139a8bd065cdbe0247304402202d62ef37b5196634d70b86db63ad870b888f25746da23346087ed7c5e7c83e4302202691b8ae221bd69aafc7d34d1e18f8d3b02f1daa3dc30d494eac624320b4d5750121037e64c1dac5bd62039e22822f14c2c4c7a7b9bc254cb64176eb139a8bd065cdbe00000000");
+            expect(raw).toBe("01000000000102ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d04010000000000000000ae0b16370f4e3ded9098633bc9ae1ead6d3b9473d54160c5a89ad740f1fe2d880200000000332211000280969800000000001600142c0d6288124ca4b82415b85464d085363ba5ee024ae6af0200000000160014ccdd1ceb262be59f227fe9a1ba1f91ac79a4d49702483045022100d51bd759794a032be7cd1a57817c32513369963354f8496f96f2bd7c974b23d802200ef88dfb57952057a5fc87f384c6b978841e872a1a4f08b1d626a61ce9a148a6012102e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb02483045022100dfbb3e9a32d9d98aa5b816534f7387704b078cdbdb4c99a1a798f573fda99b05022006029eb5bb36a2d2df656d05db7397339c39f3bb21271007db409825bec8d90e012102e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb00000000");
         })
     });
 });
