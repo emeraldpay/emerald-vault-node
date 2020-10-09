@@ -65,10 +65,13 @@ export interface UnsignedBitcoinTx {
         amount: number;
         hdPath?: string;
         address?: string;
+        entryId?: EntryId;
     }[];
     outputs: {
         address: string;
         amount: number;
+        entryId?: EntryId;
+        hdPath?: string;
     }[];
     fee: number;
 }
