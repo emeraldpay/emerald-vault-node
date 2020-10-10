@@ -36,7 +36,7 @@ export interface IEmeraldVault {
 
     removeWallet(walletId: Uuid): Promise<boolean>;
 
-    getEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]>;
+    listEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]>;
 
     addEntry(walletId: Uuid, entry: AddEntry): Promise<EntryId>;
 

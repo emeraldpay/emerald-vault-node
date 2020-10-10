@@ -7,7 +7,7 @@ use uuid::Uuid;
 use access::{args_get_str, VaultConfig, WrappedVault, AccountIndex};
 use chrono::{DateTime, Utc};
 use emerald_vault::structs::seed::{LedgerSource, Seed, SeedSource};
-use emerald_vault::structs::wallet::{EntryId, PKType, ReservedPath, WalletEntry, AddressRole};
+use emerald_vault::structs::wallet::{EntryId, PKType, ReservedPath, WalletEntry, AddressRole, EntryAddress};
 use emerald_vault::{
     blockchain::chains::Blockchain, convert::json::keyfile::EthereumJsonV3File,
     storage::error::VaultError, structs::wallet::Wallet, trim_hex, EthereumAddress,
@@ -142,6 +142,16 @@ impl From<ReservedAccountJson> for ReservedPath {
         ReservedPath {
             seed_id: value.seed_id,
             account_id: value.account_id,
+        }
+    }
+}
+
+impl<T: ToString> From<&EntryAddress<T>> for CurrentAddressJson {
+    fn from(value: &EntryAddress<T>) -> Self {
+        CurrentAddressJson {
+            address: value.address.to_string(),
+            role: value.role.to_string(),
+            hd_path: value.hd_path.as_ref().map_or("".to_string(), |p| p.to_string()),
         }
     }
 }
@@ -290,13 +300,7 @@ fn with_std_addresses(entry: &WalletEntry, index: Option<&AccountIndex>) -> Vec<
                 .or_else::<Vec<Address>, _>(|_| Ok(vec![]))
                 .unwrap()
                 .iter()
-                .enumerate()
-                .map(|(pos, a)| CurrentAddressJson {
-                    address: a.to_string(),
-                    hd_path: account_hd.address_at(0, index.receive + pos as u32)
-                        .expect("invalid hd path").to_string(),
-                    role: "receive".to_string(),
-                })
+                .map(|a| CurrentAddressJson::from(a))
                 .collect()
         },
         _ => vec![]

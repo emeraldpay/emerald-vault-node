@@ -11,6 +11,10 @@ use emerald_vault::{
 };
 use json::StatusResult;
 use emerald_vault::structs::book::AddressRef;
+use wallets::CurrentAddressJson;
+use emerald_vault::structs::wallet::{AddressRole, EntryAddress};
+use emerald_vault::chains::BlockchainType;
+use bitcoin::Address;
 
 #[derive(Deserialize)]
 pub struct UpdateAccount {
@@ -40,6 +44,27 @@ pub struct NewMnemonicAccount {
 }
 
 impl WrappedVault {
+    fn list_entry_addresses(&self, wallet_id: Uuid, entry_id: usize, role: String, start: usize, limit: usize)
+                            -> Result<Vec<CurrentAddressJson>, VaultError> {
+        let storage = &self.cfg.get_storage();
+        let wallet = storage.wallets().get(wallet_id)?;
+        let entry = wallet.get_entry(entry_id)?;
+        let role = AddressRole::from_str(role.as_str())?;
+
+        let addresses = match entry.blockchain.get_type() {
+            BlockchainType::Bitcoin => entry.get_addresses::<Address>(role, start as u32, limit as u32)?
+                .iter()
+                .map(|a| CurrentAddressJson::from(a))
+                .collect(),
+            BlockchainType::Ethereum => entry.get_addresses::<EthereumAddress>(role, start as u32, limit as u32)?.
+                iter()
+                .map(|a| CurrentAddressJson::from(a))
+                .collect()
+        };
+
+        Ok(addresses)
+    }
+
     fn set_label(&self, wallet_id: Uuid, entry_id: usize, label: Option<String>) -> bool {
         let storage = &self.cfg.get_storage();
         let result = storage.update_entry(wallet_id, entry_id).set_label(label);
@@ -239,29 +264,33 @@ pub fn update_receive_disabled(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(js_value.downcast().unwrap())
 }
 
-//pub fn import_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
-//    let cfg = VaultConfig::get_config(&mut cx);
-//    let vault = WrappedVault::new(cfg);
-//
-//    let raw = cx.argument::<JsString>(1).expect("Input JSON is not provided").value();
-//    let account: NewMnemonicAccount = serde_json::from_str(&raw).expect("Invalid JSON");
-//
-//    if account.password.is_empty() {
-//        panic!("Empty password");
-//    }
-//
-//    let mnemonic = Mnemonic::try_from(Language::English, &account.mnemonic).expect("Mnemonic is not valid");
-//    let hd_path = HDPath::try_from(&account.hd_path).expect("HDPath is not valid");
-//    let pk = generate_key(&hd_path, &mnemonic.seed(None)).expect("Unable to generate private key");
-//
-//    let id = vault.import_pk(pk.to_vec(), &account.password, Some(account.name));
-//    let address = vault.get_wallet_address(id).expect("Address not initialized");
-//
-//    let result = JsObject::new(&mut cx);
-//    let id_handle = cx.string(id.to_string());
-//    result.set(&mut cx, "id", id_handle).expect("Failed to set id");
-//    let addr_handle = cx.string(address.to_string());
-//    result.set(&mut cx, "address", addr_handle).expect("Failed to set address");
-//
-//    Ok(result)
-//}
+pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let vault = WrappedVault::new(cfg);
+
+    let wallet_id = cx
+        .argument::<JsString>(1)
+        .expect("wallet_id not provided")
+        .value();
+    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+    let entry_id = cx
+        .argument::<JsNumber>(2)
+        .expect("entry_id not provided")
+        .value() as usize;
+    let role = args_get_str(&mut cx, 3).expect("address_role not provided");
+    let start = cx
+        .argument::<JsNumber>(4)
+        .expect("entry_id not provided")
+        .value() as usize;
+    let limit = cx
+        .argument::<JsNumber>(5)
+        .expect("entry_id not provided")
+        .value() as usize;
+
+    let result = vault.list_entry_addresses(wallet_id, entry_id, role, start, limit)
+        .expect("failed to get addresses");
+
+    let status = StatusResult::Ok(result).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+    Ok(js_value.downcast().unwrap())
+}

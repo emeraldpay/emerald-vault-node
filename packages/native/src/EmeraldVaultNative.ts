@@ -152,9 +152,18 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
-    getEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]> {
-        //TODO
-        return Promise.resolve([]);
+    listEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]> {
+        return new Promise((resolve, reject) => {
+            let fullId = EntryIdOp.of(id);
+            let status: Status<CurrentAddress[]> = addon.entries_listAddresses(this.conf,
+                fullId.extractWalletId(), fullId.extractEntryInternalId(),
+                role, start, limit
+            );
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
     }
 
     addEntry(walletId: Uuid, entry: AddEntry): Promise<EntryId> {

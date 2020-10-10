@@ -50,6 +50,8 @@ register_module!(mut cx, {
         entries::update_receive_disabled,
     )
     .expect("entries_updateReceiveDisabled not exported");
+    cx.export_function("entries_listAddresses", entries::list_addresses)
+        .expect("entries_listAddresses not exported");
 
     cx.export_function("sign_tx", sign::sign_tx)
         .expect("sign_tx not exported");

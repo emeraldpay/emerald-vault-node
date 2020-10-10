@@ -928,6 +928,146 @@ describe("Entries", () => {
             ])
         });
 
+        test("Get bitcoin addresses", async () => {
+            let id = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = await vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/84'/0'/0'/0/1",
+                }
+            };
+            let entryId = await vault.addEntry(walletId, addEntry);
+            let addresses = await vault.listEntryAddresses(entryId, "receive", 0, 7);
+            expect(addresses).toEqual([
+                {
+                    "address": "bc1qxqz4qerrm662nt4hxh39mqltvqcffcvzzfc49z",
+                    "hdPath": "m/84'/0'/0'/0/0",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1qj4zhepcsjp6gpqf252329daum6ey6hhqagccaf",
+                    "hdPath": "m/84'/0'/0'/0/1",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1qnuy60h2qq7zjmj929nha54hcmpveqj6cj07sa6",
+                    "hdPath": "m/84'/0'/0'/0/2",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1q6cd2ytka6huf7g4mwg3yus3nzck89c86ngr9pj",
+                    "hdPath": "m/84'/0'/0'/0/3",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1qn2w44323gc0v9j6ss7flg0cv0tzfm0p3ptysr0",
+                    "hdPath": "m/84'/0'/0'/0/4",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1qv0upcfs7j20xu83z9kmh7gvd7hfexdmnd37yxs",
+                    "hdPath": "m/84'/0'/0'/0/5",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1q8jh9ytqthp0460zx956ycce0n0fu5hvtsxhuxe",
+                    "hdPath": "m/84'/0'/0'/0/6",
+                    "role": "receive"
+                }
+            ]);
+
+            let addresses2 = await vault.listEntryAddresses(entryId, "change", 2, 3);
+            expect(addresses2).toEqual([
+                {
+                    "address": "bc1qdqtpvw9e4f6cma0rd0cpd39vgyel56kwkcen9m",
+                    "hdPath": "m/84'/0'/0'/1/2",
+                    "role": "change"
+                },
+                {
+                    "address": "bc1qltrzz23vvd7c34fha2622yz86qmus4mjqsumkp",
+                    "hdPath": "m/84'/0'/0'/1/3",
+                    "role": "change"
+                },
+                {
+                    "address": "bc1q27wcjrxex9dewp3cykg43nm9x82v6fjexchvzt",
+                    "hdPath": "m/84'/0'/0'/1/4",
+                    "role": "change"
+                },
+            ]);
+
+        });
+
+        test("Get bitcoin addresses - acc 3", async () => {
+            let id = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test"
+            });
+            expect(id).toBeDefined();
+
+            let walletId = await vault.addWallet("test seed");
+            let addEntry: AddEntry = {
+                blockchain: 1,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: id, password: "test"},
+                    hdPath: "m/84'/0'/3'/0/1",
+                }
+            };
+            let entryId = await vault.addEntry(walletId, addEntry);
+            let addresses = await vault.listEntryAddresses(entryId, "receive", 0, 3);
+            expect(addresses).toEqual([
+                {
+                    "address": "bc1qd2zly9rxs2th8m63mcdtjvz6rspz8us0vdk9j3",
+                    "hdPath": "m/84'/0'/3'/0/0",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1qe5j8mlep8s5sr0ymfqh7ghhg7w7tqce8ykawy7",
+                    "hdPath": "m/84'/0'/3'/0/1",
+                    "role": "receive"
+                },
+                {
+                    "address": "bc1qrd9vmkjfl8u4evsgk2way29pyackz36y03xur5",
+                    "hdPath": "m/84'/0'/3'/0/2",
+                    "role": "receive"
+                },
+            ]);
+
+            let addresses2 = await vault.listEntryAddresses(entryId, "change", 0, 3);
+            expect(addresses2).toEqual([
+                {
+                    "address": "bc1q77p5rars35ka0zg964xggwdkjnf9nvqf4q4guu",
+                    "hdPath": "m/84'/0'/3'/1/0",
+                    "role": "change"
+                },
+                {
+                    "address": "bc1qyvjdkqs74skz6ypdc4wpayc307jjkzj809tsgg",
+                    "hdPath": "m/84'/0'/3'/1/1",
+                    "role": "change"
+                },
+                {
+                    "address": "bc1qmx07wew39njjyv8gn0907kxx5whzmvdrg5zphu",
+                    "hdPath": "m/84'/0'/3'/1/2",
+                    "role": "change"
+                },
+            ]);
+
+        });
+
         test("Create bitcoin - acc 2", async () => {
             let id = await vault.importSeed({
                 type: "mnemonic",
