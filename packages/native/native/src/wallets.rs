@@ -23,7 +23,7 @@ use emerald_vault::{
     EthereumAddress,
     EthereumPrivateKey,
 };
-use hdpath::{StandardHDPath};
+use hdpath::{StandardHDPath, AccountHDPath};
 use json::StatusResult;
 use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 use address::AddressRefJson;
@@ -361,7 +361,7 @@ impl WrappedVault {
                             BlockchainType::Bitcoin =>
                                 storage.add_bitcoin_entry(wallet_id).seed_hd(
                                     seed_id,
-                                    StandardHDPath::from_str(hd.hd_path.as_str())?,
+                                    AccountHDPath::from_str(hd.hd_path.as_str())?,
                                     blockchain,
                                     hd.seed.password,
                                 )?
@@ -396,7 +396,7 @@ impl WrappedVault {
                             BlockchainType::Bitcoin =>
                                 storage.add_bitcoin_entry(wallet_id).seed_hd(
                                     seed_id,
-                                    StandardHDPath::from_str(hd.hd_path.as_str())?,
+                                    AccountHDPath::from_str(hd.hd_path.as_str())?,
                                     blockchain,
                                     hd.seed.password,
                                 )?
