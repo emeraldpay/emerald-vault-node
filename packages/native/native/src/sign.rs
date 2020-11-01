@@ -98,7 +98,7 @@ fn convert_inputs(inputs: Vec<InputJson>, xpub: &XPub, seed_id: Uuid, hd_account
                 Some(value) => {
                     let address = Address::from_str(value).map_err(|_| "Invalid input bitcoin address")?;
                     //TODO use actual number of used address from current state
-                    match xpub.find_path(&hd_account, &address, 1000) {
+                    match xpub.find_path(hd_account, &address, 1000) {
                         Some(path) => path,
                         None => return Err(format!("Unknown address: {:?}", address))
                     }
@@ -188,11 +188,7 @@ impl WrappedVault {
         };
         let seed = storage.seeds().get(seed_ref.seed_id).map_err(|_| "Seed not found")?;
         let seed_id = seed.id.clone();
-        let hd_account = AccountHDPath::new(
-            seed_ref.hd_path.purpose().clone(),
-            seed_ref.hd_path.coin_type(),
-            seed_ref.hd_path.account(),
-        );
+        let hd_account = AccountHDPath::from(&seed_ref.hd_path);
         let xpub = match &entry.address {
             Some(ar) => match ar {
                 AddressRef::ExtendedPub(value) => value,

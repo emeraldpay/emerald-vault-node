@@ -12,7 +12,7 @@ use emerald_vault::{
 use json::StatusResult;
 use emerald_vault::structs::book::AddressRef;
 use wallets::CurrentAddressJson;
-use emerald_vault::structs::wallet::{AddressRole, EntryAddress};
+use emerald_vault::structs::wallet::{AddressRole};
 use emerald_vault::chains::BlockchainType;
 use bitcoin::Address;
 

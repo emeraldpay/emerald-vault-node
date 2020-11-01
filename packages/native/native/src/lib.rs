@@ -10,6 +10,7 @@ extern crate hdpath;
 extern crate serde_json;
 extern crate uuid;
 extern crate bitcoin;
+extern crate emerald_hwkey;
 
 use neon::prelude::*;
 

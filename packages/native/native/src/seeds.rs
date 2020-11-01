@@ -4,7 +4,7 @@ use uuid::Uuid;
 use access::{VaultConfig, WrappedVault};
 use chrono::{DateTime, Utc};
 use emerald_vault::util::none_if_empty;
-use emerald_vault::{hdwallet::WManager, mnemonic::{Language, Mnemonic, MnemonicSize}, storage::error::VaultError, structs::{
+use emerald_vault::{mnemonic::{Language, Mnemonic, MnemonicSize}, storage::error::VaultError, structs::{
     crypto::Encrypted,
     seed::{LedgerSource, Seed, SeedSource},
 }, EthereumAddress};
@@ -16,6 +16,8 @@ use emerald_vault::blockchain::chains::BlockchainType;
 use emerald_vault::chains::Blockchain;
 use bitcoin::Address;
 use std::str::FromStr;
+use emerald_hwkey::ledger::manager::LedgerKey;
+use emerald_hwkey::errors::HWKeyError;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
@@ -233,15 +235,11 @@ pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
 
 impl WrappedVault {
     pub fn is_ledger_connected() -> Result<bool, VaultError> {
-        let id = StandardHDPath::try_from("m/44'/60'/0'/0/0").expect("Failed to create address");
-        let mut wallet_manager = WManager::new(None).expect("Can't create HID endpoint");
-        wallet_manager
-            .update(Some(id.to_bytes()))
-            .expect("Devices list not loaded");
-        let opened = wallet_manager.open();
+        let opened = LedgerKey::new_connected().and_then(|a| a.open());
         match opened {
             Ok(_) => Ok(true),
-            Err(e) => Err(VaultError::HDKeyFailed(e)),
+            Err(HWKeyError::Unavailable) => Ok(false),
+            Err(e) => Err(VaultError::HWKeyFailed(e)),
         }
     }
 
