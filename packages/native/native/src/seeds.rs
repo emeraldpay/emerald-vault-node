@@ -18,6 +18,9 @@ use bitcoin::Address;
 use std::str::FromStr;
 use emerald_hwkey::ledger::manager::LedgerKey;
 use emerald_hwkey::errors::HWKeyError;
+use emerald_hwkey::ledger::app_bitcoin::{BitcoinApp, BitcoinApps};
+use emerald_hwkey::ledger::traits::LedgerApp;
+use emerald_hwkey::ledger::app_ethereum::{EthereumApp, EthereumApps};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
@@ -68,6 +71,24 @@ pub enum SeedDefinitionOrReferenceType {
 pub struct MnemonicSeedJson {
     pub value: String,
     pub password: Option<String>,
+}
+
+#[derive(Serialize, Clone, Debug, Eq, PartialEq)]
+pub struct LedgerDetails {
+    #[serde(rename = "type")]
+    pub json_type: String,
+    pub connected: bool,
+    pub app: Option<String>,
+}
+
+impl Default for LedgerDetails {
+    fn default() -> Self {
+        LedgerDetails {
+            json_type: "ledger".to_string(),
+            connected: false,
+            app: None,
+        }
+    }
 }
 
 impl From<Seed> for SeedJson {
@@ -229,6 +250,45 @@ pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     let sentence = mnemonic.sentence();
 
     let status = StatusResult::Ok(sentence).as_json();
+    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+    Ok(js_value.downcast().unwrap())
+}
+
+fn get_bitcoin_app(k: &LedgerKey) -> Option<String> {
+    BitcoinApp::new(&k).is_open().map(
+        |app| match app {
+            BitcoinApps::Mainnet => "bitcoin".to_string(),
+            BitcoinApps::Testnet => "bitcoin-test".to_string()
+        },
+    )
+}
+
+fn get_ethereum_app(k: &LedgerKey) -> Option<String> {
+    EthereumApp::new(&k).is_open().map(
+        |app| match app {
+            EthereumApps::Ethereum => "ethereum".to_string(),
+            EthereumApps::EthereumClassic => "ethereum-classic".to_string()
+        },
+    )
+}
+
+
+pub fn list_hwkey(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let mut result: Vec<LedgerDetails> = Vec::new();
+
+    match LedgerKey::new_connected() {
+        Ok(k) => {
+            let name = get_bitcoin_app(&k).or_else(|| get_ethereum_app(&k));
+            result.push(LedgerDetails {
+                connected: true,
+                app: name,
+                ..LedgerDetails::default()
+            })
+        },
+        Err(_) => {}
+    };
+
+    let status = StatusResult::Ok(result).as_json();
     let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
     Ok(js_value.downcast().unwrap())
 }

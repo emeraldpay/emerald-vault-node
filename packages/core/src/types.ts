@@ -418,3 +418,15 @@ export function isIdSeedReference(value: SeedReference): value is IdSeedReferenc
 export function isSeedReference(value: Uuid | SeedReference | SeedDefinition): value is SeedReference {
     return typeof value === "object" && (value.type == "id" || value.type == "ledger");
 }
+
+export interface LedgerDetails {
+    type: "ledger";
+    connected: boolean;
+    app: "bitcoin" | "bitcoin-testnet" | "ethereum" | "ethereum-classic" | null;
+}
+
+export type HWKeyDetails = LedgerDetails;
+
+export function isLedgerDetails(value: HWKeyDetails): value is LedgerDetails {
+    return typeof value === "object" && value.type === "ledger";
+}

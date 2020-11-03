@@ -70,6 +70,9 @@ export {
     Update,
     ImportPrivateKey,
     PKRef,
+
+    LedgerDetails, HWKeyDetails,
+    isLedgerDetails
 } from './types';
 
 export {

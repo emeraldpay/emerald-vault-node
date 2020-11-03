@@ -2,7 +2,7 @@ import {
     AddEntry,
     AddressBookItem, AddressRole, BlockchainType,
     CreateAddressBookItem, CurrentAddress,
-    EntryId, LedgerSeedReference, SeedDefinition,
+    EntryId, HWKeyDetails, LedgerSeedReference, SeedDefinition,
     SeedDescription, SeedReference,
     UnsignedTx,
     Uuid,
@@ -62,7 +62,7 @@ export interface IEmeraldVault {
 
     listSeeds(): Promise<SeedDescription[]>;
 
-    getConnectedHWSeed(create: boolean): Promise<SeedDescription | undefined>;
+    getConnectedHWDetails(): Promise<HWKeyDetails[]>;
 
     importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid>;
 

@@ -75,6 +75,9 @@ register_module!(mut cx, {
     cx.export_function("seed_listAddresses", seeds::list_addresses)
         .expect("seed_listAddresses not exported");
 
+    cx.export_function("seed_hwkey_list", seeds::list_hwkey)
+        .expect("seed_hwkey_list not exported");
+
     cx.export_function("admin_migrate", admin::migrate)
         .expect("admin_migrate not exported");
     cx.export_function("admin_autofix", admin::autofix)

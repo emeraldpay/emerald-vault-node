@@ -18,7 +18,7 @@ import {
     CreateAddressBookItem,
     WalletState,
     CurrentAddress,
-    AddressRole, getBlockchainType, isEthereumTx
+    AddressRole, getBlockchainType, isEthereumTx, HWKeyDetails
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -313,9 +313,14 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
-    getConnectedHWSeed(create: boolean): Promise<SeedDescription | undefined> {
-        //TODO
-        return Promise.resolve(undefined);
+    getConnectedHWDetails(): Promise<HWKeyDetails[]> {
+        return new Promise((resolve, reject) => {
+            let status: Status<HWKeyDetails[]> = addon.seed_hwkey_list(this.conf);
+            if (!status.succeeded) {
+                return reject(new Error(status.error.message));
+            }
+            resolve(status.result);
+        });
     }
 
     importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid> {

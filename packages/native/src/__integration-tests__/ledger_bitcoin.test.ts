@@ -28,6 +28,12 @@ describe('Verify connection', () => {
         expect(act).toBe(IS_CONNECTED);
     });
 
+    test("App opened", async () => {
+        let details = await vault.getConnectedHWDetails();
+        expect(details).toEqual([
+            {type: "ledger", connected: true, app: "bitcoin"}
+        ])
+    })
 });
 
 describe('List addresses', () => {
