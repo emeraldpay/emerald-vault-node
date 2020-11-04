@@ -1,6 +1,7 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
 import {
+    BitcoinEntry,
     EthereumEntry,
     LedgerSeedReference,
     SeedPKRef,
@@ -251,4 +252,29 @@ describe('Create entries', () => {
         expect(entryKey.seedId).toBe(seedId);
     });
 
+    test("Creates bitcoin entry if xpub provided", async () => {
+        let walletId = await vault.addWallet("wallet 1");
+        let seedId = await vault.importSeed({
+            type: "ledger",
+        })
+        let entryId = await vault.addEntry(walletId, {
+            type: "hd-path",
+            blockchain: 1,
+            key: {
+                seed: {type: "id", value: seedId},
+                hdPath: "m/84'/0'/0'",
+                address: "zpub6rRF9XhDBRQSKiGLTD9vTaBfdpRrxJA9eG5YHmTwFfRN2Rbv7w7XNgCZg93Gk7CdRdfjY5hwM5ugrwXak9RgVsx5fwHfAdHdbf5UKmokEtJ"
+            },
+        });
+        let wallet = await vault.getWallet(walletId);
+        let entry = wallet.entries[0] as BitcoinEntry;
+        expect(entry.key.type).toBe("hd-path");
+        let key = entry.key as SeedPKRef;
+        expect(key.seedId).toBe(seedId);
+        expect(key.hdPath).toBe("m/84'/0'/0'/0/0");
+        expect(entry.address).toEqual({
+            type: "xpub",
+            value: "zpub6rRF9XhDBRQSKiGLTD9vTaBfdpRrxJA9eG5YHmTwFfRN2Rbv7w7XNgCZg93Gk7CdRdfjY5hwM5ugrwXak9RgVsx5fwHfAdHdbf5UKmokEtJ"
+        });
+    });
 });

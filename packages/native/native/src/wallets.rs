@@ -12,6 +12,7 @@ use emerald_vault::{
         chains::BlockchainType,
     },
     convert::json::keyfile::EthereumJsonV3File,
+    storage::entry::AddEntryOptions,
     storage::error::VaultError,
     structs::{
         wallet::Wallet,
@@ -28,6 +29,7 @@ use json::StatusResult;
 use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 use address::AddressRefJson;
 use bitcoin::Address;
+use emerald_vault::blockchain::bitcoin::XPub;
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -343,9 +345,15 @@ impl WrappedVault {
                 )?
             }
             AddEntryType::HdPath(hd) => {
-                let expected_address = hd
-                    .address
-                    .and_then(|s| EthereumAddress::from_str(s.as_str()).ok());
+                let expected_ethereum_address = match &hd.address {
+                    Some(s) => EthereumAddress::from_str(s.as_str()).ok(),
+                    None => None
+                };
+                let bitcoin_opts = AddEntryOptions {
+                    seed_password: hd.seed.password.clone(),
+                    xpub: hd.address.and_then(|xpub| XPub::from_str(xpub.as_str()).ok()),
+                    ..Default::default()
+                };
                 match hd.seed.value {
                     SeedDefinitionOrReferenceType::Reference(seed_id) => {
                         //TODO duplicate with ledger
@@ -356,14 +364,14 @@ impl WrappedVault {
                                     StandardHDPath::from_str(hd.hd_path.as_str())?,
                                     blockchain,
                                     hd.seed.password,
-                                    expected_address,
+                                    expected_ethereum_address,
                                 )?,
                             BlockchainType::Bitcoin =>
                                 storage.add_bitcoin_entry(wallet_id).seed_hd(
                                     seed_id,
                                     AccountHDPath::from_str(hd.hd_path.as_str())?,
                                     blockchain,
-                                    hd.seed.password,
+                                    bitcoin_opts,
                                 )?
                         }
                     }
@@ -391,14 +399,14 @@ impl WrappedVault {
                                     StandardHDPath::from_str(hd.hd_path.as_str())?,
                                     blockchain,
                                     hd.seed.password,
-                                    expected_address,
+                                    expected_ethereum_address,
                                 )?,
                             BlockchainType::Bitcoin =>
                                 storage.add_bitcoin_entry(wallet_id).seed_hd(
                                     seed_id,
                                     AccountHDPath::from_str(hd.hd_path.as_str())?,
                                     blockchain,
-                                    hd.seed.password,
+                                    bitcoin_opts,
                                 )?
                         }
                     }
