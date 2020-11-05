@@ -67,6 +67,20 @@ describe("Seeds", () => {
                     expect(act["m/84'/0'/0'/0/1"]).toBe('bc1qj4zhepcsjp6gpqf252329daum6ey6hhqagccaf');
                     expect(act["m/84'/0'/1'/0/0"]).toBe('bc1qhetq9vhlk3pdxn8a3754z8ntz7yqvh8tsduqkt');
                 });
+
+                test("List bitcoin xpub", async () => {
+                    const act = await vault.listSeedAddresses(type, BlockchainId.BITCOIN, [
+                        "m/84'/0'/0'",
+                        "m/84'/0'/1'",
+                        "m/44'/0'/0'",
+                        "m/49'/0'/0'",
+                    ]);
+                    // console.log(act);
+                    expect(act["m/84'/0'/0'"]).toBe('zpub6rgquuQgjiNdUjkU7qZck9t3JU5K9U9EG2aVAwzDy2BJKHKMekVNsyZF2e4dw9L9AoT9WHy5iDVdUHz2XkrANy5LRVGLt3XMkar752N2hvq');
+                    expect(act["m/84'/0'/1'"]).toBe('zpub6rgquuQgjiNdWtkm1t1XUnnTC5qDJoDrVwoUnMC6bEb8cWSRRDYcqGM4BpXbzhfHkWAGWh2VjZiYKyh9qVdpTkJEvgXgB9g5U2iRE3jiDgQ');
+                    expect(act["m/44'/0'/0'"]).toBe('xpub6DRy3BJWmkVz5WVunR37BpXM48ARFhTQCLZJN3rjtSgRDsz2zbU9E3BGtpr2kpWAmQ2oYMkWjDjSigQCQu1xbEp5gRVoKUvbT1L8CbPrVLS');
+                    expect(act["m/49'/0'/0'"]).toBe('ypub6XKWqjEULzxUZ1AaNausD7JFWzg8jKCFmdycJpojoiRLDCNuLxKREUXnvTD26q3AAsiSBDymo2E21yhAiUY8Vrnu4UHQvfTrKRcvzyV2Pd2');
+                });
             });
 
         });

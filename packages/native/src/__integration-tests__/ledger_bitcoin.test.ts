@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
-import {EthereumEntry, LedgerSeedReference, SeedPKRef, Uuid, BitcoinEntry} from "@emeraldpay/emerald-vault-core";
+import {LedgerSeedReference, SeedPKRef, Uuid, BitcoinEntry} from "@emeraldpay/emerald-vault-core";
 
 const IS_CONNECTED = process.env.EMERALD_TEST_LEDGER === 'true';
 
@@ -95,6 +95,41 @@ describe('List addresses', () => {
     });
 });
 
+describe('List xpub', () => {
+    let vault: EmeraldVaultNative;
+    beforeAll(() => {
+        vault = new EmeraldVaultNative({
+            dir: tempPath("ledger-list-btc")
+        });
+        vault.open();
+    });
+
+    const ledgerReference: LedgerSeedReference = {
+        type: "ledger",
+    };
+
+    test("Just list", async () => {
+        const act = await vault.listSeedAddresses(ledgerReference, 1, [
+            "m/84'/0'/0'",
+            "m/84'/0'/1'",
+        ]);
+        console.log(act);
+        expect(act["m/84'/0'/0'"]).toBe("zpub6rRF9XhDBRQSKiGLTD9vTaBfdpRrxJA9eG5YHmTwFfRN2Rbv7w7XNgCZg93Gk7CdRdfjY5hwM5ugrwXak9RgVsx5fwHfAdHdbf5UKmokEtJ");
+        expect(act["m/84'/0'/1'"]).toBe("zpub6rRF9XhDBRQSP251N6St8X4MpUvexnmdu9qFAMXf2xetav5BQ4PNQjKQrC3Sa265foZmoTdtt5sNZVtz5FjwFqrQWiG14th53GB53wQ6E4M");
+    });
+
+    test("List with created ledger", async () => {
+        let id: Uuid = await vault.importSeed(ledgerReference)
+        const act = await vault.listSeedAddresses(id, 1, [
+            "m/84'/0'/0'",
+            "m/84'/0'/1'",
+        ]);
+        console.log(act);
+        expect(act["m/84'/0'/0'"]).toBe("zpub6rRF9XhDBRQSKiGLTD9vTaBfdpRrxJA9eG5YHmTwFfRN2Rbv7w7XNgCZg93Gk7CdRdfjY5hwM5ugrwXak9RgVsx5fwHfAdHdbf5UKmokEtJ");
+        expect(act["m/84'/0'/1'"]).toBe("zpub6rRF9XhDBRQSP251N6St8X4MpUvexnmdu9qFAMXf2xetav5BQ4PNQjKQrC3Sa265foZmoTdtt5sNZVtz5FjwFqrQWiG14th53GB53wQ6E4M");
+    });
+});
+
 describe('Create entries', () => {
     let vault: EmeraldVaultNative;
 
@@ -106,10 +141,6 @@ describe('Create entries', () => {
     });
 
     test("Create entry", async () => {
-        if (!IS_CONNECTED) {
-            console.warn("Ignore Ledger tests");
-            return;
-        }
         let walletId = await vault.addWallet("wallet 1");
         let seedId = await vault.importSeed({
             type: "ledger",
@@ -135,10 +166,6 @@ describe('Create entries', () => {
     });
 
     test("Create few entries", async () => {
-        if (!IS_CONNECTED) {
-            console.warn("Ignore Ledger tests");
-            return;
-        }
         let walletId = await vault.addWallet("wallet 1");
         let seedId = await vault.importSeed({
             type: "ledger",
@@ -188,10 +215,6 @@ describe('Create entries', () => {
     });
 
     test("Create entries right from ledger", async () => {
-        if (!IS_CONNECTED) {
-            console.warn("Ignore Ledger tests");
-            return;
-        }
         expect((await vault.listSeeds()).length).toBe(0);
         let walletId = await vault.addWallet("wallet from ledger");
         let entryId = await vault.addEntry(walletId, {
@@ -216,10 +239,6 @@ describe('Create entries', () => {
     });
 
     test("Create entries from existing ledger by referring", async () => {
-        if (!IS_CONNECTED) {
-            console.warn("Ignore Ledger tests");
-            return;
-        }
         expect((await vault.listSeeds()).length).toBe(0);
         let walletId = await vault.addWallet("wallet from ledger");
         let seedId = await vault.importSeed({
@@ -242,5 +261,4 @@ describe('Create entries', () => {
         let entryKey = entry.key as SeedPKRef;
         expect(entryKey.seedId).toBe(seedId);
     });
-
 });

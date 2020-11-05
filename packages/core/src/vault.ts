@@ -68,5 +68,14 @@ export interface IEmeraldVault {
 
     isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean>;
 
+    /**
+     * Return addresses on the specified Seed.
+     * For ethereum, HD Path must be standard 5-element path (m/44'/0'/0'/0/0).
+     * For bitcoin, in addition to a full path, it support path to an (m/84'/0'/0'). In this case it returns XPub address of that account.
+     *
+     * @param seed existing seed, or reference to hardware key
+     * @param blockchain blockchain id
+     * @param hdpath list of hdpath to address or account
+     */
     listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: number, hdpath: string[]): Promise<{ [key: string]: string }>;
 }

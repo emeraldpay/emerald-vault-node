@@ -23,7 +23,7 @@ emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = 
 emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
 uuid = { version = "0.8.1", features = ["serde", "v4"] }
 hex = "0.4.2"
-hdpath = "0.4"
+hdpath = "0.6"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"

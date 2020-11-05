@@ -8,7 +8,7 @@ use emerald_vault::{mnemonic::{Language, Mnemonic, MnemonicSize}, storage::error
     crypto::Encrypted,
     seed::{LedgerSource, Seed, SeedSource},
 }, EthereumAddress};
-use hdpath::StandardHDPath;
+use hdpath::{StandardHDPath, AccountHDPath, CustomHDPath, HDPath};
 use json::StatusResult;
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -181,7 +181,7 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
             }
             StatusResult::Ok(result).as_json()
         }
-        Err(e) => StatusResult::Error(0, format!("{}", e)).as_json(),
+        Err(e) => StatusResult::Error(0, format!("{:?}", e)).as_json(),
     };
 
     let js_value = neon_serde::to_value(&mut cx, &status)?;
@@ -329,23 +329,50 @@ impl WrappedVault {
                            password: Option<String>,
                            hd_path_all: Vec<String>,
                            blockchain: Blockchain) -> Result<Vec<HDPathAddress>, VaultError> {
-        let hd_path_all = hd_path_all.iter()
-            .map(|s| StandardHDPath::from_str(s.as_str().clone()))
+        let hd_path_std: Vec<StandardHDPath> = hd_path_all.iter()
+            .map(|s|
+                StandardHDPath::from_str(s.as_str().clone())
+            )
             .filter(|a| a.is_ok())
             .map(|a| a.unwrap())
             .collect();
         let addresses = match blockchain.get_type() {
             BlockchainType::Bitcoin => {
-                seed.get_addresses::<Address>(password, &hd_path_all, blockchain)?
+                let hd_path_acc: Vec<AccountHDPath> = hd_path_all.iter()
+                    .map(|s|
+                        CustomHDPath::from_str(s).and_then(|p|
+                            if p.len() == 3 {
+                                AccountHDPath::try_from(p)
+                            } else {
+                                Err(hdpath::Error::InvalidLength(p.len() as usize))
+                            }
+                        )
+                    )
+                    .filter(|a| a.is_ok())
+                    .map(|a| a.unwrap())
+                    .collect();
+                let mut result: Vec<HDPathAddress> = Vec::with_capacity(hd_path_std.len() + hd_path_acc.len());
+                if !hd_path_acc.is_empty() {
+                    seed.get_xpub(password.clone(), &hd_path_acc, blockchain)?.iter()
+                        .map(|a| HDPathAddress {
+                            hd_path: a.0.as_custom().to_string(), // convert to custom to encode as standrd hd path
+                            address: a.1.to_string(),
+                        })
+                        .for_each(|a| result.push(a));
+                };
+
+                seed.get_addresses::<Address>(password, &hd_path_std, blockchain)?
                     .iter()
                     .map(|a| HDPathAddress {
                         hd_path: a.0.to_string(),
                         address: a.1.to_string(),
                     })
-                    .collect()
+                    .for_each(|a| result.push(a));
+
+                result
             },
             BlockchainType::Ethereum => {
-                seed.get_addresses::<EthereumAddress>(password, &hd_path_all, blockchain)?
+                seed.get_addresses::<EthereumAddress>(password, &hd_path_std, blockchain)?
                     .iter()
                     .map(|a| HDPathAddress {
                         hd_path: a.0.to_string(),
