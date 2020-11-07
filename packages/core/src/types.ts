@@ -4,6 +4,7 @@ export type SeedRefType = "ledger" | "mnemonic" | "id";
 export type EntryType = "pk" | "seed-hd";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
 export type AddressRole = "receive" | "change";
+export type LedgerApp = "bitcoin" | "bitcoin-testnet" | "ethereum" | "ethereum-classic";
 
 export enum BlockchainId {
     BITCOIN = 1,
@@ -422,7 +423,7 @@ export function isSeedReference(value: Uuid | SeedReference | SeedDefinition): v
 export interface LedgerDetails {
     type: "ledger";
     connected: boolean;
-    app: "bitcoin" | "bitcoin-testnet" | "ethereum" | "ethereum-classic" | null;
+    app: LedgerApp | null;
 }
 
 export type HWKeyDetails = LedgerDetails;

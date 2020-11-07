@@ -72,7 +72,8 @@ export {
     PKRef,
 
     LedgerDetails, HWKeyDetails,
-    isLedgerDetails
+    isLedgerDetails,
+    LedgerApp
 } from './types';
 
 export {
