@@ -33,7 +33,7 @@ describe('Verify connection', () => {
         expect(details).toEqual([
             {type: "ledger", connected: true, app: "bitcoin"}
         ])
-    })
+    });
 });
 
 describe('List addresses', () => {

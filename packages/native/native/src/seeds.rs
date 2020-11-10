@@ -121,7 +121,32 @@ impl SeedDefinitionOrReferenceJson {
     }
 }
 
-pub fn is_available(mut cx: FunctionContext) -> JsResult<JsObject> {
+struct IsAvailableTask {
+    cfg: VaultConfig,
+    parsed: SeedDefinitionOrReferenceJson,
+}
+
+impl Task for IsAvailableTask {
+    type Output = bool;
+    type Error = String;
+    type JsEvent = JsObject;
+
+    fn perform(&self) -> Result<Self::Output, Self::Error> {
+        let vault = WrappedVault::new(self.cfg.clone());
+        match vault.is_available(self.parsed.clone()) {
+            Ok(avail) => Ok(avail),
+            Err(_) => Ok(false),
+        }
+    }
+
+    fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
+        let status = StatusResult::from(result).as_json();
+        let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+        Ok(js_value.downcast().unwrap())
+    }
+}
+
+pub fn is_available(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     let json = cx
         .argument::<JsString>(1)
         .expect("Input JSON is not provided")
@@ -130,16 +155,52 @@ pub fn is_available(mut cx: FunctionContext) -> JsResult<JsObject> {
         serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
     let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
-    let status = match vault.is_available(parsed) {
-        Ok(avail) => StatusResult::Ok(avail).as_json(),
-        Err(_) => StatusResult::Ok(false).as_json(),
+    let task = IsAvailableTask {
+        cfg,
+        parsed,
     };
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    let f = cx.argument::<JsFunction>(2)?;
+    task.schedule(f);
+    Ok(cx.undefined())
 }
 
-pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
+struct ListAddressesTask {
+    cfg: VaultConfig,
+    parsed: SeedDefinitionOrReferenceJson,
+    hd_path_all: Vec<String>,
+    blockchain: Blockchain,
+}
+
+impl Task for ListAddressesTask {
+    type Output = HashMap<String, String>;
+    type Error = String;
+    type JsEvent = JsObject;
+
+    fn perform(&self) -> Result<Self::Output, Self::Error> {
+        let vault = WrappedVault::new(self.cfg.clone());
+        match vault.list_addresses(self.parsed.clone(), self.hd_path_all.clone(), self.blockchain) {
+            Ok(addresses) => {
+                let mut result = HashMap::new();
+                for address in addresses {
+                    result.insert(
+                        address.hd_path.as_str().to_string(),
+                        address.address.to_string(),
+                    );
+                }
+                Ok(result)
+            }
+            Err(e) => Err(format!("{:?}", e))
+        }
+    }
+
+    fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
+        let status = StatusResult::from(result).as_json();
+        let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+        Ok(js_value.downcast().unwrap())
+    }
+}
+
+pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     let json = cx
         .argument::<JsString>(1)
         .expect("Input JSON is not provided")
@@ -168,24 +229,16 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
         .collect();
 
     let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
 
-    let status = match vault.list_addresses(parsed, hd_path_all, blockchain) {
-        Ok(addresses) => {
-            let mut result = HashMap::new();
-            for address in addresses {
-                result.insert(
-                    address.hd_path.as_str().to_string(),
-                    address.address.to_string(),
-                );
-            }
-            StatusResult::Ok(result).as_json()
-        }
-        Err(e) => StatusResult::Error(0, format!("{:?}", e)).as_json(),
+    let f = cx.argument::<JsFunction>(4)?;
+    let task = ListAddressesTask {
+        cfg,
+        parsed,
+        hd_path_all,
+        blockchain,
     };
-
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    task.schedule(f);
+    Ok(cx.undefined())
 }
 
 pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
@@ -272,25 +325,41 @@ fn get_ethereum_app(k: &LedgerKey) -> Option<String> {
     )
 }
 
+struct ListHWKeyTask;
 
-pub fn list_hwkey(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let mut result: Vec<LedgerDetails> = Vec::new();
+impl Task for ListHWKeyTask {
+    type Output = Vec<LedgerDetails>;
+    type Error = String;
+    type JsEvent = JsObject;
 
-    match LedgerKey::new_connected() {
-        Ok(k) => {
-            let name = get_bitcoin_app(&k).or_else(|| get_ethereum_app(&k));
-            result.push(LedgerDetails {
-                connected: true,
-                app: name,
-                ..LedgerDetails::default()
-            })
-        },
-        Err(_) => {}
-    };
+    fn perform(&self) -> Result<Self::Output, Self::Error> {
+        let mut result: Vec<LedgerDetails> = Vec::new();
 
-    let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+        match LedgerKey::new_connected() {
+            Ok(k) => {
+                let name = get_bitcoin_app(&k).or_else(|| get_ethereum_app(&k));
+                result.push(LedgerDetails {
+                    connected: true,
+                    app: name,
+                    ..LedgerDetails::default()
+                })
+            },
+            Err(_) => {}
+        };
+        Ok(result)
+    }
+
+    fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
+        let status = StatusResult::from(result).as_json();
+        let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
+        Ok(js_value.downcast().unwrap())
+    }
+}
+
+pub fn list_hwkey(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let f = cx.argument::<JsFunction>(1)?;
+    ListHWKeyTask.schedule(f);
+    Ok(cx.undefined())
 }
 
 impl WrappedVault {

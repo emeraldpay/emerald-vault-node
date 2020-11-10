@@ -45,6 +45,23 @@ const DEFAULT_CONFIG: Config & WalletState = {
     accountIndexes: []
 }
 
+function resolveStatus(status: Status<any>, err: Error | undefined, resolve, reject) {
+    if (!status.succeeded) {
+        return reject(new Error(status.error.message));
+    }
+    if (err) {
+        return reject(err);
+    }
+    resolve(status.result);
+}
+
+// Neon Callback for Status<T>
+type NeonCallback<T> = (err: Error | undefined, status: Status<T>) => void;
+
+function neonToPromise<T>(resolve, reject): NeonCallback<T> {
+    return (err, status) => resolveStatus(status, err, resolve, reject)
+}
+
 export class EmeraldVaultNative implements IEmeraldVault {
     private conf: Config & Partial<WalletState>;
 
@@ -315,11 +332,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     getConnectedHWDetails(): Promise<HWKeyDetails[]> {
         return new Promise((resolve, reject) => {
-            let status: Status<HWKeyDetails[]> = addon.seed_hwkey_list(this.conf);
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
+            addon.seed_hwkey_list(this.conf, neonToPromise(resolve, reject));
         });
     }
 
@@ -334,36 +347,29 @@ export class EmeraldVaultNative implements IEmeraldVault {
     }
 
     isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean> {
+        let ref = seed;
+        if (isReference(seed)) {
+            ref = {
+                type: "id",
+                value: seed
+            }
+        }
         return new Promise((resolve, reject) => {
-            let ref = seed;
-            if (isReference(seed)) {
-                ref = {
-                    type: "id",
-                    value: seed
-                }
-            }
-            let status: Status<boolean> = addon.seed_isAvailable(this.conf, JSON.stringify(ref));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
+            addon.seed_isAvailable(this.conf, JSON.stringify(ref), neonToPromise(resolve, reject));
         });
     }
 
     listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: number, hdpath: string[]): Promise<{ [key: string]: string }> {
+        let ref = seed;
+        if (isReference(seed)) {
+            ref = {
+                type: "id",
+                value: seed
+            }
+        }
+
         return new Promise((resolve, reject) => {
-            let ref = seed;
-            if (isReference(seed)) {
-                ref = {
-                    type: "id",
-                    value: seed
-                }
-            }
-            let status: Status<{ [key: string]: string }> = addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath);
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
+            addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath, neonToPromise(resolve, reject));
         });
     }
 }
