@@ -62,10 +62,6 @@ describe('List addresses', () => {
     };
 
     test("List ethereum", async () => {
-        if (!IS_CONNECTED) {
-            console.warn("Ignore Ledger tests");
-            return;
-        }
         const act = await vault.listSeedAddresses(ledgerReference, 100, [
             "m/44'/60'/0'/0/0",
             "m/44'/60'/0'/0/1",
@@ -79,10 +75,6 @@ describe('List addresses', () => {
 
 
     test("List ethereum with created ledger", async () => {
-        if (!IS_CONNECTED) {
-            console.warn("Ignore Ledger tests");
-            return;
-        }
         let id: Uuid = await vault.importSeed(ledgerReference)
         const act = await vault.listSeedAddresses(id, 100, [
             "m/44'/60'/0'/0/0",

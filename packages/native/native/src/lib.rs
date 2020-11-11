@@ -11,6 +11,9 @@ extern crate serde_json;
 extern crate uuid;
 extern crate bitcoin;
 extern crate emerald_hwkey;
+extern crate env_logger;
+#[macro_use]
+extern crate log;
 
 use neon::prelude::*;
 
@@ -24,7 +27,29 @@ mod seeds;
 mod sign;
 mod wallets;
 
+use env_logger::Builder;
+use chrono::Local;
+use log::LevelFilter;
+use std::io::Write;
+
+const DEV_MODE: bool = false;
+
 register_module!(mut cx, {
+    if DEV_MODE {
+        Builder::new()
+            .format(|buf, record| {
+                writeln!(buf,
+                         "{} [{}] - {}",
+                         Local::now().format("%Y-%m-%dT%H:%M:%S"),
+                         record.level(),
+                         record.args()
+                )
+            })
+            .filter(None, LevelFilter::Trace)
+            .init();
+        log::warn!("START IN DEV MODE");
+    }
+
     cx.export_function("wallets_list", wallets::list)
         .expect("wallets_list not exported");
     cx.export_function("wallets_add", wallets::add)
