@@ -137,7 +137,8 @@ describe("Address Book", () => {
             expect(entries[0].createdAt).toBeDefined();
             const createdAt = new Date(entries[0].createdAt);
             expect(createdAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
-            expect(createdAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
+            // give extra 10 ms, because on windows it may swing in a couple of millis here
+            expect(createdAt.getTime()).toBeLessThanOrEqual(new Date().getTime() + 10);
 
         });
     });
