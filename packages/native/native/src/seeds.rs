@@ -311,7 +311,7 @@ fn get_bitcoin_app(k: &LedgerKey) -> Option<String> {
     BitcoinApp::new(&k).is_open().map(
         |app| match app {
             BitcoinApps::Mainnet => "bitcoin".to_string(),
-            BitcoinApps::Testnet => "bitcoin-test".to_string()
+            BitcoinApps::Testnet => "bitcoin-testnet".to_string()
         },
     )
 }
