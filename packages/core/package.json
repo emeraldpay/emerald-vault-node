@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-core",
-  "version": "0.6.0-rc.2",
+  "version": "0.6.0-rc.3",
   "description": "Emerald Vault Core data types",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
   "license": "Apache-2.0",
@@ -24,7 +24,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "typescript": "^3.4.2",
+    "typescript": "^3.9.10",
     "rimraf": "^2.6.3",
     "jest": "24.8.0",
     "@types/jest": "24.0.13",

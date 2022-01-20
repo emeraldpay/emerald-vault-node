@@ -18,7 +18,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: "12.x"
+          node-version: "16.x"
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: "12.x"
+          node-version: "16.x"
       - run: yarn install
       - run: yarn workspace @emeraldpay/emerald-vault-core run build:ts
       - name: Test
