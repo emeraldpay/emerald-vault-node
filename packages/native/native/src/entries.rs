@@ -169,7 +169,7 @@ pub fn import_ethereum(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(result)
 }
 
-pub fn export(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn export(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -188,11 +188,10 @@ pub fn export(mut cx: FunctionContext) -> JsResult<JsObject> {
     let pk = vault.export_web3(wallet_id, entry_id, password);
     let result = serde_json::to_string_pretty(&pk).expect("Failed to convert to JSON");
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -213,11 +212,10 @@ pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsObject> {
     let pk = vault.export_pk(wallet_id, entry_id, password);
     let result = format!("0x{}", hex::encode(pk.0));
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn update_label(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -235,11 +233,10 @@ pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = vault.set_label(wallet_id, entry_id, label);
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn update_receive_disabled(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn update_receive_disabled(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -260,11 +257,10 @@ pub fn update_receive_disabled(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = vault.set_receive_disabled(wallet_id, entry_id, disabled);
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -291,6 +287,5 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsObject> {
         .expect("failed to get addresses");
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }

@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString};
+use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString, JsValue};
 use uuid::Uuid;
 
 use access::{args_get_str, VaultConfig, WrappedVault, AccountIndex};
@@ -25,11 +25,12 @@ use emerald_vault::{
     EthereumPrivateKey,
 };
 use hdpath::{StandardHDPath, AccountHDPath};
-use json::StatusResult;
+use json::{StatusResult, AsJsObject};
 use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 use address::AddressRefJson;
 use bitcoin::Address;
 use emerald_vault::blockchain::bitcoin::XPub;
+use neon::context::Context;
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -455,7 +456,7 @@ impl WrappedVault {
     }
 }
 
-pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg.clone());
     let wallets = vault.load_wallets();
@@ -466,12 +467,10 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
     }
 
     let status = StatusResult::Ok(result).as_json();
-
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -485,11 +484,10 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     let id = vault.create_wallet(parsed).expect("Wallet not created");
 
     let status = StatusResult::Ok(id.to_string()).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn add_entry_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn add_entry_to_wallet(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -506,11 +504,10 @@ pub fn add_entry_to_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
         .expect("Entry not created");
 
     let status = StatusResult::Ok(id).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn update_label(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -519,11 +516,10 @@ pub fn update_label(mut cx: FunctionContext) -> JsResult<JsObject> {
     let title = args_get_str(&mut cx, 2);
     let result = vault.set_title(wallet_id, title).is_ok();
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn remove_entry(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn remove_entry(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -533,11 +529,10 @@ pub fn remove_entry(mut cx: FunctionContext) -> JsResult<JsObject> {
         .remove_entry(wallet_id, entry_id)
         .expect("Not deleted");
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn remove(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn remove(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -545,6 +540,5 @@ pub fn remove(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = vault.remove(wallet_id).expect("Not deleted");
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status)?;
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }

@@ -129,7 +129,7 @@ struct IsAvailableTask {
 impl Task for IsAvailableTask {
     type Output = bool;
     type Error = String;
-    type JsEvent = JsObject;
+    type JsEvent = JsString;
 
     fn perform(&self) -> Result<Self::Output, Self::Error> {
         let vault = WrappedVault::new(self.cfg.clone());
@@ -141,8 +141,7 @@ impl Task for IsAvailableTask {
 
     fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
         let status = StatusResult::from(result).as_json();
-        let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-        Ok(js_value.downcast().unwrap())
+        Ok(cx.string(status))
     }
 }
 
@@ -174,7 +173,7 @@ struct ListAddressesTask {
 impl Task for ListAddressesTask {
     type Output = HashMap<String, String>;
     type Error = String;
-    type JsEvent = JsObject;
+    type JsEvent = JsString;
 
     fn perform(&self) -> Result<Self::Output, Self::Error> {
         let vault = WrappedVault::new(self.cfg.clone());
@@ -195,8 +194,7 @@ impl Task for ListAddressesTask {
 
     fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
         let status = StatusResult::from(result).as_json();
-        let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-        Ok(js_value.downcast().unwrap())
+        Ok(cx.string(status))
     }
 }
 
@@ -241,7 +239,7 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     Ok(cx.undefined())
 }
 
-pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -256,11 +254,10 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = vault.add_seed(parsed).expect("Seed not added");
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
     let seeds = vault.list_seeds().expect("List not loaded");
@@ -288,11 +285,10 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
     }
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
     let size = cx
         .argument::<JsNumber>(0)
         .expect("Mnemonic size is not provided")
@@ -303,8 +299,7 @@ pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsObject> {
     let sentence = mnemonic.sentence();
 
     let status = StatusResult::Ok(sentence).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
 fn get_bitcoin_app(k: &LedgerKey) -> Option<String> {
@@ -330,7 +325,7 @@ struct ListHWKeyTask;
 impl Task for ListHWKeyTask {
     type Output = Vec<LedgerDetails>;
     type Error = String;
-    type JsEvent = JsObject;
+    type JsEvent = JsString;
 
     fn perform(&self) -> Result<Self::Output, Self::Error> {
         let mut result: Vec<LedgerDetails> = Vec::new();
@@ -351,8 +346,7 @@ impl Task for ListHWKeyTask {
 
     fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
         let status = StatusResult::from(result).as_json();
-        let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-        Ok(js_value.downcast().unwrap())
+        Ok(cx.string(status))
     }
 }
 

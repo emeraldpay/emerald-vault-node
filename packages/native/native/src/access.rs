@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use neon::handle::Handle;
 use neon::object::{Object};
-use neon::prelude::{FunctionContext, JsObject, JsString, JsArray};
+use neon::prelude::{FunctionContext, JsObject, JsString, JsArray, JsNumber};
 use neon::types::{JsNull, JsUndefined};
 
 use emerald_vault::{
@@ -15,6 +15,7 @@ use emerald_vault::{
 use uuid::Uuid;
 use emerald_vault::structs::wallet::WalletEntry;
 use emerald_vault::storage::error::VaultError;
+use neon::context::Context;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct VaultConfig {
@@ -37,6 +38,34 @@ pub struct AccountIndex {
     pub change: u32,
 }
 
+impl AccountIndex {
+    fn from_json(cx: &mut FunctionContext,
+                 obj: Handle<JsObject>) -> AccountIndex {
+        let wallet_id = obj_get_str(cx, &obj, "walletId")
+            .map(|s| Uuid::from_str(s.as_str()).expect("Invalid UUID for walletId"))
+            .expect("No walletId field");
+        println!("entryid {:?}", obj_get_number(cx, &obj, "entryId"));
+        let entry_id = obj_get_number(cx, &obj, "entryId")
+            .filter(|v| *v >= 0 && *v < 0x8fffffff)
+            .map(|v| v as usize)
+            .expect("No entryId field");
+        let receive = obj_get_number(cx, &obj, "receive")
+            .filter(|v| *v >= 0 && *v < 0x8fffffff)
+            .map(|v| v as u32)
+            .expect("No receive field");
+        let change = obj_get_number(cx, &obj, "change")
+            .filter(|v| *v >= 0 && *v < 0x8fffffff)
+            .map(|v| v as u32)
+            .expect("No change field");
+        AccountIndex {
+            wallet_id,
+            entry_id,
+            receive,
+            change,
+        }
+    }
+}
+
 pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
     match obj.get(cx, name) {
         Ok(val) => {
@@ -46,6 +75,27 @@ pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str)
                 None
             } else {
                 Some(val.downcast::<JsString>().expect("Not a string").value())
+            }
+        }
+        Err(_) => None,
+    }
+}
+
+pub fn obj_get_number(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<i64> {
+    match obj.get(cx, name) {
+        Ok(val) => {
+            if val.is_a::<JsNull>() {
+                None
+            } else if val.is_a::<JsUndefined>() {
+                None
+            } else {
+                let f = val.downcast::<JsNumber>().expect("Not a number").value();
+                if f.round() == f {
+                    Some(f as i64)
+                } else {
+                    println!("not round");
+                    None
+                }
             }
         }
         Err(_) => None,
@@ -79,8 +129,7 @@ impl VaultConfig {
                 let items: Handle<JsArray> = value.downcast().expect("accountIndexes is not an array");
                 items.to_vec(cx).expect("accountIndexes is not a vector").iter()
                     .map(|it|
-                        neon_serde::from_value(cx, it.clone())
-                            .expect("invalid account index json")
+                        AccountIndex::from_json(cx, it.downcast().expect("Not an object"))
                     )
                     .collect()
             },

@@ -11,11 +11,10 @@ name = "emerald_vault_node"
 crate-type = ["cdylib"]
 
 [build-dependencies]
-neon-build = "0.3.2"
+neon-build = "0.9.1"
 
 [dependencies]
-neon = "0.3.2"
-neon-serde = "0.3.0"
+neon = "0.9.1"
 emerald-vault = "0.28.0"
 emerald-hwkey = "0.1.0"
 #emerald-vault = { path = "../../../../emerald-rs" }

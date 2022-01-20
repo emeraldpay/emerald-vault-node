@@ -33,10 +33,10 @@ pub enum StatusResult<T> {
 
 impl<T> StatusResult<T>
     where
-        T: Clone,
+        T: Clone + serde::Serialize,
 {
-    pub fn as_json(&self) -> StatusJson<T> {
-        match self {
+    pub fn as_json(&self) -> String {
+        let obj = match self {
             StatusResult::Ok(ref t) => StatusJson {
                 succeeded: true,
                 result: Some(t.clone()),
@@ -50,6 +50,12 @@ impl<T> StatusResult<T>
                     message: message.clone(),
                 }),
             },
+        };
+        let result = serde_json::to_string(&obj)
+            .map_err(|err| "{\"succeeded\": false, \"error\": {\"code\": 0, \"message\": \"Failed to convert JSON\"}}".to_string());
+        match result {
+            Ok(v) => v,
+            Err(v) => v
         }
     }
 }

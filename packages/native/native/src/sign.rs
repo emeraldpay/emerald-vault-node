@@ -16,6 +16,7 @@ use emerald_vault::blockchain::bitcoin::{BitcoinTransferProposal, InputReference
 use emerald_vault::structs::wallet::PKType;
 use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{Address, TxOut, OutPoint, Txid};
+use neon::context::Context;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UnsignedEthereumTxJson {
@@ -215,7 +216,7 @@ impl WrappedVault {
     }
 }
 
-pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -260,6 +261,5 @@ pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = result.map(|b| hex::encode(b));
 
     let status = StatusResult::from(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
