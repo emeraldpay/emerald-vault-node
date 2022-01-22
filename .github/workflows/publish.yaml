@@ -66,7 +66,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Install Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: "16.x"
 
@@ -84,6 +84,10 @@ jobs:
       - name: Instal system libs (not windows)
         run: sudo apt-get install libusb-1.0-0-dev
         if: runner.os == 'Linux'
+
+      - name: Install build tools (windows)
+        run: choco install -y visualcpp-build-tools
+        if: runner.os == 'Windows'
 
       - name: Instal JS dependencies
         run: yarn install
@@ -107,7 +111,7 @@ jobs:
 
       - name: Show lib details
         run: |
-          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+          node_modules/@mapbox/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
           ls packages/native/native
 
       - name: Build Typescript

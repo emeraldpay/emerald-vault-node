@@ -51,7 +51,6 @@ jobs:
           # so better to link them statically.
           RUSTFLAGS: "-C target-feature=+crt-static"
           RUST_BACKTRACE: "1"
-      #          npm_config_devdir: ""
 
       - name: Build Rust lib (not windows)
         run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
