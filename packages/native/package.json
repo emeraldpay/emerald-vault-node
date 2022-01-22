@@ -52,7 +52,7 @@
     "unpack": "node prepare-tests.js",
     "install-binary": "node-pre-gyp install --fallback-to-build=false --update-binary",
     "package:node": "node-pre-gyp package",
-    "package:electron": "node-pre-gyp package --runtime=electron --target=16.0.0",
+    "package:electron": "node-pre-gyp package --runtime=electron --target=15.0.0",
     "upload-binary": "node-pre-gyp-github publish",
     "prepublishOnly": "npm run clean && npm run build && npm run test && npm run clean:native:ifpublish",
     "version:electron": "./node_modules/.bin/electron --version"
@@ -75,7 +75,7 @@
     "node-pre-gyp-github": "1.4.3",
     "electron-build-env": "0.2.0",
     "unzipper": "0.10.5",
-    "electron": "^16.0.0",
+    "electron": "^15.0.0",
     "cross-env": "6.0.3",
     "if-env": "^1.0.4",
     "ethereumjs-tx": "^2.1.2",
