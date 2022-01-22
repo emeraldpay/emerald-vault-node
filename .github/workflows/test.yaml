@@ -37,7 +37,7 @@ jobs:
         if: runner.os == 'Linux'
 
       - name: Instal buld tools (windows)
-        run: npm install --global --production windows-build-tools
+        run: npm install --global windows-build-tools node-gyp
         if: runner.os == 'Windows'
 
       - name: Instal JS dependencies
