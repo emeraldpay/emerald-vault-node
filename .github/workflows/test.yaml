@@ -11,7 +11,7 @@ jobs:
         # incompatible with librocksdb-sys v5.18.3
         os: ["windows-2016", "macos-latest", "ubuntu-latest"]
     runs-on: ${{ matrix.os }}
-    allow-failure: true
+    continue-on-error: true
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
