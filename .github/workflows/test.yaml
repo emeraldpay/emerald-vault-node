@@ -36,8 +36,11 @@ jobs:
         run: sudo apt-get install libusb-1.0-0-dev
         if: runner.os == 'Linux'
 
-      - name: Instal buld tools (windows)
-        run: npm install --global windows-build-tools node-gyp
+      #      - name: Instal buld tools (windows)
+      #        run: npm install --global windows-build-tools node-gyp
+      #        if: runner.os == 'Windows'
+      - name: Install buld tools (windows)
+        run: choco install -y visualcpp-build-tools
         if: runner.os == 'Windows'
 
       - name: Instal JS dependencies
