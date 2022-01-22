@@ -90,8 +90,19 @@ jobs:
 
       - name: Build Rust lib
         run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        if: runner.os == 'Windows'
         env:
+          # dynamic linkage may be a problem for Windows users who would need to install some extra DLLs just to make Emerald works
+          # so better to link them statically.
           RUSTFLAGS: "-C target-feature=+crt-static"
+          RUST_BACKTRACE: "1"
+          # support macOS High Sierra
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
+
+      - name: Build Rust lib
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        if: runner.os != 'Windows'
+        env:
           RUST_BACKTRACE: "1"
           # support macOS High Sierra
           MACOSX_DEPLOYMENT_TARGET: "10.13"
