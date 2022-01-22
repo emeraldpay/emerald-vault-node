@@ -27,21 +27,32 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Instal LLVM
+      - name: Instal LLVM (windows)
         run: choco install -y llvm
         if: runner.os == 'Windows'
 
-      - name: Instal system libs
+      - name: Instal system libs (not windows)
         run: sudo apt-get install libusb-1.0-0-dev
         if: runner.os == 'Linux'
 
       - name: Instal JS dependencies
         run: yarn install
 
-      - name: Build Rust lib
+      - name: Build Rust lib (windows)
         run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        if: runner.os == 'Windows'
         env:
+          # dynamic linkage may be a problem for Windows users who would need to install some extra DLLs just to make Emerald works
+          # so better to link them statically.
           RUSTFLAGS: "-C target-feature=+crt-static"
+          RUST_BACKTRACE: "1"
+          # support macOS High Sierra
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
+
+      - name: Build Rust lib (not windows)
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        if: runner.os != 'Windows'
+        env:
           RUST_BACKTRACE: "1"
           # support macOS High Sierra
           MACOSX_DEPLOYMENT_TARGET: "10.13"
