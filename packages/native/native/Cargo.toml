@@ -14,7 +14,7 @@ crate-type = ["cdylib"]
 neon-build = "0.9.1"
 
 [dependencies]
-neon = "0.9.1"
+neon = "0.9.1-legacy"
 emerald-vault = "0.28.0"
 emerald-hwkey = "0.1.0"
 #emerald-vault = { path = "../../../../emerald-rs" }
