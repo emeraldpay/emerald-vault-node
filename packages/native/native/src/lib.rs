@@ -1,7 +1,6 @@
 extern crate emerald_vault;
 extern crate hex;
 extern crate neon;
-extern crate neon_serde;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

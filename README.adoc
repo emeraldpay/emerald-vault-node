@@ -30,11 +30,11 @@ yarn install
 ----
 # for NodeJS (and default unit testing)
 
-yarn run build:rs
+yarn workspace @emeraldpay/emerald-vault-native run build:rs
 
 # for Electron:
 
-yarn run build:rs:electron
+yarn workspace @emeraldpay/emerald-vault-native run build:rs:electron
 ----
 
 .Build Typescript
@@ -49,7 +49,7 @@ yarn workspaces run test
 
 == License
 
-Copyright 2020 EmeraldPay, Inc
+Copyright 2022 EmeraldPay, Inc
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at

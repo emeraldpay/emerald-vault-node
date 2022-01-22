@@ -16,6 +16,7 @@ use emerald_vault::blockchain::bitcoin::{BitcoinTransferProposal, InputReference
 use emerald_vault::structs::wallet::PKType;
 use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{Address, TxOut, OutPoint, Txid};
+use neon::context::Context;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UnsignedEthereumTxJson {
@@ -215,30 +216,30 @@ impl WrappedVault {
     }
 }
 
-pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
         .expect("wallet_id not provided")
-        .value();
+        .value(&mut cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
 
     let entry_id = cx
         .argument::<JsNumber>(2)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
 
     let unsigned_tx = cx
         .argument::<JsString>(3)
         .expect("Transaction JSON not provided")
-        .value();
+        .value(&mut cx);
 
     let password = cx
         .argument::<JsString>(4)
         .expect("Password not provided")
-        .value();
+        .value(&mut cx);
 
     let entry = vault.get_entry(wallet_id, entry_id).expect("Unknown wallet entry");
 
@@ -260,6 +261,5 @@ pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsObject> {
     let result = result.map(|b| hex::encode(b));
 
     let status = StatusResult::from(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }

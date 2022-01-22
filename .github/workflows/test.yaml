@@ -11,14 +11,15 @@ jobs:
         # incompatible with librocksdb-sys v5.18.3
         os: ["windows-2016", "macos-latest", "ubuntu-latest"]
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
 
       - name: Install Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
-          node-version: "12.x"
+          node-version: "16.x"
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -27,28 +28,41 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Instal LLVM
+      - name: Instal LLVM (windows)
         run: choco install -y llvm
         if: runner.os == 'Windows'
 
-      - name: Instal system libs
+      - name: Instal system libs (not windows)
         run: sudo apt-get install libusb-1.0-0-dev
         if: runner.os == 'Linux'
+
+      - name: Install build tools (windows)
+        run: choco install -y visualcpp-build-tools
+        if: runner.os == 'Windows'
 
       - name: Instal JS dependencies
         run: yarn install
 
-      - name: Build Rust lib
+      - name: Build Rust lib (windows)
         run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        if: runner.os == 'Windows'
         env:
+          # dynamic linkage may be a problem for Windows users who would need to install some extra DLLs just to make Emerald works
+          # so better to link them statically.
           RUSTFLAGS: "-C target-feature=+crt-static"
+          RUST_BACKTRACE: "1"
+
+      - name: Build Rust lib (not windows)
+        run: yarn workspace @emeraldpay/emerald-vault-native run build:rs:${{ matrix.node }}
+        if: runner.os != 'Windows'
+        env:
           RUST_BACKTRACE: "1"
           # support macOS High Sierra
           MACOSX_DEPLOYMENT_TARGET: "10.13"
 
       - name: Show lib details
         run: |
-          node_modules/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
+          node_modules/@mapbox/node-pre-gyp/bin/node-pre-gyp reveal --directory packages/native
           ls packages/native/native
 
       - name: Build Typescript
@@ -71,7 +85,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
-          node-version: "12.x"
+          node-version: "16.x"
       - run: yarn install
       - run: yarn workspace @emeraldpay/emerald-vault-core run build:ts
       - name: Test

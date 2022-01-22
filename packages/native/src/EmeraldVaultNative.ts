@@ -56,10 +56,10 @@ function resolveStatus(status: Status<any>, err: Error | undefined, resolve, rej
 }
 
 // Neon Callback for Status<T>
-type NeonCallback<T> = (err: Error | undefined, status: Status<T>) => void;
+type NeonCallback<T> = (status: string) => void;
 
 function neonToPromise<T>(resolve, reject): NeonCallback<T> {
-    return (err, status) => resolveStatus(status, err, resolve, reject)
+    return (status) => resolveStatus(JSON.parse(status), undefined, resolve, reject)
 }
 
 export class EmeraldVaultNative implements IEmeraldVault {
@@ -115,7 +115,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     listWallets(): Promise<Wallet[]> {
         return new Promise((resolve, reject) => {
-            let status: Status<Wallet[]> = addon.wallets_list(this.conf);
+            let status: Status<Wallet[]> = JSON.parse(addon.wallets_list(this.conf));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message))
             }
@@ -125,7 +125,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     getWallet(id: Uuid): Promise<Wallet | undefined> {
         return new Promise((resolve, reject) => {
-            let status: Status<Wallet[]> = addon.wallets_list(this.conf);
+            let status: Status<Wallet[]> = JSON.parse(addon.wallets_list(this.conf));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message))
             }
@@ -141,7 +141,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
             } else if (typeof labelOrOptions === 'object') {
                 options = labelOrOptions
             }
-            let status: Status<Uuid> = addon.wallets_add(this.conf, JSON.stringify(options));
+            let status: Status<Uuid> = JSON.parse(addon.wallets_add(this.conf, JSON.stringify(options)));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -151,7 +151,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     setWalletLabel(walletId: Uuid, label: string): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            let status: Status<boolean> = addon.wallets_updateLabel(this.conf, walletId, label);
+            let status: Status<boolean> = JSON.parse(addon.wallets_updateLabel(this.conf, walletId, label));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -161,7 +161,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     removeWallet(walletId: Uuid): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            let status: Status<boolean> = addon.wallets_remove(this.conf, walletId);
+            let status: Status<boolean> = JSON.parse(addon.wallets_remove(this.conf, walletId));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -172,10 +172,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
     listEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]> {
         return new Promise((resolve, reject) => {
             let fullId = EntryIdOp.of(id);
-            let status: Status<CurrentAddress[]> = addon.entries_listAddresses(this.conf,
+            let status: Status<CurrentAddress[]> = JSON.parse(addon.entries_listAddresses(this.conf,
                 fullId.extractWalletId(), fullId.extractEntryInternalId(),
                 role, start, limit
-            );
+            ));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -185,7 +185,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     addEntry(walletId: Uuid, entry: AddEntry): Promise<EntryId> {
         return new Promise((resolve, reject) => {
-            let status: Status<number> = addon.wallets_addEntry(this.conf, walletId, JSON.stringify(entry));
+            let status: Status<number> = JSON.parse(addon.wallets_addEntry(this.conf, walletId, JSON.stringify(entry)));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -196,7 +196,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
     removeEntry(entryFullId: EntryId): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let op = EntryIdOp.of(entryFullId);
-            let status: Status<boolean> = addon.wallets_removeEntry(this.conf, op.extractWalletId(), op.extractEntryInternalId());
+            let status: Status<boolean> = JSON.parse(addon.wallets_removeEntry(this.conf, op.extractWalletId(), op.extractEntryInternalId()));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message))
             }
@@ -207,10 +207,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
     setEntryLabel(entryFullId: EntryId, label: string | null): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let op = EntryIdOp.of(entryFullId);
-            let status: Status<boolean> = addon.entries_updateLabel(this.conf,
+            let status: Status<boolean> = JSON.parse(addon.entries_updateLabel(this.conf,
                 op.extractWalletId(), op.extractEntryInternalId(),
                 label
-            );
+            ));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -221,10 +221,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
     setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let op = EntryIdOp.of(entryFullId);
-            let status: Status<boolean> = addon.entries_updateReceiveDisabled(this.conf,
+            let status: Status<boolean> = JSON.parse(addon.entries_updateReceiveDisabled(this.conf,
                 op.extractWalletId(), op.extractEntryInternalId(),
                 disabled
-            );
+            ));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -235,7 +235,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<string> {
         return new Promise((resolve, reject) => {
             let op = EntryIdOp.of(entryId);
-            let status: Status<string> = addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password);
+            let status: Status<string> = JSON.parse(addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -250,7 +250,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
     exportRawPk(entryId: EntryId, password: string): Promise<string> {
         return new Promise((resolve, reject) => {
             let op = EntryIdOp.of(entryId);
-            let status: Status<string> = addon.entries_exportPk(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
+            let status: Status<string> = JSON.parse(addon.entries_exportPk(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -263,7 +263,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
             let op = EntryIdOp.of(entryId);
             let status: Status<string>;
             try {
-                status = addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password);
+                status = JSON.parse(addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password));
             } catch (e) {
                 return reject(e);
             }
@@ -276,7 +276,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     generateMnemonic(size: number): Promise<string> {
         return new Promise((resolve, reject) => {
-            let status: Status<string> = addon.seed_generateMnemonic(size);
+            let status: Status<string> = JSON.parse(addon.seed_generateMnemonic(size));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -287,7 +287,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
     listAddressBook(blockchain: number): Promise<AddressBookItem[]> {
         return new Promise((resolve, reject) => {
             let opts = Object.assign({}, this.conf);
-            let status: Status<AddressBookItem[]> = addon.addrbook_list(opts);
+            let status: Status<AddressBookItem[]> = JSON.parse(addon.addrbook_list(opts));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -301,7 +301,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
     addToAddressBook(item: CreateAddressBookItem): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let opts = Object.assign({}, this.conf);
-            let status: Status<boolean> = addon.addrbook_add(opts, JSON.stringify(item));
+            let status: Status<boolean> = JSON.parse(addon.addrbook_add(opts, JSON.stringify(item)));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -312,7 +312,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
     removeFromAddressBook(blockchain: number, address: string): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let opts = Object.assign({}, this.conf);
-            let status: Status<boolean> = addon.addrbook_remove(opts, address);
+            let status: Status<boolean> = JSON.parse(addon.addrbook_remove(opts, address));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -322,7 +322,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     listSeeds(): Promise<SeedDescription[]> {
         return new Promise((resolve, reject) => {
-            let status: Status<SeedDescription[]> = addon.seed_list(this.conf);
+            let status: Status<SeedDescription[]> = JSON.parse(addon.seed_list(this.conf));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }
@@ -338,7 +338,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid> {
         return new Promise((resolve, reject) => {
-            let status: Status<Uuid> = addon.seed_add(this.conf, JSON.stringify(seed));
+            let status: Status<Uuid> = JSON.parse(addon.seed_add(this.conf, JSON.stringify(seed)));
             if (!status.succeeded) {
                 return reject(new Error(status.error.message));
             }

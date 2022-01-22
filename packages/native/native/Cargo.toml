@@ -1,9 +1,8 @@
 [package]
 name = "emerald-vault-node"
-version = "0.6.0-rc.2"
+version = "0.7.0-rc.1"
 authors = ["Igor Artamonov <igor@artamonov.ru>"]
 license = "Apache-2.0"
-build = "build.rs"
 exclude = ["artifacts.json", "index.node"]
 
 [lib]
@@ -11,11 +10,9 @@ name = "emerald_vault_node"
 crate-type = ["cdylib"]
 
 [build-dependencies]
-neon-build = "0.3.2"
+neon-build = "0.9.1"
 
 [dependencies]
-neon = "0.3.2"
-neon-serde = "0.3.0"
 emerald-vault = "0.28.0"
 emerald-hwkey = "0.1.0"
 #emerald-vault = { path = "../../../../emerald-rs" }
@@ -32,3 +29,8 @@ chrono = { version = "0.4", features = ["serde"] }
 bitcoin = "0.25.0"
 env_logger = "0.8.1"
 log = "0.4.11"
+
+[dependencies.neon]
+version = "0.9.1"
+default-features = false
+features = ["napi-6", "channel-api"]

@@ -104,7 +104,7 @@ impl WrappedVault {
     }
 }
 
-pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
@@ -114,40 +114,37 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsObject> {
         list.iter().map(|b| AddressBookmarkJson::from(b)).collect();
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn add(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
     let add_js = cx
         .argument::<JsString>(1)
         .expect("Address Book item not provided")
-        .value();
+        .value(&mut cx);
     let item =
         serde_json::from_str::<NewAddressBookItem>(add_js.as_str()).expect("Invalid input JSON");
     let result = vault.add_to_addressbook(item);
 
     let status = StatusResult::Ok(result).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
 
-pub fn remove(mut cx: FunctionContext) -> JsResult<JsObject> {
+pub fn remove(mut cx: FunctionContext) -> JsResult<JsString> {
     let cfg = VaultConfig::get_config(&mut cx);
     let vault = WrappedVault::new(cfg);
 
     let address = cx
         .argument::<JsString>(1)
         .expect("Address no provided")
-        .value();
+        .value(&mut cx);
     let address = EthereumAddress::from_str(address.as_str()).expect("Invalid address");
 
     let removed = vault.remove_addressbook_by_addr(&address);
 
     let status = StatusResult::Ok(removed).as_json();
-    let js_value = neon_serde::to_value(&mut cx, &status).expect("Invalid Value");
-    Ok(js_value.downcast().unwrap())
+    Ok(cx.string(status))
 }
