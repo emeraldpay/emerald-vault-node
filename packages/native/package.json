@@ -73,6 +73,7 @@
     "node-gyp": "8.4.1",
     "@mapbox/node-pre-gyp": "^1.0.8",
     "node-pre-gyp-github": "1.4.3",
+    "@octokit/rest": "^18.12.0",
     "electron-build-env": "0.2.0",
     "unzipper": "0.10.5",
     "electron": "^15.0.0",
