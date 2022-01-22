@@ -257,7 +257,7 @@ fn read_wallet_id(cx: &mut FunctionContext, pos: i32) -> Uuid {
     let wallet_id = cx
         .argument::<JsString>(pos)
         .expect("wallet_id is not provided")
-        .value();
+        .value(cx);
     let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
     wallet_id
 }
@@ -266,13 +266,13 @@ fn read_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usize
     let wallet_id = cx
         .argument::<JsString>(pos)
         .expect("wallet_id is not provided")
-        .value();
+        .value(cx);
     let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
 
     let entry_id = cx
         .argument::<JsNumber>(pos + 1)
         .expect("entry_id is not provided")
-        .value();
+        .value(cx);
     let entry_id = entry_id as usize;
 
     (wallet_id, entry_id)
@@ -477,7 +477,7 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
     let json = cx
         .argument::<JsString>(1)
         .expect("Input JSON with options is not provided")
-        .value();
+        .value(&mut cx);
     let parsed: AddWalletJson =
         serde_json::from_str(json.as_str()).expect("Invalid JSON with options");
 
@@ -495,7 +495,7 @@ pub fn add_entry_to_wallet(mut cx: FunctionContext) -> JsResult<JsString> {
     let json = cx
         .argument::<JsString>(2)
         .expect("Input JSON is not provided")
-        .value();
+        .value(&mut cx);
 
     let parsed: AddEntryJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
 

@@ -3,7 +3,6 @@ name = "emerald-vault-node"
 version = "0.6.0-rc.3"
 authors = ["Igor Artamonov <igor@artamonov.ru>"]
 license = "Apache-2.0"
-build = "build.rs"
 exclude = ["artifacts.json", "index.node"]
 
 [lib]
@@ -14,7 +13,6 @@ crate-type = ["cdylib"]
 neon-build = "0.9.1"
 
 [dependencies]
-neon = "0.9.1-legacy"
 emerald-vault = "0.28.0"
 emerald-hwkey = "0.1.0"
 #emerald-vault = { path = "../../../../emerald-rs" }
@@ -31,3 +29,8 @@ chrono = { version = "0.4", features = ["serde"] }
 bitcoin = "0.25.0"
 env_logger = "0.8.1"
 log = "0.4.11"
+
+[dependencies.neon]
+version = "0.9.1"
+default-features = false
+features = ["napi-6", "channel-api"]

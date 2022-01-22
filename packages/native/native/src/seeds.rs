@@ -121,63 +121,70 @@ impl SeedDefinitionOrReferenceJson {
     }
 }
 
-struct IsAvailableTask {
-    cfg: VaultConfig,
-    parsed: SeedDefinitionOrReferenceJson,
-}
-
-impl Task for IsAvailableTask {
-    type Output = bool;
-    type Error = String;
-    type JsEvent = JsString;
-
-    fn perform(&self) -> Result<Self::Output, Self::Error> {
-        let vault = WrappedVault::new(self.cfg.clone());
-        match vault.is_available(self.parsed.clone()) {
-            Ok(avail) => Ok(avail),
-            Err(_) => Ok(false),
-        }
-    }
-
-    fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
-        let status = StatusResult::from(result).as_json();
-        Ok(cx.string(status))
-    }
-}
-
 pub fn is_available(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     let json = cx
         .argument::<JsString>(1)
         .expect("Input JSON is not provided")
-        .value();
+        .value(&mut cx);
     let parsed: SeedDefinitionOrReferenceJson =
         serde_json::from_str(json.as_str()).expect("Invalid JSON");
-
     let cfg = VaultConfig::get_config(&mut cx);
-    let task = IsAvailableTask {
-        cfg,
-        parsed,
-    };
-    let f = cx.argument::<JsFunction>(2)?;
-    task.schedule(f);
+
+    let handler = cx.argument::<JsFunction>(2)?.root(&mut cx);
+    let queue = cx.channel();
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result: Result<bool, VaultError> = match vault.is_available(parsed.clone()) {
+            Ok(avail) => Ok(avail),
+            Err(_) => Ok(false),
+        };
+        let status = StatusResult::from(result).as_json();
+        queue.send(move |mut cx| {
+            let callback = handler.into_inner(&mut cx);
+            let this = cx.undefined();
+            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
+            callback.call(&mut cx, this, args)?;
+            Ok(())
+        });
+    });
     Ok(cx.undefined())
 }
 
-struct ListAddressesTask {
-    cfg: VaultConfig,
-    parsed: SeedDefinitionOrReferenceJson,
-    hd_path_all: Vec<String>,
-    blockchain: Blockchain,
-}
+pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let json = cx
+        .argument::<JsString>(1)
+        .expect("Input JSON is not provided")
+        .value(&mut cx);
+    let parsed: SeedDefinitionOrReferenceJson =
+        serde_json::from_str(json.as_str()).expect("Invalid JSON");
 
-impl Task for ListAddressesTask {
-    type Output = HashMap<String, String>;
-    type Error = String;
-    type JsEvent = JsString;
+    let blockchain = cx
+        .argument::<JsNumber>(2)
+        .expect("Input JSON is not provided")
+        .value(&mut cx);
+    let blockchain = Blockchain::try_from(blockchain as u32)
+        .expect("Invalid blockchain id");
 
-    fn perform(&self) -> Result<Self::Output, Self::Error> {
-        let vault = WrappedVault::new(self.cfg.clone());
-        match vault.list_addresses(self.parsed.clone(), self.hd_path_all.clone(), self.blockchain) {
+    let hd_path_all: Vec<String> = cx
+        .argument::<JsArray>(3)
+        .expect("List of HD Path is not provided")
+        .to_vec(&mut cx)
+        .expect("Failed to convert to Rust vector")
+        .into_iter()
+        .map(|item| {
+            item.downcast::<JsString, _>(&mut cx)
+                .expect("Expected string element in array")
+                .value(&mut cx)
+        })
+        .collect();
+
+    let cfg = VaultConfig::get_config(&mut cx);
+
+    let handler = cx.argument::<JsFunction>(4)?.root(&mut cx);
+    let queue = cx.channel();
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result: Result<HashMap<String, String>, String> = match vault.list_addresses(parsed.clone(), hd_path_all.clone(), blockchain) {
             Ok(addresses) => {
                 let mut result = HashMap::new();
                 for address in addresses {
@@ -189,53 +196,16 @@ impl Task for ListAddressesTask {
                 Ok(result)
             }
             Err(e) => Err(format!("{:?}", e))
-        }
-    }
-
-    fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
+        };
         let status = StatusResult::from(result).as_json();
-        Ok(cx.string(status))
-    }
-}
-
-pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let json = cx
-        .argument::<JsString>(1)
-        .expect("Input JSON is not provided")
-        .value();
-    let parsed: SeedDefinitionOrReferenceJson =
-        serde_json::from_str(json.as_str()).expect("Invalid JSON");
-
-    let blockchain = cx
-        .argument::<JsNumber>(2)
-        .expect("Input JSON is not provided")
-        .value();
-    let blockchain = Blockchain::try_from(blockchain as u32)
-        .expect("Invalid blockchain id");
-
-    let hd_path_all = cx
-        .argument::<JsArray>(3)
-        .expect("List of HD Path is not provided")
-        .to_vec(&mut cx)
-        .expect("Failed to convert to Rust vector")
-        .into_iter()
-        .map(|item| {
-            item.downcast::<JsString>()
-                .expect("Expected string element in array")
-                .value()
-        })
-        .collect();
-
-    let cfg = VaultConfig::get_config(&mut cx);
-
-    let f = cx.argument::<JsFunction>(4)?;
-    let task = ListAddressesTask {
-        cfg,
-        parsed,
-        hd_path_all,
-        blockchain,
-    };
-    task.schedule(f);
+        queue.send(move |mut cx| {
+            let callback = handler.into_inner(&mut cx);
+            let this = cx.undefined();
+            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
+            callback.call(&mut cx, this, args)?;
+            Ok(())
+        });
+    });
     Ok(cx.undefined())
 }
 
@@ -246,7 +216,7 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
     let json = cx
         .argument::<JsString>(1)
         .expect("Input JSON is not provided")
-        .value();
+        .value(&mut cx);
     let parsed: SeedDefinitionOrReferenceJson =
         serde_json::from_str(json.as_str()).expect("Invalid JSON");
     let parsed = parsed.clean();
@@ -292,7 +262,7 @@ pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
     let size = cx
         .argument::<JsNumber>(0)
         .expect("Mnemonic size is not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
 
     let size = MnemonicSize::from_length(size).expect("Invalid mnemonic size");
     let mnemonic = Mnemonic::new(Language::English, size).expect("Failed to generate mnemonic");
@@ -320,39 +290,33 @@ fn get_ethereum_app(k: &LedgerKey) -> Option<String> {
     )
 }
 
-struct ListHWKeyTask;
-
-impl Task for ListHWKeyTask {
-    type Output = Vec<LedgerDetails>;
-    type Error = String;
-    type JsEvent = JsString;
-
-    fn perform(&self) -> Result<Self::Output, Self::Error> {
-        let mut result: Vec<LedgerDetails> = Vec::new();
-
-        match LedgerKey::new_connected() {
+pub fn list_hwkey(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let hadnler = cx.argument::<JsFunction>(1)?.root(&mut cx);
+    let queue = cx.channel();
+    std::thread::spawn(move || {
+        let result: Result<Vec<LedgerDetails>, VaultError> = match LedgerKey::new_connected() {
             Ok(k) => {
+                let mut result: Vec<LedgerDetails> = Vec::new();
                 let name = get_bitcoin_app(&k).or_else(|| get_ethereum_app(&k));
                 result.push(LedgerDetails {
                     connected: true,
                     app: name,
                     ..LedgerDetails::default()
-                })
+                });
+                Ok(result)
             },
-            Err(_) => {}
+            Err(e) => Err(VaultError::HWKeyFailed(e))
         };
-        Ok(result)
-    }
-
-    fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
         let status = StatusResult::from(result).as_json();
-        Ok(cx.string(status))
-    }
-}
+        queue.send(move |mut cx| {
+            let callback = hadnler.into_inner(&mut cx);
+            let this = cx.undefined();
+            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
+            callback.call(&mut cx, this, args)?;
+            Ok(())
+        });
+    });
 
-pub fn list_hwkey(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let f = cx.argument::<JsFunction>(1)?;
-    ListHWKeyTask.schedule(f);
     Ok(cx.undefined())
 }
 

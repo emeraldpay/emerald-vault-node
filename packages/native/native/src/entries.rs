@@ -149,7 +149,7 @@ pub fn import_ethereum(mut cx: FunctionContext) -> JsResult<JsObject> {
     let raw = cx
         .argument::<JsString>(1)
         .expect("Input JSON is not provided")
-        .value();
+        .value(&mut cx);
     let pk = EthereumJsonV3File::try_from(raw).expect("Invalid JSON");
     let id = vault.put(&pk);
     let address = vault
@@ -176,12 +176,12 @@ pub fn export(mut cx: FunctionContext) -> JsResult<JsString> {
     let wallet_id = cx
         .argument::<JsString>(1)
         .expect("wallet_id not provided")
-        .value();
+        .value(&mut cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
     let entry_id = cx
         .argument::<JsNumber>(2)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
 
     let password = args_get_str(&mut cx, 3);
 
@@ -198,16 +198,16 @@ pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsString> {
     let wallet_id = cx
         .argument::<JsString>(1)
         .expect("wallet_id not provided")
-        .value();
+        .value(&mut cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
     let entry_id = cx
         .argument::<JsNumber>(2)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
     let password = cx
         .argument::<JsString>(3)
         .expect("Password is not provided")
-        .value();
+        .value(&mut cx);
 
     let pk = vault.export_pk(wallet_id, entry_id, password);
     let result = format!("0x{}", hex::encode(pk.0));
@@ -222,12 +222,12 @@ pub fn update_label(mut cx: FunctionContext) -> JsResult<JsString> {
     let wallet_id = cx
         .argument::<JsString>(1)
         .expect("wallet_id not provided")
-        .value();
+        .value(&mut cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
     let entry_id = cx
         .argument::<JsNumber>(2)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
     let label = args_get_str(&mut cx, 3);
 
     let result = vault.set_label(wallet_id, entry_id, label);
@@ -243,16 +243,16 @@ pub fn update_receive_disabled(mut cx: FunctionContext) -> JsResult<JsString> {
     let wallet_id = cx
         .argument::<JsString>(1)
         .expect("wallet_id not provided")
-        .value();
+        .value(&mut cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
     let entry_id = cx
         .argument::<JsNumber>(2)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
     let disabled = cx
         .argument::<JsBoolean>(3)
         .expect("receive_disabled not provided")
-        .value();
+        .value(&mut cx);
 
     let result = vault.set_receive_disabled(wallet_id, entry_id, disabled);
 
@@ -267,21 +267,21 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsString> {
     let wallet_id = cx
         .argument::<JsString>(1)
         .expect("wallet_id not provided")
-        .value();
+        .value(&mut cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
     let entry_id = cx
         .argument::<JsNumber>(2)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
     let role = args_get_str(&mut cx, 3).expect("address_role not provided");
     let start = cx
         .argument::<JsNumber>(4)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
     let limit = cx
         .argument::<JsNumber>(5)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
 
     let result = vault.list_entry_addresses(wallet_id, entry_id, role, start, limit)
         .expect("failed to get addresses");

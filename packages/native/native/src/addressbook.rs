@@ -124,7 +124,7 @@ pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
     let add_js = cx
         .argument::<JsString>(1)
         .expect("Address Book item not provided")
-        .value();
+        .value(&mut cx);
     let item =
         serde_json::from_str::<NewAddressBookItem>(add_js.as_str()).expect("Invalid input JSON");
     let result = vault.add_to_addressbook(item);
@@ -140,7 +140,7 @@ pub fn remove(mut cx: FunctionContext) -> JsResult<JsString> {
     let address = cx
         .argument::<JsString>(1)
         .expect("Address no provided")
-        .value();
+        .value(&mut cx);
     let address = EthereumAddress::from_str(address.as_str()).expect("Invalid address");
 
     let removed = vault.remove_addressbook_by_addr(&address);

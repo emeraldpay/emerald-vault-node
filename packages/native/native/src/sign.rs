@@ -223,23 +223,23 @@ pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
     let wallet_id = cx
         .argument::<JsString>(1)
         .expect("wallet_id not provided")
-        .value();
+        .value(&mut cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
 
     let entry_id = cx
         .argument::<JsNumber>(2)
         .expect("entry_id not provided")
-        .value() as usize;
+        .value(&mut cx) as usize;
 
     let unsigned_tx = cx
         .argument::<JsString>(3)
         .expect("Transaction JSON not provided")
-        .value();
+        .value(&mut cx);
 
     let password = cx
         .argument::<JsString>(4)
         .expect("Password not provided")
-        .value();
+        .value(&mut cx);
 
     let entry = vault.get_entry(wallet_id, entry_id).expect("Unknown wallet entry");
 

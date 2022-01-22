@@ -56,10 +56,10 @@ function resolveStatus(status: Status<any>, err: Error | undefined, resolve, rej
 }
 
 // Neon Callback for Status<T>
-type NeonCallback<T> = (err: Error | undefined, status: string) => void;
+type NeonCallback<T> = (status: string) => void;
 
 function neonToPromise<T>(resolve, reject): NeonCallback<T> {
-    return (err, status) => resolveStatus(JSON.parse(status), err, resolve, reject)
+    return (status) => resolveStatus(JSON.parse(status), undefined, resolve, reject)
 }
 
 export class EmeraldVaultNative implements IEmeraldVault {

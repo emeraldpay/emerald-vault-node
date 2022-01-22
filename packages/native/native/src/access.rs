@@ -44,7 +44,6 @@ impl AccountIndex {
         let wallet_id = obj_get_str(cx, &obj, "walletId")
             .map(|s| Uuid::from_str(s.as_str()).expect("Invalid UUID for walletId"))
             .expect("No walletId field");
-        println!("entryid {:?}", obj_get_number(cx, &obj, "entryId"));
         let entry_id = obj_get_number(cx, &obj, "entryId")
             .filter(|v| *v >= 0 && *v < 0x8fffffff)
             .map(|v| v as usize)
@@ -69,12 +68,12 @@ impl AccountIndex {
 pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
     match obj.get(cx, name) {
         Ok(val) => {
-            if val.is_a::<JsNull>() {
+            if val.is_a::<JsNull, _>(cx) {
                 None
-            } else if val.is_a::<JsUndefined>() {
+            } else if val.is_a::<JsUndefined, _>(cx) {
                 None
             } else {
-                Some(val.downcast::<JsString>().expect("Not a string").value())
+                Some(val.downcast::<JsString, _>(cx).expect("Not a string").value(cx))
             }
         }
         Err(_) => None,
@@ -84,12 +83,12 @@ pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str)
 pub fn obj_get_number(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<i64> {
     match obj.get(cx, name) {
         Ok(val) => {
-            if val.is_a::<JsNull>() {
+            if val.is_a::<JsNull, _>(cx) {
                 None
-            } else if val.is_a::<JsUndefined>() {
+            } else if val.is_a::<JsUndefined, _>(cx) {
                 None
             } else {
-                let f = val.downcast::<JsNumber>().expect("Not a number").value();
+                let f = val.downcast::<JsNumber, _>(cx).expect("Not a number").value(cx);
                 if f.round() == f {
                     Some(f as i64)
                 } else {
@@ -106,9 +105,9 @@ pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
     match cx.argument_opt(pos) {
         None => None,
         Some(v) => {
-            if v.is_a::<JsString>() {
-                match v.downcast::<JsString>() {
-                    Ok(v) => Some(v.value()),
+            if v.is_a::<JsString, _>(cx) {
+                match v.downcast::<JsString, _>(cx) {
+                    Ok(v) => Some(v.value(cx)),
                     Err(_) => None,
                 }
             } else {
@@ -126,11 +125,12 @@ impl VaultConfig {
 
         let account_indexes: Vec<AccountIndex> = match config.get(cx, "accountIndexes") {
             Ok(value) => {
-                let items: Handle<JsArray> = value.downcast().expect("accountIndexes is not an array");
+                let items: Handle<JsArray> = value.downcast(cx).expect("accountIndexes is not an array");
                 items.to_vec(cx).expect("accountIndexes is not a vector").iter()
-                    .map(|it|
-                        AccountIndex::from_json(cx, it.downcast().expect("Not an object"))
-                    )
+                    .map(|it| {
+                        let val = it.downcast(cx).expect("Not an object");
+                        AccountIndex::from_json(cx, val)
+                    })
                     .collect()
             },
             _ => vec![]
