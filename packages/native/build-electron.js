@@ -2,7 +2,7 @@ var build = require('electron-build-env');
 
 var opts = {
     // also configured in package.json
-    electron: "7.0.0"
+    electron: "15.0.0"
 };
 
 build(["neon", "build", "--release"], opts, function(err) {
