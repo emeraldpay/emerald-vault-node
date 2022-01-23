@@ -3,55 +3,54 @@ name: Publish package
 on:
   release:
     types: [created]
-  pull_request:
 
 jobs:
-#  npm:
-  #    name: Publish to NPM
-  #    runs-on: ubuntu-latest
-  #    steps:
-  #      - name: Checkout the code
-  #        uses: actions/checkout@v2
-  #        with:
-  #          ref: ${{ github.ref }}
-  #
-  #      - name: Install Node.js
-  #        uses: actions/setup-node@v2
-  #        with:
-  #          node-version: "16.x"
-  #          always-auth: true
-  #
-  #      - name: Configure NPM
-  #        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-  #
-  #      - name: Install Rust
-  #        uses: actions-rs/toolchain@v1
-  #        with:
-  #          profile: minimal
-  #          toolchain: stable
-  #          override: true
-  #
-  #      - name: Instal system libs
-  #        run: sudo apt-get install libusb-1.0-0-dev
-  #
-  #      - name: Instal JS dependencies
-  #        run: yarn install
-  #
-  #      - name: Configure Node.js Path
-  #        run: npm config set scripts-prepend-node-path true
-  #
-  #      - name: Publish to NPM - core
-  #        run: npm publish --access=public
-  #        working-directory: packages/core
-  #
-  #      - name: Publish to NPM - native
-  #        run: npm publish --access=public
-  #        working-directory: packages/native
-  #        env:
-  #          NO_NPM_BINARY: "true"
+  npm:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          always-auth: true
+
+      - name: Configure NPM
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Instal system libs
+        run: sudo apt-get install libusb-1.0-0-dev
+
+      - name: Instal JS dependencies
+        run: yarn install
+
+      - name: Configure Node.js Path
+        run: npm config set scripts-prepend-node-path true
+
+      - name: Publish to NPM - core
+        run: npm publish --access=public
+        working-directory: packages/core
+
+      - name: Publish to NPM - native
+        run: npm publish --access=public
+        working-directory: packages/native
+        env:
+          NO_NPM_BINARY: "true"
 
   prebuilds:
-  #  needs: npm
+    needs: npm
     name: Upload binary for (${{ matrix.os }}, ${{ matrix.node }})
     strategy:
       matrix:
@@ -121,7 +120,6 @@ jobs:
       # Cleanup to avoid putting temp files into resulting package
       - name: Clean Before Package
         run: yarn workspace @emeraldpay/emerald-vault-native run clean:rs
-        if: matrix.node == 'electron'
 
       - name: Package
         run: yarn workspace @emeraldpay/emerald-vault-native run package:${{ matrix.node }}
