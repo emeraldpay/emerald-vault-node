@@ -50,7 +50,6 @@ jobs:
           NO_NPM_BINARY: "true"
 
   prebuilds:
-    needs: npm
     name: Upload binary for (${{ matrix.os }}, ${{ matrix.node }})
     strategy:
       matrix:
