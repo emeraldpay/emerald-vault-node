@@ -92,7 +92,6 @@ pub fn obj_get_number(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &s
                 if f.round() == f {
                     Some(f as i64)
                 } else {
-                    println!("not round");
                     None
                 }
             }

@@ -78,6 +78,7 @@
     "if-env": "^1.0.4",
     "ethereumjs-tx": "^2.1.2",
     "crypto-js": "^4.0.0",
-    "bitcoinjs-lib": "^5.2.0"
+    "bitcoinjs-lib": "^5.2.0",
+    "fs-extra": "^10.0.0"
   }
 }

@@ -123,6 +123,16 @@ describe("Compatibility", () => {
             expect(raw).toBe("0xf865028477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38210518026a0a8f7aacd400789614602925c4331cf7ccf83548401632da7ee36b634fd5e2ce1a05c554688d38bd762af2e4885b70a2b3e608dffe80a2c33c93606afe4add040c6");
         });
 
+        test('Check global key', async () => {
+            let isSet = await vault.isGlobalKeySet();
+            expect(isSet).toBeFalsy();
+
+            let legacy = await vault.getOddPasswordItems();
+
+            // only one, another one is Ledger
+            expect(legacy).toContainEqual({type: 'seed', id: '14780c33-0364-4bff-9244-a7a495c0cf33'});
+            expect(legacy.length).toBe(1);
+        });
     })
 
 });

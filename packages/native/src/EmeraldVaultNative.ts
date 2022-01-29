@@ -18,7 +18,7 @@ import {
     CreateAddressBookItem,
     WalletState,
     CurrentAddress,
-    AddressRole, getBlockchainType, isEthereumTx, HWKeyDetails
+    AddressRole, getBlockchainType, isEthereumTx, HWKeyDetails, OddPasswordItem, ExportedWeb3Json
 } from "@emeraldpay/emerald-vault-core";
 
 var addon = require('../native/index.node');
@@ -258,12 +258,17 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
-    exportJsonPk(entryId: EntryId, password?: string): Promise<string> {
+    exportJsonPk(entryId: EntryId, password: string): Promise<ExportedWeb3Json> {
         return new Promise((resolve, reject) => {
             let op = EntryIdOp.of(entryId);
-            let status: Status<string>;
+            let status: Status<ExportedWeb3Json>;
             try {
-                status = JSON.parse(addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password));
+                let statusPlain: Status<string> = JSON.parse(addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password));
+                status = {
+                    error: statusPlain.error,
+                    succeeded: statusPlain.succeeded,
+                    result: JSON.parse(statusPlain.result)
+                }
             } catch (e) {
                 return reject(e);
             }
@@ -372,4 +377,29 @@ export class EmeraldVaultNative implements IEmeraldVault {
             addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath, neonToPromise(resolve, reject));
         });
     }
+
+    createGlobalKey(password: String): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            addon.global_create(this.conf, password, neonToPromise(resolve, reject));
+        });
+    }
+
+    isGlobalKeySet(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            addon.global_isSet(this.conf, neonToPromise(resolve, reject));
+        });
+    }
+
+    getOddPasswordItems(): Promise<OddPasswordItem[]> {
+        return new Promise((resolve, reject) => {
+            addon.admin_listOdd(this.conf, neonToPromise(resolve, reject));
+        });
+    }
+
+    tryUpgradeOddItems(odd_password: string, global_password: string): Promise<Uuid[]> {
+        return new Promise((resolve, reject) => {
+            addon.admin_upgradeOdd(this.conf, odd_password, global_password, neonToPromise(resolve, reject));
+        });
+    }
+
 }

@@ -17,6 +17,7 @@ use emerald_vault::structs::wallet::PKType;
 use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{Address, TxOut, OutPoint, Txid};
 use neon::context::Context;
+use emerald_vault::structs::types::UsesOddKey;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UnsignedEthereumTxJson {
@@ -198,10 +199,18 @@ impl WrappedVault {
             None => return Err("No address for the entry".to_string())
         };
 
+        let keys = if seed.is_odd_key() {
+            KeyMapping::single(seed_id, password)
+        } else {
+            let global = storage.global_key().get()
+                .map_err(|_| "Global Key unavailable")?;
+            KeyMapping::global(global, password)
+        };
+
         let proposal = BitcoinTransferProposal {
             network: entry.blockchain.as_bitcoin_network(),
             seed: vec![seed],
-            keys: KeyMapping::single(seed_id, password),
+            keys,
             input: convert_inputs(unsigned_tx.inputs, xpub, seed_id, &hd_account)?,
             output: convert_output(unsigned_tx.outputs)?,
             change: entry.clone(),
@@ -209,7 +218,7 @@ impl WrappedVault {
         };
         let valid = proposal.validate();
         if valid.is_ok() {
-            entry.sign_bitcoin(proposal).map_err(|_| "Failed to sign".to_string())
+            entry.sign_bitcoin(proposal).map_err(|e| format!("Failed to sign: {:?}", e))
         } else {
             Err(format!("Invalid tx: {:?}", valid.expect_err("no_error_on_invalid")))
         }

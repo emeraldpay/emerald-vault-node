@@ -43,6 +43,12 @@ pub struct NewMnemonicAccount {
     pub hd_path: String,
 }
 
+#[derive(Serialize)]
+pub struct ExportedWeb3Json {
+    pub password: String,
+    pub json: String,
+}
+
 impl WrappedVault {
     fn list_entry_addresses(&self, wallet_id: Uuid, entry_id: usize, role: String, start: usize, limit: usize)
                             -> Result<Vec<CurrentAddressJson>, VaultError> {
@@ -101,11 +107,11 @@ impl WrappedVault {
         }
     }
 
-    fn put(&self, pk: &EthereumJsonV3File) -> Uuid {
+    fn put(&self, pk: &EthereumJsonV3File, json_password: String, global_password: String) -> Uuid {
         let storage = &self.cfg.get_storage();
         let id = storage
             .create_new()
-            .ethereum(pk, self.get_blockchain())
+            .ethereum(pk, json_password.as_str(), self.get_blockchain(), global_password.as_str())
             .expect("Keyfile not saved");
         id
     }
@@ -128,7 +134,7 @@ impl WrappedVault {
         wallet_id: Uuid,
         entry_id: usize,
         password: Option<String>,
-    ) -> EthereumJsonV3File {
+    ) -> (String, EthereumJsonV3File) {
         let storage = &self.cfg.get_storage();
 
         let wallet = storage
@@ -136,8 +142,9 @@ impl WrappedVault {
             .get(wallet_id)
             .expect("Wallet doesn't exit");
         let account = wallet.get_entry(entry_id).expect("Account doesn't exist");
+        let password = password.expect("Password is not provided");
         account
-            .export_ethereum_web3(password, storage)
+            .export_ethereum_web3(password.as_str(), storage)
             .expect("PrivateKey unavailable")
     }
 }
@@ -150,8 +157,17 @@ pub fn import_ethereum(mut cx: FunctionContext) -> JsResult<JsObject> {
         .argument::<JsString>(1)
         .expect("Input JSON is not provided")
         .value(&mut cx);
+    let json_password = cx
+        .argument::<JsString>(2)
+        .expect("JSON password is not provided")
+        .value(&mut cx);
+    let global_password = cx
+        .argument::<JsString>(3)
+        .expect("Global Password is not provided")
+        .value(&mut cx);
+
     let pk = EthereumJsonV3File::try_from(raw).expect("Invalid JSON");
-    let id = vault.put(&pk);
+    let id = vault.put(&pk, json_password, global_password);
     let address = vault
         .get_wallet_address(id)
         .expect("Address not initialized");
@@ -186,8 +202,15 @@ pub fn export(mut cx: FunctionContext) -> JsResult<JsString> {
     let password = args_get_str(&mut cx, 3);
 
     let pk = vault.export_web3(wallet_id, entry_id, password);
-    let result = serde_json::to_string_pretty(&pk).expect("Failed to convert to JSON");
-    let status = StatusResult::Ok(result).as_json();
+
+    let result_json = serde_json::to_string_pretty(&pk.1).expect("Failed to convert to JSON");
+    let result = ExportedWeb3Json {
+        password: pk.0,
+        json: result_json,
+    };
+    let result = serde_json::to_string(&result).map_err(|_| "Cannot convert to JSON".to_string());
+
+    let status = StatusResult::from(result).as_json();
     Ok(cx.string(status))
 }
 

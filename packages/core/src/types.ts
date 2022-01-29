@@ -307,7 +307,18 @@ interface AddAnyEntry {
 
 export interface AddJsonEntry extends AddAnyEntry {
     type: "ethereum-json";
+    /**
+     * JSON key as a string
+     */
     key: string;
+    /**
+     * Password used by the JSON file
+     */
+    jsonPassword: string;
+    /**
+     * Global Key password (Global Key must be set prior)
+     */
+    password: string;
 }
 
 export interface AddRawPkEntry extends AddAnyEntry {
@@ -430,4 +441,26 @@ export type HWKeyDetails = LedgerDetails;
 
 export function isLedgerDetails(value: HWKeyDetails): value is LedgerDetails {
     return typeof value === "object" && value.type === "ledger";
+}
+
+/**
+ * Reference to a vault item that doesn't use Global Key
+ */
+export interface OddPasswordItem {
+    type: "seed" | "key";
+    id: Uuid;
+}
+
+/**
+ * Exported Ethereum Web3 Key
+ */
+export interface ExportedWeb3Json {
+    /**
+     * Private key in Web3 JSON format
+     */
+    json: string;
+    /**
+     * Password used by the JSON file to encrypt the Private Key
+     */
+    password: string;
 }

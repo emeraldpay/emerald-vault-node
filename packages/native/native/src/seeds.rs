@@ -363,6 +363,8 @@ impl WrappedVault {
             .filter(|a| a.is_ok())
             .map(|a| a.unwrap())
             .collect();
+        let storage = &self.cfg.get_storage();
+        let global = storage.global_key().get_if_exists()?;
         let addresses = match blockchain.get_type() {
             BlockchainType::Bitcoin => {
                 let hd_path_acc: Vec<AccountHDPath> = hd_path_all.iter()
@@ -380,7 +382,7 @@ impl WrappedVault {
                     .collect();
                 let mut result: Vec<HDPathAddress> = Vec::with_capacity(hd_path_std.len() + hd_path_acc.len());
                 if !hd_path_acc.is_empty() {
-                    seed.get_xpub(password.clone(), &hd_path_acc, blockchain)?.iter()
+                    seed.get_xpub(password.clone(), &global, &hd_path_acc, blockchain)?.iter()
                         .map(|a| HDPathAddress {
                             hd_path: a.0.as_custom().to_string(), // convert to custom to encode as standrd hd path
                             address: a.1.to_string(),
@@ -388,7 +390,7 @@ impl WrappedVault {
                         .for_each(|a| result.push(a));
                 };
 
-                seed.get_addresses::<Address>(password, &hd_path_std, blockchain)?
+                seed.get_addresses::<Address>(password, global, &hd_path_std, blockchain)?
                     .iter()
                     .map(|a| HDPathAddress {
                         hd_path: a.0.to_string(),
@@ -399,7 +401,7 @@ impl WrappedVault {
                 result
             },
             BlockchainType::Ethereum => {
-                seed.get_addresses::<EthereumAddress>(password, &hd_path_std, blockchain)?
+                seed.get_addresses::<EthereumAddress>(password, global, &hd_path_std, blockchain)?
                     .iter()
                     .map(|a| HDPathAddress {
                         hd_path: a.0.to_string(),
@@ -427,8 +429,8 @@ impl WrappedVault {
             SeedDefinitionOrReferenceType::Mnemonic(m) => {
                 let mnemonic = Mnemonic::try_from(Language::English, m.value.as_str())
                     .expect("Failed to parse mnemonic phrase");
-                let temp_seed = SeedSource::create_bytes(mnemonic.seed(m.password), "temp")?;
-                self.list_seed_addresses(temp_seed, Some("temp".to_string()), hd_path_all, blockchain)?
+                let temp_seed = SeedSource::create_raw(mnemonic.seed(m.password))?;
+                self.list_seed_addresses(temp_seed, Some("NONE".to_string()), hd_path_all, blockchain)?
             }
             SeedDefinitionOrReferenceType::Ledger => {
                 self.list_seed_addresses(SeedSource::Ledger(LedgerSource::default()), None, hd_path_all, blockchain)?
@@ -452,10 +454,14 @@ impl WrappedVault {
                 if seed.password.is_none() {
                     return Err(VaultError::PasswordRequired);
                 }
+                if !storage.global_key().is_set() {
+                    return Err(VaultError::GlobalKeyRequired);
+                }
+                let global = storage.global_key().get_if_exists()?;
                 let mnemonic = Mnemonic::try_from(Language::English, value.value.as_str())
                     .map_err(|_| VaultError::InvalidDataError("mnemonic".to_string()))?;
                 let raw = mnemonic.seed(value.password);
-                SeedSource::Bytes(Encrypted::encrypt(raw, seed.password.unwrap().as_str())?)
+                SeedSource::Bytes(Encrypted::encrypt(raw, seed.password.unwrap().as_bytes(), global)?)
             }
             SeedDefinitionOrReferenceType::Reference(_) => {
                 return Err(VaultError::UnsupportedDataError(

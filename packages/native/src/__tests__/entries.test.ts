@@ -19,11 +19,12 @@ describe("Entries", () => {
 
     describe("Details", () => {
         let vault: EmeraldVaultNative;
-        beforeAll(() => {
+        beforeAll(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("entry-details")
             });
             vault.open();
+            await vault.createGlobalKey("test");
         });
 
         test("refers pk", async () => {
@@ -213,88 +214,6 @@ describe("Entries", () => {
 
         });
 
-        describe('Migrate vault 0.26 with ledger', () => {
-
-            let vault;
-            beforeAll(() => {
-                vault = new EmeraldVaultNative({
-                    dir: "./testdata/vault-0.26-ledger"
-                });
-                vault.open();
-            });
-
-            test("list eth", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let entries = wallets.entriesByBlockchain(100)
-                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
-
-                expect(entries.length).toBe(3);
-                expect(entries[0].address.value).toBe("0x3EAF0B987B49C4D782EE134FDC1243FD0CCDFDD3".toLowerCase());
-                expect(entries[0].receiveDisabled).toBeFalsy();
-                expect(entries[1].address.value).toBe("0x410891C20E253A2D284F898368860EC7FFA6153C".toLowerCase());
-                expect(entries[1].receiveDisabled).toBeFalsy();
-                expect(entries[2].address.value).toBe("0xBD5222391BBB9F17484F2565455FB6610D9E145F".toLowerCase());
-                expect(entries[2].receiveDisabled).toBeFalsy();
-            });
-
-            test("list etc", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
-                expect(entries[0].address.value).toBe("0x5B30DE96FDF94AC6C5B4A8C243F991C649D66FA1".toLowerCase());
-            });
-
-            test("list kovan", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let entries = wallets.entriesByBlockchain(10002)
-                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
-                expect(entries.length).toBe(0);
-            });
-
-        });
-
-        describe('Test vault 0.26 basic', () => {
-
-            let vault;
-            beforeAll(() => {
-                vault = new EmeraldVaultNative({
-                    dir: "./testdata/vault-0.26-basic"
-                });
-                vault.open();
-            });
-
-            test("list eth", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let entries = wallets.entriesByBlockchain(100)
-                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
-                expect(entries.length).toBe(2);
-                expect(entries[0].address.value).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(entries[0].receiveDisabled).toBeFalsy();
-                expect(entries[1].address.value).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
-                expect(entries[1].receiveDisabled).toBeFalsy();
-
-                let entry = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3").value;
-                expect(entry.name).toBe("foo bar");
-                // expect(entries[0].description).toBe("teßt entry #1");
-            });
-
-            test("list etc", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
-                expect(entries.length).toBe(1);
-                expect(entries[0].address.value).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
-            });
-
-            test("list kovan", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let entries = wallets.entriesByBlockchain(10002)
-                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
-                expect(entries.length).toBe(0);
-            });
-
-        });
-
         describe('Test default dir', () => {
 
             let vault;
@@ -325,36 +244,17 @@ describe("Entries", () => {
 
         });
 
-        describe('Test vault 0.26 with Snappy compression', () => {
-
-            let vault;
-            beforeAll(() => {
-                vault = new EmeraldVaultNative({
-                    dir: "./testdata/vault-0.26-snappy"
-                });
-                vault.open();
-            });
-
-            test("list etc", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let entries = wallets.entriesByBlockchain(101)
-                    .sort((a, b) => AddressRefOp.of(a.address).compareTo(b.address));
-                expect(entries.length).toBe(2);
-                expect(entries[0].address.value).toBe("0x1e728c6d055380b69ac1c0fdc27425158621f109");
-                expect(entries[1].address.value).toBe("0xca1c2e76f2122fdda9f97da0c4e37674727645cc");
-            });
-
-        });
     });
 
     describe("Export", () => {
         describe('Test export JSON', () => {
 
             let vault: EmeraldVaultNative;
-            beforeAll(() => {
+            beforeAll(async () => {
                 vault = new EmeraldVaultNative({
                     dir: tempPath("export-json")
                 });
+                await vault.createGlobalKey("test-global");
             });
 
             test("errors for unknown entry", (done) => {
@@ -373,97 +273,75 @@ describe("Entries", () => {
                     });
             });
 
-            test("import & export 6412c428", async () => {
+            test("import & export 3eaf0b", async () => {
                 let data = {
                     "version": 3,
-                    "id": "305f4853-80af-4fa6-8619-6f285e83cf28",
-                    "address": "6412c428fc02902d137b60dc0bd0f6cd1255ea99",
-                    "name": "Hello",
-                    "description": "World!!!!",
+                    "id": "1d098815-15b2-42da-9bd6-e549396a3a4d",
+                    "address": "3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
+                    "name": "",
+                    "description": "",
                     "visible": true,
                     "crypto": {
                         "cipher": "aes-128-ctr",
-                        "cipherparams": {"iv": "e4610fb26bd43fa17d1f5df7a415f084"},
-                        "ciphertext": "dc50ab7bf07c2a793206683397fb15e5da0295cf89396169273c3f49093e8863",
+                        "cipherparams": {"iv": "07d2a1660d8d02f0dbf55578044bb2b7"},
+                        "ciphertext": "91cc591b18f6a9b115555990db18f647ed828dad30cdf7e3493e2eb0a1f80514",
                         "kdf": "scrypt",
                         "kdfparams": {
                             "dklen": 32,
-                            "salt": "86c6a8857563b57be9e16ad7a3f3714f80b714bcf9da32a2788d695a194f3275",
+                            "salt": "8c20d18ae12d11128aad057e37dd840a695b60c22ef020fae1827308a6bdf485",
                             "n": 1024,
                             "r": 8,
                             "p": 1
                         },
-                        "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
+                        "mac": "a37f95a2e5726c45c88153dad4d88b58acf72655c173bf2f0f0444a3b42b4790"
                     }
                 };
                 let walletId = await vault.addWallet("test");
                 let entryId = await vault.addEntry(walletId, {
                     blockchain: 100,
                     type: "ethereum-json",
-                    key: JSON.stringify(data)
+                    key: JSON.stringify(data),
+                    jsonPassword: "testtest",
+                    password: "test-global"
                 });
 
-                let current = JSON.parse(await vault.exportJsonPk(entryId));
+                let exported = await vault.exportJsonPk(entryId, "test-global")
+                let current = JSON.parse(exported.json);
                 expect(current).toBeDefined();
-                expect(current.address).toBe("6412c428fc02902d137b60dc0bd0f6cd1255ea99")
+                expect(current.address).toBe("3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3")
             });
 
         });
 
-        describe('Test export from vault-0.26', () => {
-
-            let vault: EmeraldVaultNative;
-            beforeAll(() => {
-                vault = new EmeraldVaultNative({
-                    dir: "./testdata/vault-0.26-basic"
-                });
-                vault.open();
-            });
-
-            test("export 6412c428", async () => {
-                let wallets = WalletsOp.of(await vault.listWallets());
-                let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(wallet).toBeDefined();
-                expect(wallet.value.name).toBe("foo bar");
-                let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(entry).toBeDefined();
-
-                let current = JSON.parse(await vault.exportJsonPk(entry.id, "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"));
-                expect(current.address).toBe("3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            });
-
-        });
     });
 
     describe("Import JSON", () => {
         let vault: EmeraldVaultNative;
-        beforeAll(() => {
+        beforeAll(async () => {
             vault = new EmeraldVaultNative({
-                dir: "./testdata/tmp-import-json"
+                dir: tempPath("./testdata/import-json")
             });
+            await vault.createGlobalKey("test-global");
         });
 
-        test("import scrypt - 6412c428", async () => {
+        test("import scrypt - f079f4", async () => {
             let data = {
                 "version": 3,
-                "id": "305f4853-80af-4fa6-8619-6f285e83cf28",
-                "address": "6412c428fc02902d137b60dc0bd0f6cd1255ea99",
-                "name": "Hello",
-                "description": "World!!!!",
-                "visible": true,
+                "id": "038a3f29-58c2-4b04-af6f-82d419a5b99a",
+                "address": "f079f4dc353c8c60d21507bab994c9bb8b422559",
                 "crypto": {
+                    "ciphertext": "73188dc1ead6f9b1d938c932a8ac32e2f79b255ee61c8ccf7ceca56c7942f72a",
+                    "cipherparams": {"iv": "875e43cf3bc53752ed4f3b8493668cce"},
                     "cipher": "aes-128-ctr",
-                    "cipherparams": {"iv": "e4610fb26bd43fa17d1f5df7a415f084"},
-                    "ciphertext": "dc50ab7bf07c2a793206683397fb15e5da0295cf89396169273c3f49093e8863",
                     "kdf": "scrypt",
                     "kdfparams": {
                         "dklen": 32,
-                        "salt": "86c6a8857563b57be9e16ad7a3f3714f80b714bcf9da32a2788d695a194f3275",
-                        "n": 1024,
+                        "salt": "ac1f1c9461c79310966af141009f0e97c13bf2d076810c46dcd209a31811f503",
+                        "n": 8192,
                         "r": 8,
                         "p": 1
                     },
-                    "mac": "8dfedc1a92e2f2ca1c0c60cd40fabb8fb6ce7c05faf056281eb03e0a9996ecb0"
+                    "mac": "0fa24647af1a077aecfa3ca3fc22bdb24de9b527ec4b581e8ab848dbf9086e92"
                 }
             };
 
@@ -471,12 +349,14 @@ describe("Entries", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
-                key: JSON.stringify(data)
+                key: JSON.stringify(data),
+                jsonPassword: "just-a-test-wallet-100",
+                password: "test-global"
             });
 
             let entry = (await vault.getWallet(walletId)).entries[0] as EthereumEntry;
 
-            expect(entry.address.value).toBe("0x6412c428fc02902d137b60dc0bd0f6cd1255ea99");
+            expect(entry.address.value).toBe("0xf079f4dc353c8c60d21507bab994c9bb8b422559");
             expect(entry.receiveDisabled).toBeFalsy();
         });
 
@@ -508,7 +388,9 @@ describe("Entries", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "ethereum-json",
-                key: JSON.stringify(data)
+                key: JSON.stringify(data),
+                jsonPassword: "testtest",
+                password: "test-global"
             });
 
             let entry = (await vault.getWallet(walletId)).entries[0] as EthereumEntry;
@@ -543,7 +425,9 @@ describe("Entries", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
-                key: JSON.stringify(data)
+                key: JSON.stringify(data),
+                jsonPassword: "test",
+                password: "test-global"
             });
 
             let entry = (await vault.getWallet(walletId)).entries[0] as EthereumEntry;
@@ -578,7 +462,9 @@ describe("Entries", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "ethereum-json",
-                key: JSON.stringify(data)
+                key: JSON.stringify(data),
+                jsonPassword: "testpassword",
+                password: "test-global"
             });
 
             let entry = (await vault.getWallet(walletId)).entries[0] as EthereumEntry;
@@ -671,25 +557,22 @@ describe("Entries", () => {
 
     describe("Export PK", () => {
         let vault: EmeraldVaultNative;
-        beforeAll(() => {
+        beforeAll(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("export-pk")
             });
+            await vault.createGlobalKey("test-global")
         });
 
         test("import and export pk, 0xfac192ce", async () => {
-            let data = {
-                pk: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                password: "test"
-            };
             let walletId = await vault.addWallet("test");
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "raw-pk-hex",
-                key: data.pk,
-                password: data.password
+                key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                password: "test-global"
             });
-            let pk = await vault.exportRawPk(entryId, "test");
+            let pk = await vault.exportRawPk(entryId, "test-global");
 
             expect(pk).toBe("0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd");
         });
@@ -720,10 +603,12 @@ describe("Entries", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
-                key: JSON.stringify(data)
+                key: JSON.stringify(data),
+                jsonPassword: "testpassword",
+                password: "test-global"
             });
 
-            let pk = await vault.exportRawPk(entryId, "testpassword");
+            let pk = await vault.exportRawPk(entryId, "test-global");
 
             expect(pk).toBe("0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d");
         });
@@ -756,21 +641,59 @@ describe("Entries", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
-                key: JSON.stringify(data)
+                key: JSON.stringify(data),
+                jsonPassword: "testtest",
+                password: "test-global"
             });
 
-            let pk = await vault.exportRawPk(entryId, "testtest");
+            let pk = await vault.exportRawPk(entryId, "test-global");
 
             expect(pk).toBe("0xad901ebb27a07ca54ffe797b24f602bdd600f300283c02a0b58b7c0567f12234");
+        });
+
+        test("import and export scrypt 2", async () => {
+            let data = {
+                "version": 3,
+                "id": "038a3f29-58c2-4b04-af6f-82d419a5b99a",
+                "address": "f079f4dc353c8c60d21507bab994c9bb8b422559",
+                "crypto": {
+                    "ciphertext": "73188dc1ead6f9b1d938c932a8ac32e2f79b255ee61c8ccf7ceca56c7942f72a",
+                    "cipherparams": {"iv": "875e43cf3bc53752ed4f3b8493668cce"},
+                    "cipher": "aes-128-ctr",
+                    "kdf": "scrypt",
+                    "kdfparams": {
+                        "dklen": 32,
+                        "salt": "ac1f1c9461c79310966af141009f0e97c13bf2d076810c46dcd209a31811f503",
+                        "n": 8192,
+                        "r": 8,
+                        "p": 1
+                    },
+                    "mac": "0fa24647af1a077aecfa3ca3fc22bdb24de9b527ec4b581e8ab848dbf9086e92"
+                }
+            };
+
+            let walletId = await vault.addWallet("test");
+            let entryId = await vault.addEntry(walletId, {
+                blockchain: 100,
+                type: "ethereum-json",
+                key: JSON.stringify(data),
+                jsonPassword: "just-a-test-wallet-100",
+                password: "test-global"
+            });
+
+            let pk = await vault.exportRawPk(entryId, "test-global");
+
+            expect(pk).toBe("0xed7e236d84a69f4090a1834e2ef546f3cf15d218ff26494eae41aaeff8103637");
         });
     });
 
     describe("Remove", () => {
         let vault: EmeraldVaultNative;
-        beforeAll(() => {
+        beforeAll(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("remove")
             });
+            await vault.createGlobalKey("test-global");
         });
 
         test("errors for invalid address", (done) => {
@@ -800,11 +723,14 @@ describe("Entries", () => {
                 "id": "3198bc9c-6672-5ab3-d995-4942343ae5b6",
                 "version": 3
             };
+            // just-a-test-wallet-100
 
             let walletId = await vault.addWallet("test 1");
             let entryId = await vault.addEntry(walletId, {
                 type: "ethereum-json",
                 key: JSON.stringify(data),
+                jsonPassword: "testpassword",
+                password: "test-global",
                 blockchain: 101
             });
 
@@ -828,10 +754,12 @@ describe("Entries", () => {
 
     describe("Create from seed", () => {
         let vault: EmeraldVaultNative;
-        beforeEach(() => {
+        beforeEach(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("seed-entry")
             });
+            await vault.createGlobalKey("test");
+            vault.open()
         });
 
         test("Create ethereum", async () => {

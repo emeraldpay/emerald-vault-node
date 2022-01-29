@@ -4,14 +4,16 @@ import * as bitcoin from "bitcoinjs-lib";
 import sha256 from 'crypto-js/sha256';
 import CryptoJS from 'crypto-js';
 import {Network} from "bitcoinjs-lib/types/types";
+import {tempPath} from "../__tests__/_commons";
 
 describe('Sign different tx combinations (slow to execute)', () => {
 
     let vault: EmeraldVaultNative;
-    beforeAll(() => {
+    beforeAll(async () => {
         vault = new EmeraldVaultNative({
-            dir: "./testdata/tmp-sign-btc-tx-variants"
+            dir: tempPath("./testdata/sign-btc-tx-variants")
         });
+        await vault.createGlobalKey("global-password");
     });
 
     function testAll(entryId: EntryId): Promise<any> {
@@ -99,7 +101,7 @@ describe('Sign different tx combinations (slow to execute)', () => {
             };
 
             result.push(
-                vault.signTx(entryId, tx, "test")
+                vault.signTx(entryId, tx, "global-password")
                     .then((raw) => {
                         // console.log("raw", raw);
 
@@ -157,7 +159,7 @@ describe('Sign different tx combinations (slow to execute)', () => {
             value: {
                 value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
             },
-            password: "test"
+            password: "global-password"
         });
 
         let walletId = await vault.addWallet("test seed");
@@ -165,7 +167,7 @@ describe('Sign different tx combinations (slow to execute)', () => {
             blockchain: 1,
             type: "hd-path",
             key: {
-                seed: {type: "id", value: seed_id, password: "test"},
+                seed: {type: "id", value: seed_id, password: "global-password"},
                 hdPath: "m/84'/0'/2'/0/1",
             }
         };

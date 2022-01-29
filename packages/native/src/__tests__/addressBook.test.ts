@@ -2,42 +2,6 @@ import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
 
 describe("Address Book", () => {
-    describe('Test vault 0.26 book', () => {
-
-        let vault;
-        beforeAll(() => {
-            vault = new EmeraldVaultNative({
-                dir: "./testdata/vault-0.26-book"
-            });
-            vault.open();
-        });
-
-        test("list eth", async () => {
-            let entries = await vault.listAddressBook(100);
-            expect(entries.length).toBe(2);
-
-            expect(entries[0].address).toEqual({
-                type: 'single',
-                value: "0xB3c9A2f3F96ffBC4b7DEd2D92C83175698147Ae2".toLowerCase()
-            });
-            expect(entries[0].name).toBe("name 1");
-            expect(entries[0].description).toBe("тест");
-
-            expect(entries[1].address).toEqual({
-                type: 'single',
-                value: "0xc2d7cf95645d33006175b78989035c7c9061d3f9".toLowerCase()
-            });
-            expect(entries[1].name).toBeNull();
-            expect(entries[1].description).toBeNull();
-        });
-
-        test("list etc", async () => {
-            let entries = await vault.listAddressBook(101);
-            expect(entries.length).toBe(0);
-        });
-
-    });
-
     describe('Test empty book', () => {
 
         let vault;

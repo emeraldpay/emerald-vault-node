@@ -73,7 +73,10 @@ export {
 
     LedgerDetails, HWKeyDetails,
     isLedgerDetails,
-    LedgerApp
+    LedgerApp,
+
+    OddPasswordItem,
+    ExportedWeb3Json
 } from './types';
 
 export {

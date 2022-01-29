@@ -38,6 +38,8 @@ pub struct AddEntryJson {
     #[serde(flatten)]
     pub key_value: AddEntryType,
     pub password: Option<String>,
+    #[serde(rename = "jsonPassword")]
+    pub json_password: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -330,7 +332,12 @@ impl WrappedVault {
         let result = match entry.key_value {
             AddEntryType::EthereumJson(json) => {
                 let json = EthereumJsonV3File::try_from(json)?;
-                let id = storage.add_ethereum_entry(wallet_id).json(&json, blockchain)?;
+                let json_password = entry.json_password.expect("JSON Password is not provided");
+                if entry.password.is_none() {
+                    panic!("Password is required".to_string())
+                }
+                let id = storage.add_ethereum_entry(wallet_id)
+                    .json(&json, json_password.as_str(), blockchain, entry.password.unwrap().as_str())?;
                 id
             }
             AddEntryType::RawHex(hex) => {

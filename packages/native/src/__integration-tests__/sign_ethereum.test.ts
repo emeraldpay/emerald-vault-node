@@ -7,6 +7,7 @@ import {
 } from "@emeraldpay/emerald-vault-core";
 import Common from "ethereumjs-common";
 import {Transaction} from "ethereumjs-tx";
+import {tempPath} from "../__tests__/_commons";
 
 function convertHex(b: Buffer): string {
     let value = b.toString('hex');
@@ -35,10 +36,11 @@ function hexQuantity(hex: string): string {
 describe('Sign different tx combinations (slow to execute)', () => {
 
     let vault: EmeraldVaultNative;
-    beforeAll(() => {
+    beforeAll(async () => {
         vault = new EmeraldVaultNative({
-            dir: "./testdata/tmp-sign-tx-variants"
+            dir: tempPath("./testdata/sign-tx-variants")
         });
+        await vault.createGlobalKey("global-password");
     });
 
     let pk = {
@@ -86,7 +88,7 @@ describe('Sign different tx combinations (slow to execute)', () => {
                                     data
                                 };
                                 result.push(
-                                    vault.signTx(entryId, tx, "123456")
+                                    vault.signTx(entryId, tx, "global-password")
                                         .then((raw) => {
                                             expect(raw).toBeDefined();
                                             let parsed;
@@ -124,7 +126,9 @@ describe('Sign different tx combinations (slow to execute)', () => {
         let entryId = await vault.addEntry(walletId, {
             blockchain: 100,
             type: "ethereum-json",
-            key: JSON.stringify(pk)
+            key: JSON.stringify(pk),
+            jsonPassword: "123456",
+            password: "global-password"
         });
         await testAll(entryId, 1);
     });
@@ -134,7 +138,9 @@ describe('Sign different tx combinations (slow to execute)', () => {
         let entryId = await vault.addEntry(walletId, {
             blockchain: 101,
             type: "ethereum-json",
-            key: JSON.stringify(pk)
+            key: JSON.stringify(pk),
+            jsonPassword: "123456",
+            password: "global-password"
         });
         await testAll(entryId, 61);
     });
@@ -144,7 +150,9 @@ describe('Sign different tx combinations (slow to execute)', () => {
         let entryId = await vault.addEntry(walletId, {
             blockchain: 10002,
             type: "ethereum-json",
-            key: JSON.stringify(pk)
+            key: JSON.stringify(pk),
+            jsonPassword: "123456",
+            password: "global-password"
         });
         await testAll(entryId, 42);
     })

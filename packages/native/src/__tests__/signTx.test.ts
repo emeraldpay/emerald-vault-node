@@ -4,78 +4,14 @@ import {UnsignedBitcoinTx, WalletsOp} from "@emeraldpay/emerald-vault-core";
 
 
 describe("Sign transaction", () => {
-    describe('Use vault 0.26', () => {
-
-        let vault: EmeraldVaultNative;
-        beforeAll(() => {
-            vault = new EmeraldVaultNative({
-                dir: "./testdata/vault-0.26-basic"
-            });
-            vault.open();
-        });
-
-        test("sign", async () => {
-            let tx = {
-                from: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x1051",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x2"
-            };
-            let wallets = WalletsOp.of(await vault.listWallets());
-            let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-
-            let raw = await vault.signTx(entry.id, tx, "testtest");
-
-            expect(raw).toBe("0xf865028477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38210518025a09d38cc96e9856d1a82ede28bee743dcff816ea3cb2217b927d4eab11887d9b9da05a236057d16224e93f59230e1c722e4511553e7264a80e787bcd29c6ec6a90c4");
-        });
-
-        test("sign with nonce 0x196", async () => {
-            let tx = {
-                from: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x292d3069b0a00",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x196"
-            };
-            let wallets = WalletsOp.of(await vault.listWallets());
-            let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let raw = await vault.signTx(entry.id, tx, "testtest");
-
-            expect(raw).toBe("0xf86c8201968477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3870292d3069b0a008026a0073d38c0929a96f0af687aa519e817bc5cee830cf27bbb0525fd2b102d364318a00b2ab0a20e908a0cd2f96720cae6f1dd900f3de7d40e4bb45fcb76263026c51c");
-        });
-
-        test("sign with data", async () => {
-            let tx = {
-                from: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x0",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x19",
-                data: "0xa9059cbb0000000000000000000000000d0707963952f2fba59dd06f2b425ace40b492fe0000000000000000000000000000000000000000000002650fe6fe599c940000"
-            };
-            let wallets = WalletsOp.of(await vault.listWallets());
-            let wallet = wallets.findWalletByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let entry = wallet.findEntryByAddress("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-            let raw = await vault.signTx(entry.id, tx, "testtest");
-
-            expect(raw).toBe("0xf8a8198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd380b844a9059cbb0000000000000000000000000d0707963952f2fba59dd06f2b425ace40b492fe0000000000000000000000000000000000000000000002650fe6fe599c94000025a0b2501b7c0ccd6cb000b6f568e504ed605f41e5fbdbdffe2a440e636aa499da1ca02e7e76de7b0167a09fda23395039443cf0bb523ceeacdf0f9fa873408753a7a3");
-        });
-
-    });
-
     describe('Import and sign', () => {
 
         let vault: EmeraldVaultNative;
-        beforeAll(() => {
+        beforeAll(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("import-sign")
             });
+            await vault.createGlobalKey("test-global")
         });
 
         test("sign with scrypt", async () => {
@@ -102,7 +38,9 @@ describe("Sign transaction", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
-                key: JSON.stringify(pk)
+                key: JSON.stringify(pk),
+                jsonPassword: "sign with scrypt",
+                password: "test-global"
             });
 
             let tx = {
@@ -114,7 +52,7 @@ describe("Sign transaction", () => {
                 nonce: "0x19",
                 data: ""
             };
-            let raw = await vault.signTx(entryId, tx, "sign with scrypt");
+            let raw = await vault.signTx(entryId, tx, "test-global");
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808026a0f3357ca4028bcfd26de329b5405ed60342a3aad785e84ea3776ef650818e7de5a0469efc686f479b242f311480911668c8b1993188908f87bd1d1c56b82a0b4fa6");
         });
@@ -145,7 +83,9 @@ describe("Sign transaction", () => {
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "ethereum-json",
-                key: JSON.stringify(pk)
+                key: JSON.stringify(pk),
+                jsonPassword: "testpassword",
+                password: "test-global"
             });
 
             let tx = {
@@ -157,14 +97,14 @@ describe("Sign transaction", () => {
                 nonce: "0x19",
                 data: ""
             };
-            let raw = await vault.signTx(entryId, tx, "testpassword");
+            let raw = await vault.signTx(entryId, tx, "test-global");
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808025a06b2a5f318f1362404bd3f5bb68b7947091ae9dd06c8a01bdd967c20b1cd04ac5a059ab6b5aacf77ba3b5b3938254916e27e69f2b0ddfc028ec710eaaea96e3cff8");
         });
 
         test("use mnemonic", async () => {
             let mnemonic = {
-                password: "1234",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/3",
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
             };
@@ -175,13 +115,13 @@ describe("Sign transaction", () => {
                 value: {
                     value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
                 },
-                password: "1234"
+                password: "test-global"
             });
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
-                    seed: {type: "id", value: seedId, password: "1234"},
+                    seed: {type: "id", value: seedId, password: "test-global"},
                     hdPath: "m/44'/60'/0'/0/3",
                 }
             });
@@ -196,7 +136,7 @@ describe("Sign transaction", () => {
                 nonce: "0x19",
                 data: ""
             };
-            let raw = await vault.signTx(entryId, tx, "1234");
+            let raw = await vault.signTx(entryId, tx, "test-global");
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808025a02eab8b290050239e77329cb6d0d663c9bdbf0fe15918e4937be727dd67a0c593a05dda8f7b748b5907c0b414be260809f9c2dcfcd35a4a9b1cc801a7f4fe2154eb");
         });
@@ -208,13 +148,13 @@ describe("Sign transaction", () => {
                 value: {
                     value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
                 },
-                password: "1234"
+                password: "test-global"
             });
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 1,
                 type: "hd-path",
                 key: {
-                    seed: {type: "id", value: seedId, password: "1234"},
+                    seed: {type: "id", value: seedId, password: "test-global"},
                     hdPath: "m/84'/0'/2'/0/0",
                 }
             });
@@ -238,7 +178,7 @@ describe("Sign transaction", () => {
                 fee: 500
             };
 
-            let raw = await vault.signTx(entryId, tx, "1234");
+            let raw = await vault.signTx(entryId, tx, "test-global");
 
             expect(raw).toBe("02000000000101ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d040100000000feffffff0169716202000000001600142c0d6288124ca4b82415b85464d085363ba5ee02024830450221008ac94f1e95782d92a50aacf8730547b11815c11a3ac95cc8ca314da5bf7f00ed022049e58da09d003c95ab2020b8446e888c300dd7dabc99ee9dbd3ab3574646dbc0012102e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb00000000");
         });
@@ -250,13 +190,13 @@ describe("Sign transaction", () => {
                 value: {
                     value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
                 },
-                password: "1234"
+                password: "test-global"
             });
             let entryId = await vault.addEntry(walletId, {
                 blockchain: 1,
                 type: "hd-path",
                 key: {
-                    seed: {type: "id", value: seedId, password: "1234"},
+                    seed: {type: "id", value: seedId, password: "test-global"},
                     hdPath: "m/84'/0'/2'/0/0",
                 }
             });
@@ -292,7 +232,7 @@ describe("Sign transaction", () => {
                 fee: 800
             };
 
-            let raw = await vault.signTx(entryId, tx, "1234");
+            let raw = await vault.signTx(entryId, tx, "test-global");
             expect(raw).toBe("02000000000102ae0b16370f4e3ded9068c5a89ad740f1fe2d8839b693ecead1dab64339571d04010000000000000000ae0b16370f4e3ded9098633bc9ae1ead6d3b9473d54160c5a89ad740f1fe2d880200000000332211000280969800000000001600142c0d6288124ca4b82415b85464d085363ba5ee024ae6af0200000000160014ccdd1ceb262be59f227fe9a1ba1f91ac79a4d49702473044022054051833b2716dece1445af56cfd825a914080c30cf7a71df3ab7c2a39aa0c3a02206de71e4eb0c79873082ba69042769b12a7ed0d93c4006be26bcd439e0fcc52c7012102e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb02473044022016f45acb4f3a5a139f84efca1ad399aa09607998b9325783c26c2a0d5ecde96d02207ce8ef91c9088d04723e17a11f3b56bb98a9016df5b253c53e902b3a98e0197d012102e2ec110e2fff8c7ad0879015044d09395cf1665eb9a8ea80e1c30b53ea39cedb00000000");
         })
     });

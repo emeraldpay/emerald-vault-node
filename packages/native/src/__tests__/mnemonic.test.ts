@@ -6,10 +6,11 @@ describe("Mnemonic", () => {
 
     describe('Test generate mnemonic', () => {
         let vault: EmeraldVaultNative;
-        beforeAll(() => {
+        beforeAll(async () => {
             vault = new EmeraldVaultNative({
-                dir: "./testdata/tmp-gen-mnemonic"
+                dir: tempPath("./testdata/gen-mnemonic")
             });
+            await vault.createGlobalKey("test-global")
         });
 
         test("errors for invalid length", async () => {
@@ -50,15 +51,16 @@ describe("Mnemonic", () => {
     describe('Test import mnemonic', () => {
 
         let vault: EmeraldVaultNative;
-        beforeAll(() => {
+        beforeAll(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("import-mnemonic")
             });
+            await vault.createGlobalKey("test-global")
         });
 
         test("requires valid mnemonic", async () => {
             let data = {
-                password: "1234",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/3",
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify"
             };
@@ -75,7 +77,7 @@ describe("Mnemonic", () => {
 
         test("requires valid path", async () => {
             let data = {
-                password: "1234",
+                password: "test-global",
                 hdPath: "m44'60'0'",
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
             };
@@ -103,14 +105,13 @@ describe("Mnemonic", () => {
 
         test("requires password", async () => {
             let data = {
-                password: "",
                 hdPath: "m/44'/60'/0'/0/3",
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
             };
             await expect(
                 vault.importSeed({
                     type: "mnemonic",
-                    password: data.password,
+                    password: "",
                     value: {
                         value: data.mnemonic
                     }
@@ -120,7 +121,7 @@ describe("Mnemonic", () => {
 
         test("import c6148987 3", async () => {
             let data = {
-                password: "1234",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/3",
                 mnemonic: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
             };
@@ -150,7 +151,7 @@ describe("Mnemonic", () => {
 
         test("import f78a3c9 for ETC", async () => {
             let data = {
-                password: "testtest",
+                password: "test-global",
                 hdPath: "m/44'/61'/0'/0/1230",
                 mnemonic: "lift pledge combine cat olive divert ice fetch other typical idle idea insane friend false"
             };
@@ -180,7 +181,7 @@ describe("Mnemonic", () => {
 
         test("import 12 words mnemonic", async () => {
             let data = {
-                password: "testtest",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/1",
                 mnemonic: "cave math raven foam maze humble leave razor bonus merit leisure rough"
             };
@@ -210,7 +211,7 @@ describe("Mnemonic", () => {
 
         test("import 18 words mnemonic", async () => {
             let data = {
-                password: "testtest",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/2",
                 mnemonic: "below bird fossil menu slab chalk glow attitude work mammal orphan rose music holiday magic weather beef midnight"
             };
@@ -241,7 +242,7 @@ describe("Mnemonic", () => {
 
         test("import 21 words mnemonic", async () => {
             let data = {
-                password: "testtest",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/2030",
                 mnemonic: "around force sponsor slender upper cheese gas smile guard similar dog rival select gate fit load upper spread wolf magic marble"
             };
@@ -272,7 +273,7 @@ describe("Mnemonic", () => {
 
         test("import 24 words mnemonic", async () => {
             let data = {
-                password: "testtest",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/1000",
                 mnemonic: "erode youth impose rhythm best obey virtual general essay convince visit truck blanket lucky lizard stadium display hip market hello alley orient parrot blanket"
             };
@@ -303,7 +304,7 @@ describe("Mnemonic", () => {
 
         test("import address with zero prefix", async () => {
             let data = {
-                password: "testtest",
+                password: "test-global",
                 hdPath: "m/44'/60'/0'/0/134",
                 mnemonic: "gravity tornado laugh hold engine relief next math sleep organ above purse prefer afraid wife service opinion gallery swap violin middle"
             };

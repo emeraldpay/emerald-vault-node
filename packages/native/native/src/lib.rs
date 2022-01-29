@@ -25,6 +25,7 @@ mod json;
 mod seeds;
 mod sign;
 mod wallets;
+mod global;
 
 use env_logger::Builder;
 use chrono::Local;
@@ -102,10 +103,19 @@ register_module!(mut cx, {
     cx.export_function("seed_hwkey_list", seeds::list_hwkey)
         .expect("seed_hwkey_list not exported");
 
+    cx.export_function("global_isSet", global::is_set)
+        .expect("global_isSet not exported");
+    cx.export_function("global_create", global::create)
+        .expect("global_create not exported");
+
     cx.export_function("admin_migrate", admin::migrate)
         .expect("admin_migrate not exported");
     cx.export_function("admin_autofix", admin::autofix)
         .expect("admin_autofix not exported");
+    cx.export_function("admin_listOdd", admin::list_odd)
+        .expect("admin_listOdd not exported");
+    cx.export_function("admin_upgradeOdd", admin::upgrade_odd)
+        .expect("admin_upgradeOdd not exported");
 
     Ok(())
 });

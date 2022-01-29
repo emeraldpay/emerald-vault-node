@@ -159,10 +159,11 @@ describe("Seeds", () => {
 
     describe("Create Seed", () => {
         let vault: EmeraldVaultNative;
-        beforeEach(() => {
+        beforeEach(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("seed-create")
             });
+            await vault.createGlobalKey("test-global")
         });
 
         test("List empty", async () => {
@@ -176,7 +177,7 @@ describe("Seeds", () => {
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
                 },
-                password: "test"
+                password: "test-global"
             });
             expect(id).toBeDefined();
 
@@ -189,7 +190,7 @@ describe("Seeds", () => {
             let ref: SeedReference = {
                 type: "id",
                 value: id,
-                password: "test"
+                password: "test-global"
             }
 
             let addresses = await vault.listSeedAddresses(ref, BlockchainId.ETHEREUM, ["m/44'/60'/0'/0/1"]);
@@ -202,7 +203,7 @@ describe("Seeds", () => {
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
                 },
-                password: "test",
+                password: "test-global",
                 label: "Hello World!",
             });
             expect(id).toBeDefined();
@@ -218,7 +219,7 @@ describe("Seeds", () => {
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
                 },
-                password: "test",
+                password: "test-global",
             });
             expect(id).toBeDefined();
             let seed = (await vault.listSeeds())[0];

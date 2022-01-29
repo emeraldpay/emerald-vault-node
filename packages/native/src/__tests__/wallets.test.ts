@@ -4,49 +4,6 @@ import {tempPath} from "./_commons";
 
 describe("Wallets", () => {
 
-    describe("List", () => {
-
-        describe('Vault 0.26 - Basic', () => {
-
-            let vault: EmeraldVaultNative;
-            beforeAll(() => {
-                vault = new EmeraldVaultNative({
-                    dir: "./testdata/vault-0.26-basic"
-                });
-                vault.open();
-            });
-
-            test("list items", async () => {
-                let wallets = await vault.listWallets();
-
-                expect(wallets.length).toBe(3);
-
-                let eth = wallets.filter((w) => w.entries.some((a) => a.blockchain == 100));
-                let etc = wallets.filter((w) => w.entries.some((a) => a.blockchain == 101));
-
-                expect(eth.length).toBe(2);
-                expect(etc.length).toBe(1);
-
-                expect(isEthereumEntry(etc[0].entries[0])).toBeTruthy();
-
-                expect(etc[0].entries.length).toBe(1);
-                // @ts-ignore
-                expect(etc[0].entries[0].address?.value).toBe("0x5b30de96fdf94ac6c5b4a8c243f991c649d66fa1");
-
-                eth = eth.sort((a, b) =>
-                    // @ts-ignore
-                    AddressRefOp.of(a.entries[0].address).compareTo(b.entries[0].address)
-                );
-
-                // @ts-ignore
-                expect(eth[0].entries[0].address.value).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3");
-                expect(eth[0].name).toBe("foo bar");
-                // @ts-ignore
-                expect(eth[1].entries[0].address.value).toBe("0x410891c20e253a2d284f898368860ec7ffa6153c");
-            });
-        });
-    });
-
     describe("Create wallet and entry", () => {
 
         describe("Create", () => {
@@ -133,10 +90,11 @@ describe("Wallets", () => {
 
         describe("Import Ethereum", () => {
             let vault: EmeraldVaultNative;
-            beforeEach(() => {
+            beforeEach(async () => {
                 vault = new EmeraldVaultNative({
                     dir: tempPath("wallet-import")
                 });
+                await vault.createGlobalKey("test-global")
             });
 
             test("Create and import JSON", async () => {
@@ -166,7 +124,9 @@ describe("Wallets", () => {
                 let acc: AddEntry = {
                     blockchain: 100,
                     type: "ethereum-json",
-                    key: JSON.stringify(key)
+                    key: JSON.stringify(key),
+                    jsonPassword: "testpassword",
+                    password: "test-global"
                 };
                 let result = await vault.addEntry(id, acc);
 
@@ -182,7 +142,7 @@ describe("Wallets", () => {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                    password: "test"
+                    password: "test-global"
                 };
                 let result = await vault.addEntry(id, acc);
 
@@ -199,7 +159,7 @@ describe("Wallets", () => {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                    password: "test"
+                    password: "test-global"
                 };
                 let entryId = await vault.addEntry(id, acc);
                 let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id);
@@ -224,14 +184,14 @@ describe("Wallets", () => {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                    password: "test1"
+                    password: "test-global"
                 };
                 let result1 = await vault.addEntry(id, acc1);
                 let acc2: AddEntry = {
                     blockchain: 101,
                     type: "raw-pk-hex",
                     key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
-                    password: "test2"
+                    password: "test-global"
                 };
                 let result2 = await vault.addEntry(id, acc2);
 
@@ -252,14 +212,14 @@ describe("Wallets", () => {
                     blockchain: 100,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                    password: "test1"
+                    password: "test-global"
                 };
                 let result1 = await vault.addEntry(id, acc1);
                 let acc2: AddEntry = {
                     blockchain: 101,
                     type: "raw-pk-hex",
                     key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
-                    password: "test2"
+                    password: "test-global"
                 };
                 let result2 = await vault.addEntry(id, acc2);
 
@@ -279,10 +239,11 @@ describe("Wallets", () => {
 
     describe("Update wallet", () => {
         let vault: EmeraldVaultNative;
-        beforeEach(() => {
+        beforeEach(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("wallet-update")
             });
+            await vault.createGlobalKey("test-global");
         });
 
         test("Update label", async () => {
@@ -311,7 +272,7 @@ describe("Wallets", () => {
                 value: {
                     value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
                 },
-                password: "test"
+                password: "test-global"
             });
             expect(id).toBeDefined();
 
@@ -320,7 +281,7 @@ describe("Wallets", () => {
                 blockchain: 100,
                 type: "hd-path",
                 key: {
-                    seed: {type: "id", value: id, password: "test"},
+                    seed: {type: "id", value: id, password: "test-global"},
                     hdPath: "m/44'/60'/1'/0/1",
                 }
             };
@@ -340,10 +301,11 @@ describe("Wallets", () => {
 
     describe("Remove wallet", () => {
         let vault: EmeraldVaultNative;
-        beforeEach(() => {
+        beforeEach(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("wallet-remove")
             });
+            await vault.createGlobalKey("test-global");
         });
 
         test("empty", async () => {
@@ -363,13 +325,13 @@ describe("Wallets", () => {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                password: "test"
+                password: "test-global"
             });
             await vault.addEntry(walletId, {
                 blockchain: 101,
                 type: "raw-pk-hex",
                 key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                password: "test"
+                password: "test-global"
             });
 
             let wallet = await vault.getWallet(walletId);
@@ -386,7 +348,7 @@ describe("Wallets", () => {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                password: "test"
+                password: "test-global"
             });
 
             let walletId2 = await vault.addWallet("test 2");
@@ -394,7 +356,7 @@ describe("Wallets", () => {
                 blockchain: 100,
                 type: "raw-pk-hex",
                 key: "0x0ac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
-                password: "test"
+                password: "test-global"
             });
 
             let wallet = await vault.getWallet(walletId1);
