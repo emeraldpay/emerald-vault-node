@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-native",
-  "version": "0.8.0-dev",
+  "version": "0.8.0-alpha.0",
   "description": "Emerald Vault as NodeJS library",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
   "license": "Apache-2.0",
@@ -57,7 +57,7 @@
     "version:electron": "./node_modules/.bin/electron --version"
   },
   "dependencies": {
-    "@emeraldpay/emerald-vault-core": "0.8.0-dev"
+    "@emeraldpay/emerald-vault-core": "0.8.0-alpha.0"
   },
   "devDependencies": {
     "typescript": "^3.9.10",
