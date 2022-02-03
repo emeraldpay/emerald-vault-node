@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
-import {UnsignedBitcoinTx, WalletsOp} from "@emeraldpay/emerald-vault-core";
+import {BlockchainId, UnsignedBitcoinTx, WalletsOp} from "@emeraldpay/emerald-vault-core";
 
 
 describe("Sign transaction", () => {
@@ -139,6 +139,39 @@ describe("Sign transaction", () => {
             let raw = await vault.signTx(entryId, tx, "test-global");
 
             expect(raw).toBe("0xf863198477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3808025a02eab8b290050239e77329cb6d0d663c9bdbf0fe15918e4937be727dd67a0c593a05dda8f7b748b5907c0b414be260809f9c2dcfcd35a4a9b1cc801a7f4fe2154eb");
+        });
+
+        test("sign WETH deposit", async () => {
+            let walletId = await vault.addWallet("test sign");
+            let seedId = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
+                },
+                password: "test-global"
+            });
+            let entryId = await vault.addEntry(walletId, {
+                blockchain: BlockchainId.GOERLI_TESTNET,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: seedId, password: "test-global"},
+                    hdPath: "m/44'/60'/160720'/0/3",
+                }
+            });
+
+            let tx = {
+                from: "0xA326F1cFfF481611Bb62AC15eeA4E18c628C2751",
+                to: "0x0Bb7509324cE409F7bbC4b701f932eAca9736AB7",
+                value: "0x16345785D8A0000", // 0.1 ETH
+                gas: "0xafce", // 45006
+                gasPrice: "0x4A817C800", // 20gwei
+                nonce: "0x0",
+                data: "0xd0e30db0" // deposit
+            };
+            let raw = await vault.signTx(entryId, tx, "test-global");
+
+            // txid: 0x00f319c78cdc89d90191857f824f301152ce89795aaaf7d7ce2edf0a9b403ae0
+            expect(raw).toBe("0xf870808504a817c80082afce940bb7509324ce409f7bbc4b701f932eaca9736ab788016345785d8a000084d0e30db02da0e677b057f68d837493835884d3c844043900d3bc6fa342779fa52d1ab3369504a00f3c6bb9a2b0b74185c88e4506f76720681d6f1091b6e23926fe302db4fda793");
         });
 
         test("sign bitcoin tx", async () => {

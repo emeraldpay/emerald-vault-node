@@ -167,7 +167,7 @@ impl WrappedVault {
 
         let result = entry
             .sign_tx(tx, Some(password), &storage)
-            .map_err(|_| "Failed to sign")?;
+            .map_err(|e| format!("Failed to sign: {:?}", e))?;
         Ok(result)
     }
 
