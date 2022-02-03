@@ -45,9 +45,9 @@ dependencies = [
 
 [[package]]
 name = "argon2"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1574351abf0e4ef0de867b083a9f8e2f13618efcad6d3253c53554e4a887ed5"
+checksum = "a0a21e93ce9e91fcd0e01744e4f205fb9192f82915646a7e880dfef0ab4a38d8"
 dependencies = [
  "base64ct",
  "blake2",
@@ -348,7 +348,7 @@ dependencies = [
 [[package]]
 name = "emerald-vault"
 version = "0.29.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#5f4109ab25e8feeb5832a7086f648ecb846fecd6"
+source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#8abeded1cb4a5d78860df7ed1f4839a2b0bb4bce"
 dependencies = [
  "aes-ctr",
  "argon2",
@@ -390,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.8.0-alpha.0"
+version = "0.8.0-alpha.1"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -672,9 +672,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.116"
+version = "0.2.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "565dbd88872dbe4cc8a46e527f26483c1d1f7afa6b884a3bd6cd893d4f98da74"
+checksum = "e74d72e0f9b65b5b4ca49a346af3976df0f9c61d550727f349ecd559f251a26c"
 
 [[package]]
 name = "libloading"

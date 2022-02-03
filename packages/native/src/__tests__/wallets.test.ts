@@ -1,5 +1,12 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
-import {AddEntry, AddressRefOp, isEthereumEntry, WalletOp, WalletsOp} from "@emeraldpay/emerald-vault-core";
+import {
+    AddEntry,
+    AddressRefOp,
+    BlockchainId,
+    isEthereumEntry,
+    WalletOp,
+    WalletsOp
+} from "@emeraldpay/emerald-vault-core";
 import {tempPath} from "./_commons";
 
 describe("Wallets", () => {
@@ -140,6 +147,22 @@ describe("Wallets", () => {
                 let id = await vault.addWallet("Test 2");
                 let acc: AddEntry = {
                     blockchain: 100,
+                    type: "raw-pk-hex",
+                    key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
+                    password: "test-global"
+                };
+                let result = await vault.addEntry(id, acc);
+
+                expect(result).toBe(id + "-0");
+                let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id);
+                expect(wallet.value.entries.length).toBe(1);
+                expect(wallet.getEthereumEntries()[0].address.value).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
+            });
+
+            test("Create Goerli", async () => {
+                let id = await vault.addWallet("Test 3");
+                let acc: AddEntry = {
+                    blockchain: BlockchainId.GOERLI_TESTNET,
                     type: "raw-pk-hex",
                     key: "0xfac192ceb5fd772906bea3e118a69e8bbb5cc24229e20d8766fd298291bba6bd",
                     password: "test-global"

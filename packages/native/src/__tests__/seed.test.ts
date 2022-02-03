@@ -115,6 +115,18 @@ describe("Seeds", () => {
                     expect(act["m/44'/60'/0'/0/2"]).toBe('0x62342e8c2f34CBa5407B6e8780aB43215e74CC6A'.toLowerCase());
                 });
 
+                test("List Goerli Testnet", async () => {
+                    const act = await vault.listSeedAddresses(type, BlockchainId.GOERLI_TESTNET, [
+                        "m/44'/60'/160720'/0/0",
+                        "m/44'/60'/160720'/0/1",
+                        "m/44'/60'/160720'/0/2",
+                    ]);
+                    // console.log(act);
+                    expect(act["m/44'/60'/160720'/0/0"]).toBe('0x4D5C1AA948De28c61CF86FEeEe8fc79061Df9398'.toLowerCase());
+                    expect(act["m/44'/60'/160720'/0/1"]).toBe('0xE755197C5152a3D10ab9C37aE86778ee083D04B6'.toLowerCase());
+                    expect(act["m/44'/60'/160720'/0/2"]).toBe('0x7a328887BD35a55D1F85dAb8FF39673bEFF9Fe10'.toLowerCase());
+                });
+
                 test("List bitcoin", async () => {
                     const act = await vault.listSeedAddresses(type, BlockchainId.BITCOIN, [
                         "m/84'/0'/0'/0/0",
