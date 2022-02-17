@@ -7,9 +7,7 @@ jobs:
     strategy:
       matrix:
         node: ["electron", "node"]
-        # windows-2016 - because windows-latest comes with MSVC++ 14.25 (Visual Studio 2019 Version 16.5), which is
-        # incompatible with librocksdb-sys v5.18.3
-        os: ["windows-2016", "macos-latest", "ubuntu-latest"]
+        os: [ "windows-latest", "macos-latest", "ubuntu-latest" ]
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     steps:
