@@ -390,6 +390,12 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
+    changeGlobalKey(existingPassword: string, newPassword: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            addon.global_change(this.conf, existingPassword, newPassword, neonToPromise(resolve, reject));
+        });
+    }
+
     isGlobalKeySet(): Promise<boolean> {
         return new Promise((resolve, reject) => {
             addon.global_isSet(this.conf, neonToPromise(resolve, reject));

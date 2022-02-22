@@ -170,4 +170,41 @@ describe("Global Key", () => {
 
     });
 
+    describe("Change password", () => {
+        let vault: EmeraldVaultNative;
+        beforeEach(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("change-global")
+            });
+            vault.open();
+        });
+
+        test("Change password", async () => {
+
+            let created = await vault.createGlobalKey("test-1");
+            expect(created).toBeTruthy();
+
+            expect(await vault.verifyGlobalKey("test-1")).toBeTruthy();
+            expect(await vault.verifyGlobalKey("test-2")).toBeFalsy();
+
+            let changed = await vault.changeGlobalKey("test-1", "test-2");
+            expect(changed).toBeTruthy();
+            expect(await vault.verifyGlobalKey("test-1")).toBeFalsy();
+            expect(await vault.verifyGlobalKey("test-2")).toBeTruthy();
+        });
+
+        test("Doesn't change from wrong password", async () => {
+
+            let created = await vault.createGlobalKey("test-1");
+            expect(created).toBeTruthy();
+
+            expect(await vault.verifyGlobalKey("test-1")).toBeTruthy();
+            expect(await vault.verifyGlobalKey("test-2")).toBeFalsy();
+
+            let changed = await vault.changeGlobalKey("test-3", "test-2");
+            expect(changed).toBeFalsy();
+            expect(await vault.verifyGlobalKey("test-1")).toBeTruthy();
+            expect(await vault.verifyGlobalKey("test-2")).toBeFalsy();
+        });
+    });
 })

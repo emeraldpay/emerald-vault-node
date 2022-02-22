@@ -109,6 +109,8 @@ register_module!(mut cx, {
         .expect("global_create not exported");
     cx.export_function("global_verify", global::verify)
         .expect("global_verify not exported");
+    cx.export_function("global_change", global::change_password)
+        .expect("global_change not exported");
 
     cx.export_function("admin_migrate", admin::migrate)
         .expect("admin_migrate not exported");

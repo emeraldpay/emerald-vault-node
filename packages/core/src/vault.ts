@@ -99,6 +99,13 @@ export interface IEmeraldVault {
     verifyGlobalKey(password: string): Promise<boolean>;
 
     /**
+     * Change the password for global key
+     * @param existingPassword
+     * @param newPassword
+     */
+    changeGlobalKey(existingPassword: string, newPassword: string): Promise<boolean>;
+
+    /**
      * Check if a Global Key is currently set
      */
     isGlobalKeySet(): Promise<boolean>;
