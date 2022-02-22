@@ -76,6 +76,20 @@ describe("Global Key", () => {
             vault.open();
         });
 
+        test("Create global key and verify", async () => {
+
+            let created = await vault.createGlobalKey("test-global");
+            expect(created).toBeTruthy();
+            let isSet = await vault.isGlobalKeySet();
+            expect(isSet).toBeTruthy();
+
+            let valid = await vault.verifyGlobalKey("test-global");
+            expect(valid).toBeTruthy();
+
+            let invalid = await vault.verifyGlobalKey("test-global-wrong");
+            expect(invalid).toBeFalsy();
+        });
+
         test("Create global key and seed", async () => {
 
             let created = await vault.createGlobalKey("test-global");

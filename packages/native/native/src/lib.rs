@@ -107,6 +107,8 @@ register_module!(mut cx, {
         .expect("global_isSet not exported");
     cx.export_function("global_create", global::create)
         .expect("global_create not exported");
+    cx.export_function("global_verify", global::verify)
+        .expect("global_verify not exported");
 
     cx.export_function("admin_migrate", admin::migrate)
         .expect("admin_migrate not exported");

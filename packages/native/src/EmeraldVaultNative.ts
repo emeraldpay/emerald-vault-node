@@ -384,6 +384,12 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
+    verifyGlobalKey(password: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            addon.global_verify(this.conf, password, neonToPromise(resolve, reject));
+        });
+    }
+
     isGlobalKeySet(): Promise<boolean> {
         return new Promise((resolve, reject) => {
             addon.global_isSet(this.conf, neonToPromise(resolve, reject));

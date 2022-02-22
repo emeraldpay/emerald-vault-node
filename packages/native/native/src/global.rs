@@ -51,3 +51,28 @@ pub fn create(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     });
     Ok(cx.undefined())
 }
+
+pub fn verify(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let cfg = VaultConfig::get_config(&mut cx);
+    let password = cx
+        .argument::<JsString>(1)
+        .expect("Password is not provided")
+        .value(&mut cx);
+
+    let handler = cx.argument::<JsFunction>(2)?.root(&mut cx);
+    let queue = cx.channel();
+    std::thread::spawn(move || {
+        let storage = cfg.get_storage();
+        let result = storage.global_key().verify_password(password.as_str());
+
+        let status = StatusResult::from(result).as_json();
+        queue.send(move |mut cx| {
+            let callback = handler.into_inner(&mut cx);
+            let this = cx.undefined();
+            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
+            callback.call(&mut cx, this, args)?;
+            Ok(())
+        });
+    });
+    Ok(cx.undefined())
+}

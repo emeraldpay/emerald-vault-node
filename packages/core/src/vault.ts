@@ -93,6 +93,12 @@ export interface IEmeraldVault {
     createGlobalKey(password: string): Promise<boolean>;
 
     /**
+     * Checks the provided password if it fits the global key, i.e. user can decrypt/encrypt the Vault with it
+     * @param password
+     */
+    verifyGlobalKey(password: string): Promise<boolean>;
+
+    /**
      * Check if a Global Key is currently set
      */
     isGlobalKeySet(): Promise<boolean>;
