@@ -350,18 +350,19 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault"
-version = "0.29.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#d7de531a8e81947ca55828e7ac5f6339d6c8ecb7"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "003e12abcb7db1f2534da10c16f519ae61c7036f2d6864491ac0306b6390de17"
 dependencies = [
- "aes-ctr",
- "argon2",
- "base64 0.13.0",
- "bitcoin",
- "bitcoin_hashes 0.9.7",
- "byte-array-struct",
- "byteorder",
- "chrono",
- "csv",
+    "aes-ctr",
+    "argon2",
+    "base64 0.13.0",
+    "bitcoin",
+    "bitcoin_hashes 0.9.7",
+    "byte-array-struct",
+    "byteorder",
+    "chrono",
+    "csv",
  "emerald-hwkey",
  "enum-display-derive",
  "ethabi",
@@ -393,17 +394,17 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.8.0-beta.0"
+version = "0.8.0"
 dependencies = [
- "bitcoin",
- "byteorder",
- "chrono",
- "emerald-hwkey",
- "emerald-vault",
- "env_logger",
- "hdpath",
- "hex",
- "log",
+    "bitcoin",
+    "byteorder",
+    "chrono",
+    "emerald-hwkey",
+    "emerald-vault",
+    "env_logger",
+    "hdpath",
+    "hex",
+    "log",
  "neon",
  "neon-build",
  "serde",
