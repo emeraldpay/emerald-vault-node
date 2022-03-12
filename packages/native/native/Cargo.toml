@@ -1,6 +1,6 @@
 [package]
 name = "emerald-vault-node"
-version = "0.8.0"
+version = "0.8.1"
 authors = ["Igor Artamonov <igor@artamonov.ru>"]
 license = "Apache-2.0"
 exclude = ["artifacts.json", "index.node"]
@@ -13,8 +13,8 @@ crate-type = ["cdylib"]
 neon-build = "0.9.1"
 
 [dependencies]
-emerald-vault = "0.29.0"
-emerald-hwkey = "0.1.1"
+emerald-vault = "0.29.1"
+emerald-hwkey = "0.1"
 #emerald-vault = { path = "../../../../emerald-rs" }
 #emerald-hwkey = { path = "../../../../emerald-hwkey" }
 #emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }

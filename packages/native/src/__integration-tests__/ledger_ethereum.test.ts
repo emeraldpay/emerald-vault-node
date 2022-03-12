@@ -33,6 +33,7 @@ describe("Ethereum Integration Test", () => {
 
         test("As simple reference", async () => {
             const act = await vault.isSeedAvailable(ledgerReference);
+            console.log("IS_CONNECTED", IS_CONNECTED)
             expect(act).toBe(IS_CONNECTED);
         });
 
