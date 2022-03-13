@@ -2,7 +2,7 @@ import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
 import {
     BitcoinEntry,
-    EthereumEntry,
+    EthereumEntry, isEntryId,
     LedgerSeedReference,
     SeedPKRef,
     Uuid
@@ -223,6 +223,52 @@ describe("Ethereum Integration Test", () => {
             let entryKey = entry.key as SeedPKRef;
             expect(entryKey.type).toBe("hd-path");
             expect(entryKey.seedId).toBe(seeds[0].id);
+        });
+
+        test("Create few entries right from ledger", async () => {
+            if (!IS_CONNECTED) {
+                console.warn("Ignore Ledger tests");
+                return;
+            }
+            expect((await vault.listSeeds()).length).toBe(0);
+            let walletId = await vault.addWallet("wallet from ledger");
+            let entryId1 = await vault.addEntry(walletId, {
+                type: "hd-path",
+                blockchain: 100,
+                key: {
+                    seed: {type: "ledger"},
+                    hdPath: "m/44'/60'/0'/0/0",
+                }
+            });
+
+            expect(isEntryId(entryId1)).toBeTruthy();
+
+            let entryId2 = await vault.addEntry(walletId, {
+                type: "hd-path",
+                blockchain: 100,
+                key: {
+                    seed: {type: "ledger"},
+                    hdPath: "m/44'/60'/0'/0/1"
+                }
+            });
+
+            expect(isEntryId(entryId2)).toBeTruthy();
+
+            let seeds = await vault.listSeeds();
+            console.log("seeds", seeds);
+            expect(seeds.length).toBe(1);
+            expect(seeds[0].type).toBe("ledger");
+            expect(seeds[0].available).toBeTruthy();
+
+            let entry1 = (await vault.getWallet(walletId)).entries[0];
+            let entry1Key = entry1.key as SeedPKRef;
+            expect(entry1Key.type).toBe("hd-path");
+            expect(entry1Key.seedId).toBe(seeds[0].id);
+
+            let entry2 = (await vault.getWallet(walletId)).entries[1];
+            let entry2Key = entry2.key as SeedPKRef;
+            expect(entry2Key.type).toBe("hd-path");
+            expect(entry2Key.seedId).toBe(seeds[0].id);
         });
 
         test("Create entries from existing ledger by referring", async () => {

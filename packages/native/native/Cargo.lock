@@ -350,9 +350,9 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault"
-version = "0.29.1"
+version = "0.29.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5eb74ff6bec2fdf9ae4a80aded7df6dcc65de10e2611415d7820a47556b9efe"
+checksum = "acbca8eab31c50eac6c12fbd4c1edafffaa03cfab1f4c63c88ade9ff82cd7a45"
 dependencies = [
  "aes-ctr",
  "argon2",
@@ -394,7 +394,7 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "bitcoin",
  "byteorder",
