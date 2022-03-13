@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-core",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Emerald Vault Core data types",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
   "license": "Apache-2.0",
