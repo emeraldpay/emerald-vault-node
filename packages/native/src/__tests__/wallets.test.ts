@@ -238,11 +238,27 @@ describe("Wallets", () => {
                     password: "test-global"
                 };
                 let result1 = await vault.addEntry(id, acc1);
+
+                let seed_id = await vault.importSeed({
+                    type: "mnemonic",
+                    value: {
+                        value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                    },
+                    password: "test-global",
+                    label: "Hello World!",
+                });
+
                 let acc2: AddEntry = {
                     blockchain: 101,
-                    type: "raw-pk-hex",
-                    key: "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
-                    password: "test-global"
+                    type: "hd-path",
+                    key: {
+                        seed: {
+                            type: "id",
+                            value: seed_id,
+                            password: "test-global"
+                        },
+                        hdPath: "m/44'/60'/0'/0/2"
+                    },
                 };
                 let result2 = await vault.addEntry(id, acc2);
 
@@ -251,9 +267,11 @@ describe("Wallets", () => {
 
                 let wallet = WalletsOp.of(await vault.listWallets()).getWallet(id);
                 expect(wallet.value.entries.length).toBe(2);
+                expect(wallet.getEthereumEntries()[0].key.type).toBe("pk");
                 expect(wallet.getEthereumEntries()[0].address.value).toBe("0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4");
                 expect(wallet.getEthereumEntries()[0].blockchain).toBe(100);
-                expect(wallet.getEthereumEntries()[1].address.value).toBe("0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b");
+                expect(wallet.getEthereumEntries()[1].key.type).toBe("hd-path");
+                expect(wallet.getEthereumEntries()[1].address.value).toBe("0xd1bdbfb39e13ad7969e7d49bf7896ae6a868610c");
                 expect(wallet.getEthereumEntries()[1].blockchain).toBe(101);
             });
         });

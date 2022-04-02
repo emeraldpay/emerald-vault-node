@@ -44,7 +44,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
                     },
@@ -68,7 +68,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
                     },
@@ -79,7 +79,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     },
@@ -109,7 +109,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
                     },
@@ -120,7 +120,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     },
@@ -145,7 +145,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '9ce1f45b-4a8e-46ee-b81f-1efd034feae1',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
                     },
@@ -157,7 +157,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     },
@@ -168,7 +168,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/1'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     },
@@ -179,7 +179,7 @@ describe("Ops", () => {
                     blockchain: 100,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/5'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     },
@@ -191,7 +191,7 @@ describe("Ops", () => {
                     blockchain: 101,
                     id: '364b848e-caf2-43db-a3b5-375f64a61bf4',
                     key: {
-                        type: "seed-hd",
+                        type: "hd-path",
                         hdPath: "m/44'/60'/0'/0/0",
                         seedId: 'cbb38ce9-d818-4aa3-9c87-bbdbb7796892'
                     },
@@ -298,7 +298,7 @@ describe("Ops", () => {
                             blockchain: 100,
                             address: {type: 'single', value: '0x343d1de24ac7a891575857855c5579f9de19b427'},
                             key: {
-                                type: "seed-hd",
+                                type: "hd-path",
                                 hdPath: "m/44'/1",
                                 seedId: '5d1f51a7-3310-43bb-9b0c-7a8e5ab9fdcc'
                             },

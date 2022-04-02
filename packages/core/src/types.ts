@@ -1,7 +1,7 @@
 export type BlockchainType = "ethereum" | "bitcoin";
 export type SeedType = "raw" | "ledger" | "mnemonic";
 export type SeedRefType = "ledger" | "mnemonic" | "id";
-export type EntryType = "pk" | "seed-hd";
+export type EntryType = "pk" | "hd-path";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
 export type AddressRole = "receive" | "change";
 export type LedgerApp = "bitcoin" | "bitcoin-testnet" | "ethereum" | "ethereum-classic";
