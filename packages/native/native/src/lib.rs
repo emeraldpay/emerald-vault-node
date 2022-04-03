@@ -13,6 +13,7 @@ extern crate emerald_hwkey;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
+extern crate num_bigint;
 
 use neon::prelude::*;
 

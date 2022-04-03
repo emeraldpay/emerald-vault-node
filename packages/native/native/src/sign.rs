@@ -6,9 +6,7 @@ use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString};
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault};
-use emerald_vault::{
-    align_bytes, to_arr, to_even_str, to_u64, trim_hex, EthereumAddress, EthereumTransaction,
-};
+use emerald_vault::{align_bytes, to_arr, to_even_str, to_u64, trim_hex, EthereumAddress, EthereumLegacyTransaction};
 use json::{JsonError, StatusResult};
 use emerald_vault::structs::book::AddressRef;
 use emerald_vault::blockchain::chains::BlockchainType;
@@ -16,8 +14,10 @@ use emerald_vault::blockchain::bitcoin::{BitcoinTransferProposal, InputReference
 use emerald_vault::structs::wallet::PKType;
 use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{Address, TxOut, OutPoint, Txid};
+use emerald_vault::chains::EthereumChainId;
 use neon::context::Context;
 use emerald_vault::structs::types::UsesOddKey;
+use num_bigint::BigUint;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct UnsignedEthereumTxJson {
@@ -64,10 +64,10 @@ pub struct OutputJson {
     pub amount: u64,
 }
 
-impl TryInto<EthereumTransaction> for UnsignedEthereumTxJson {
+impl TryInto<EthereumLegacyTransaction> for UnsignedEthereumTxJson {
     type Error = JsonError;
 
-    fn try_into(self) -> Result<EthereumTransaction, Self::Error> {
+    fn try_into(self) -> Result<EthereumLegacyTransaction, Self::Error> {
         let gas_price = to_even_str(trim_hex(self.gas_price.as_str()));
         let value = to_even_str(trim_hex(self.value.as_str()));
         let gas_limit = to_even_str(trim_hex(self.gas.as_str()));
@@ -78,12 +78,13 @@ impl TryInto<EthereumTransaction> for UnsignedEthereumTxJson {
         let nonce = Vec::from_hex(to_even_str(trim_hex(self.nonce.as_str())))?;
         let data = to_even_str(trim_hex(self.data.as_str()));
 
-        let result = EthereumTransaction {
+        let result = EthereumLegacyTransaction {
+            chain_id: None,
             nonce: to_u64(&nonce),
-            gas_price: to_arr(&align_bytes(&gas_price, 32)),
+            gas_price: BigUint::from_bytes_be(&gas_price),
             gas_limit: to_u64(&gas_limit),
             to: self.to.as_str().parse::<EthereumAddress>().ok(),
-            value: to_arr(&align_bytes(&value, 32)),
+            value: BigUint::from_bytes_be(&value),
             data: Vec::from_hex(data)?,
         };
 
@@ -163,7 +164,12 @@ impl WrappedVault {
             }
         }
 
-        let tx: EthereumTransaction = unsigned_tx.try_into().map_err(|_| "Invalid sign JSON")?;
+        let tx: EthereumLegacyTransaction = unsigned_tx.try_into().map_err(|_| "Invalid sign JSON")?;
+        // now set the chain_id, otherwise it makes unprotected transactions
+        let tx = EthereumLegacyTransaction {
+            chain_id: Some(EthereumChainId::from(entry.blockchain)),
+            ..tx
+        };
 
         let result = entry
             .sign_tx(tx, Some(password), &storage)

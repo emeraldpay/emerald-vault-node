@@ -350,9 +350,8 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault"
-version = "0.29.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acbca8eab31c50eac6c12fbd4c1edafffaa03cfab1f4c63c88ade9ff82cd7a45"
+version = "0.30.0-dev"
+source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#dc33f27f416f9540245450e1e195da49d26832b5"
 dependencies = [
  "aes-ctr",
  "argon2",
@@ -376,6 +375,7 @@ dependencies = [
  "lazy_static",
  "log",
  "num",
+ "num-bigint 0.4.3",
  "pbkdf2 0.10.1",
  "protobuf",
  "rand 0.6.5",
@@ -407,6 +407,7 @@ dependencies = [
  "log",
  "neon",
  "neon-build",
+ "num-bigint 0.4.3",
  "serde",
  "serde_derive",
  "serde_json",
@@ -752,7 +753,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b7a8e9be5e039e2ff869df49155f1c06bd01ade2117ec783e56ab0932b67a8f"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.3.3",
  "num-complex",
  "num-integer",
  "num-iter",
@@ -765,6 +766,17 @@ name = "num-bigint"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f6f7833f2cbf2360a6cfd58cd41a53aa7a90bd4c202f5b1c7dd2ed73c57b2c3"
+dependencies = [
+ "autocfg 1.1.0",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
  "autocfg 1.1.0",
  "num-integer",
@@ -808,7 +820,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12ac428b1cb17fce6f731001d307d351ec70a6d202fc2e60f7d4c5e42d8f4f07"
 dependencies = [
  "autocfg 1.1.0",
- "num-bigint",
+ "num-bigint 0.3.3",
  "num-integer",
  "num-traits",
 ]
