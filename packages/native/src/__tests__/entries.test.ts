@@ -495,10 +495,10 @@ describe("Entries", () => {
             let tx1 = await vault.signTx(entryId, {
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 to: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
-                gas: "0x5208",
-                gasPrice: "0x98BCA5A00",
-                value: "0xA688906BD8B00000",
-                nonce: "0x0",
+                gas: 21000,
+                gasPrice: "41000000000",
+                value: "12000000000000000000",
+                nonce: 0,
             }, "test");
 
             expect(tx1).toBe("0xf86c8085098bca5a0082520894008aeeda4d805471df9b2a5b0f38a0c3bcba786b88a688906bd8b000008025a04da6c6e9d6f3179f624b189e70115e4b30d98c396c517da0ca8a33e36719fd1aa0495f151d4229aa79f4b8213096f56ae430cf093d66efc72ef48997f1d44d5ba3");
@@ -519,10 +519,10 @@ describe("Entries", () => {
             let tx1 = await vault.signTx(entryId, {
                 from: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
                 to: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
-                gas: "0x5208",
-                gasPrice: "0x98BCA5A00",
-                value: "0xA688906BD8B00000",
-                nonce: "0x0",
+                gas: 21000,
+                gasPrice: "41000000000",
+                value: "12000000000000000000",
+                nonce: 0,
             }, "test");
 
             expect(tx1).toBe("0xf86c8085098bca5a0082520894008aeeda4d805471df9b2a5b0f38a0c3bcba786b88a688906bd8b000008025a04da6c6e9d6f3179f624b189e70115e4b30d98c396c517da0ca8a33e36719fd1aa0495f151d4229aa79f4b8213096f56ae430cf093d66efc72ef48997f1d44d5ba3");
@@ -543,10 +543,10 @@ describe("Entries", () => {
             let tx1 = await vault.signTx(entryId, {
                 from: "0xdb365e2b984128f5d187dbc8df1f947aa6e03361",
                 to: "0x041b7ca652aa25e5be5d2053d7c7f96b5f7563d4",
-                gas: "0x1D8A8",
-                gasPrice: "0x98BCA5A00",
-                value: "0x33674060180C000",
-                nonce: "0x0",
+                gas: 121000,
+                gasPrice: "41000000000",
+                value: "231500000000000000",
+                nonce: 0,
                 data: "0x0158195989105810"
             }, "test");
 

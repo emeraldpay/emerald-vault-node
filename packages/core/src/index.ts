@@ -16,6 +16,8 @@ export {
     UnsignedTx,
     UnsignedBitcoinTx,
     UnsignedEthereumTx,
+    UnsignedBasicEthereumTx,
+    UnsignedEIP1559EthereumTx,
     isBitcoinTx,
     isEthereumTx,
     DEFAULT_BITCOIN_SEQ,

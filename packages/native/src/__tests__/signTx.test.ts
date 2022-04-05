@@ -46,11 +46,10 @@ describe("Sign transaction", () => {
             let tx = {
                 from: "0x0cf0523fc884ad99f7df146848f08cb8608a38a7",
                 to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x0",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x19",
-                data: ""
+                value: "0",
+                gas: 21000,
+                gasPrice: "2000000000",
+                nonce: 0x19,
             };
             let raw = await vault.signTx(entryId, tx, "test-global");
 
@@ -91,11 +90,10 @@ describe("Sign transaction", () => {
             let tx = {
                 from: "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
                 to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x0",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x19",
-                data: ""
+                value: "0",
+                gas: 0x5208,
+                gasPrice: "2000000000",
+                nonce: 0x19
             };
             let raw = await vault.signTx(entryId, tx, "test-global");
 
@@ -130,11 +128,10 @@ describe("Sign transaction", () => {
             let tx = {
                 from: "0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1",
                 to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x0",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x19",
-                data: ""
+                value: "0",
+                gas: 0x5208,
+                gasPrice: "2000000000",
+                nonce: 0x19
             };
             let raw = await vault.signTx(entryId, tx, "test-global");
 
@@ -162,16 +159,48 @@ describe("Sign transaction", () => {
             let tx = {
                 from: "0xA326F1cFfF481611Bb62AC15eeA4E18c628C2751",
                 to: "0x0Bb7509324cE409F7bbC4b701f932eAca9736AB7",
-                value: "0x16345785D8A0000", // 0.1 ETH
-                gas: "0xafce", // 45006
-                gasPrice: "0x4A817C800", // 20gwei
-                nonce: "0x0",
+                value: "100000000000000000", // 0.1 ETH
+                gas: 45006,
+                gasPrice: "20000000000", // 20gwei
+                nonce: 0,
                 data: "0xd0e30db0" // deposit
             };
             let raw = await vault.signTx(entryId, tx, "test-global");
 
             // txid: 0x00f319c78cdc89d90191857f824f301152ce89795aaaf7d7ce2edf0a9b403ae0
             expect(raw).toBe("0xf870808504a817c80082afce940bb7509324ce409f7bbc4b701f932eaca9736ab788016345785d8a000084d0e30db02da0e677b057f68d837493835884d3c844043900d3bc6fa342779fa52d1ab3369504a00f3c6bb9a2b0b74185c88e4506f76720681d6f1091b6e23926fe302db4fda793");
+        });
+
+        test("sign EIP1559", async () => {
+            let walletId = await vault.addWallet("test");
+            let seedId = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
+                },
+                password: "test-global"
+            });
+            let entryId = await vault.addEntry(walletId, {
+                blockchain: 100,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: seedId, password: "test-global"},
+                    hdPath: "m/44'/60'/0'/0/3",
+                }
+            });
+
+            let tx = {
+                from: "0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1",
+                to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
+                value: "0",
+                gas: 0x5208,
+                maxGasPrice: "2000000000",
+                priorityGasPrice: "100000",
+                nonce: 0x19
+            };
+            let raw = await vault.signTx(entryId, tx, "test-global");
+
+            expect(raw).toBe("0x02f8690119830186a08477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38080c001a08a6736c1ec07c2017362eed9a89823f3d6220ab8bacf81fa8a14da9581421f70a04e5f507d99bb20f0956b4b257fa660f5759dfdb7e04c7e8fcf6645ab8845cf7f");
         });
 
         test("sign bitcoin tx", async () => {

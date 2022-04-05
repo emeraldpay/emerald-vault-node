@@ -2,9 +2,11 @@ use neon::prelude::{Context, Handle, JsObject, JsValue, Object, Value};
 
 use emerald_vault::storage::error::VaultError;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum JsonError {
     InvalidData,
+    MissingField(String),
+    InvalidValue(String)
 }
 
 impl std::convert::From<hex::FromHexError> for JsonError {

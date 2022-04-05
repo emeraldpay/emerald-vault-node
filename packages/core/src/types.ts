@@ -48,15 +48,110 @@ export type Update = {
     description?: string | null
 }
 
-export interface UnsignedEthereumTx {
+/**
+ * Basic (aka Legacy) Ethereum transaction. Supported from the beginning and still supported by almost
+ * every Ethereum-compatible blockchain.
+ */
+export interface UnsignedBasicEthereumTx {
+    /**
+     * Sender address.
+     */
     from: string,
+    /**
+     * Target address. May be `null` if the transaction is supposed to create a contract.
+     */
     to?: string | null,
-    gas: string,
+    /**
+     * Transaction Gas Limit
+     */
+    gas: number,
+    /**
+     * Price to pay for gas.
+     *
+     * Wei encoded as a string. __NOT a hex-value__, but a normal decimal encoded as a string.
+     */
     gasPrice: string,
+    /**
+     * Value to transfer in Wei.
+     *
+     * __NOT a hex-value__, but a normal decimal encoded as a string.
+     */
     value: string,
+    /**
+     * Optional data. Encoded as hex with `0x` prefix
+     */
     data?: string | null,
-    nonce: string,
+    /**
+     * Transaction sequence number
+     */
+    nonce: number,
 }
+
+/**
+ * New type of Ethereum transactions. Supported since August 2021 on Ethereum Mainnet.
+ * The main difference is `maxGasPrice` and `priorityGasPrice` instead of `gasPrice` as it was before.
+ * With such transaction there is a `baseFee` for gas set by a Miner, and a user can pay some
+ * `priorityGasPrice` on top of that `baseFee` to include TX in a block.
+ * Note that the `priorityGasPrice` is supposed to be a small amount, like 2 Gwei, and may be even zero.
+ * `maxGasPrice` is a maximum user agrees to pay, i.e. an upper limit for `baseFee + priorityGasPrice`.
+ *
+ * See EIP-1559 - https://eips.ethereum.org/EIPS/eip-1559
+ */
+export interface UnsignedEIP1559EthereumTx {
+    /**
+     * Sender address.
+     */
+    from: string,
+    /**
+     * Target address. May be `null` if the transaction is supposed to create a contract.
+     */
+    to?: string | null,
+    /**
+     * Transaction Gas Limit
+     */
+    gas: number,
+    /**
+     * Max price to pay for gas. Upper limit.
+     *
+     * Wei encoded as a string. __NOT a hex-value__, but a normal decimal encoded as a string.
+     */
+    maxGasPrice: string,
+    /**
+     * Addition price for gas to pay on top of the `baseFee` of a block.
+     *
+     * Wei encoded as a string. __NOT a hex-value__, but a normal decimal encoded as a string.
+     */
+    priorityGasPrice: string,
+    /**
+     * Value to transfer in Wei.
+     *
+     * __NOT a hex-value__, but a normal decimal encoded as a string.
+     */
+    value: string,
+    /**
+     * Optional data. Encoded as hex with `0x` prefix
+     */
+    data?: string | null,
+    /**
+     * Transaction sequence number
+     */
+    nonce: number,
+    /**
+     * Optional list of address the transaction will access. May save some money.
+     */
+    accessList?: {
+        /**
+         * Address that would be accessed. Supposed to be a smart-contract address.
+         */
+        address: string,
+        /**
+         * Optional list of storage keys access by the transaction
+         */
+        storage?: string[] | null
+    }[] | null
+}
+
+export type UnsignedEthereumTx = UnsignedBasicEthereumTx | UnsignedEIP1559EthereumTx;
 
 export interface UnsignedBitcoinTx {
     inputs: {

@@ -72,10 +72,10 @@ describe('Sign different tx combinations (slow to execute)', () => {
             chainConfig = {common: Common.forCustomChain(1, {chainId}, 'byzantium')};
         }
         let result = [];
-        ["0x0", "0x1", "0xff", "0x100", "0xde0b6b3a7640000", "0xab5461ca4b100000"].forEach((value) => {
-            ["0x5208", "0x1fbd0", "0x1", "0xb7", "0x100"].forEach((gas) => {
-                ["0x77359400", "0x1", "0x0", "0x80"].forEach((gasPrice) => {
-                    ["0x0", "0x1", "0x1f", "0xff", "0x38ae"].forEach((nonce) => {
+        ["0", "1", "255", "256", "1000000000000000000", "12345600000000000000"].forEach((value) => {
+            [0x5208, 0x1fbd0, 0x1, 0xb7, 0x100].forEach((gas) => {
+                ["2000000000", "1", "0", "128"].forEach((gasPrice) => {
+                    [0x0, 0x1, 0x1f, 0xff, 0x38ae].forEach((nonce) => {
                         ["", "d0e30db0", "095ea7b300000000000000000000000036a8ce9b0b86361a02070e4303d5e24d6c63b3f10000000000000000000000000000000000000000033b2e3c9fd0803ce8000000"].forEach((data) => {
                             ["0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"].forEach(async (to) => {
                                 let tx = {
@@ -197,10 +197,10 @@ describe('Sign different key combinations (slow to execute)', () => {
             let tx: UnsignedTx = {
                 from: entry.address.value,
                 to: "0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1",
-                value: "0x1234",
-                gas: "0x5678",
-                gasPrice: "0x9012",
-                nonce: "0x0"
+                value: "4660",
+                gas: 0x5678,
+                gasPrice: "36882",
+                nonce: 0x0
             };
 
             let raw = await vault.signTx(entry.id, tx, "testtest");

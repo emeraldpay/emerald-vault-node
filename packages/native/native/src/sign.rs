@@ -6,7 +6,7 @@ use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString};
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault};
-use emerald_vault::{align_bytes, to_arr, to_even_str, to_u64, trim_hex, EthereumAddress, EthereumLegacyTransaction};
+use emerald_vault::{align_bytes, to_arr, to_even_str, to_u64, trim_hex, EthereumAddress, EthereumLegacyTransaction, to_32bytes};
 use json::{JsonError, StatusResult};
 use emerald_vault::structs::book::AddressRef;
 use emerald_vault::blockchain::chains::BlockchainType;
@@ -15,24 +15,37 @@ use emerald_vault::structs::wallet::PKType;
 use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{Address, TxOut, OutPoint, Txid};
 use emerald_vault::chains::EthereumChainId;
+use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, EthereumTransaction, TxAccess};
 use neon::context::Context;
 use emerald_vault::structs::types::UsesOddKey;
 use num_bigint::BigUint;
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct AccessListItemJson {
+    pub address: String,
+    pub storage: Option<Vec<String>>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct UnsignedEthereumTxJson {
     pub from: String,
     pub to: String,
-    pub gas: String,
+    pub gas: u64,
     #[serde(rename = "gasPrice")]
-    pub gas_price: String,
+    pub gas_price: Option<String>,
+    #[serde(rename = "maxGasPrice")]
+    pub max_gas_price: Option<String>,
+    #[serde(rename = "priorityGasPrice")]
+    pub priority_gas_price: Option<String>,
     #[serde(default)]
     pub value: String,
     #[serde(default)]
     pub data: String,
-    pub nonce: String,
+    pub nonce: u64,
     #[serde(default)]
     pub passphrase: Option<String>,
+    #[serde(rename = "accessList")]
+    pub access_list: Option<Vec<AccessListItemJson>>
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -64,32 +77,75 @@ pub struct OutputJson {
     pub amount: u64,
 }
 
-impl TryInto<EthereumLegacyTransaction> for UnsignedEthereumTxJson {
-    type Error = JsonError;
+impl UnsignedEthereumTxJson {
 
-    fn try_into(self) -> Result<EthereumLegacyTransaction, Self::Error> {
-        let gas_price = to_even_str(trim_hex(self.gas_price.as_str()));
-        let value = to_even_str(trim_hex(self.value.as_str()));
-        let gas_limit = to_even_str(trim_hex(self.gas.as_str()));
+    fn is_valid(&self) -> bool {
+        self.gas_price.is_some() || (self.priority_gas_price.is_some() && self.max_gas_price.is_some())
+    }
 
-        let gas_limit = Vec::from_hex(gas_limit)?;
-        let gas_price = Vec::from_hex(gas_price)?;
-        let value = Vec::from_hex(value)?;
-        let nonce = Vec::from_hex(to_even_str(trim_hex(self.nonce.as_str())))?;
+    fn is_legacy(&self) -> bool {
+        self.gas_price.is_some()
+    }
+
+    fn is_eip1559(&self) -> bool {
+        self.priority_gas_price.is_some() && self.max_gas_price.is_some()
+    }
+
+    fn as_eip1559(&self, chain_id: &EthereumChainId) -> Result<EthereumEIP1559Transaction, JsonError> {
+        let max_gas_price = self.max_gas_price.as_ref().ok_or(JsonError::MissingField("maxGasPrice".to_string()))?;
+        let priority_gas_price = self.priority_gas_price.as_ref().ok_or(JsonError::MissingField("priorityGasPrice".to_string()))?;
+        let data = to_even_str(trim_hex(self.data.as_str()));
+
+        let mut access: Vec<TxAccess> = Vec::new();
+        if let Some(l) = &self.access_list {
+            for item in l {
+                let address = EthereumAddress::from_str(item.address.as_str())
+                    .map_err(|_| JsonError::InvalidValue("accessList[].address".to_string()))?;
+                let storage_keys = item.storage.as_ref().unwrap_or(&Vec::new())
+                    .iter()
+                    .map(|s| to_32bytes(trim_hex(s)))
+                    .collect::<Vec<[u8; 32]>>();
+                access.push(TxAccess { address, storage_keys});
+            }
+        }
+
+        let result = EthereumEIP1559Transaction {
+            chain_id: chain_id.clone(),
+            nonce: self.nonce,
+            max_gas_price: BigUint::from_str(max_gas_price.as_str())
+                .map_err(|_| JsonError::InvalidValue("maxGasPrice".to_string()))?,
+            priority_gas_price: BigUint::from_str(priority_gas_price.as_str())
+                .map_err(|_| JsonError::InvalidValue("priorityGasPrice".to_string()))?,
+            gas_limit: self.gas,
+            to: self.to.as_str().parse::<EthereumAddress>().ok(),
+            value: BigUint::from_str(self.value.as_str())
+                .map_err(|_| JsonError::InvalidValue("value".to_string()))?,
+            data: Vec::from_hex(data)?,
+            access
+        };
+
+        Ok(result)
+    }
+
+    fn as_legacy(&self, chain_id: &EthereumChainId) -> Result<EthereumLegacyTransaction, JsonError> {
+        let gas_price = self.gas_price.as_ref().ok_or(JsonError::MissingField("gasPrice".to_string()))?;
         let data = to_even_str(trim_hex(self.data.as_str()));
 
         let result = EthereumLegacyTransaction {
-            chain_id: None,
-            nonce: to_u64(&nonce),
-            gas_price: BigUint::from_bytes_be(&gas_price),
-            gas_limit: to_u64(&gas_limit),
+            chain_id: Some(chain_id.clone()),
+            nonce: self.nonce,
+            gas_price: BigUint::from_str(gas_price.as_str())
+                .map_err(|_| JsonError::InvalidValue("gasPrice".to_string()))?,
+            gas_limit: self.gas,
             to: self.to.as_str().parse::<EthereumAddress>().ok(),
-            value: BigUint::from_bytes_be(&value),
+            value: BigUint::from_str(self.value.as_str())
+                .map_err(|_| JsonError::InvalidValue("value".to_string()))?,
             data: Vec::from_hex(data)?,
         };
 
         Ok(result)
     }
+
 }
 
 fn convert_inputs(inputs: Vec<InputJson>, xpub: &XPub, seed_id: Uuid, hd_account: &AccountHDPath) -> Result<Vec<InputReference>, String> {
@@ -164,15 +220,16 @@ impl WrappedVault {
             }
         }
 
-        let tx: EthereumLegacyTransaction = unsigned_tx.try_into().map_err(|_| "Invalid sign JSON")?;
-        // now set the chain_id, otherwise it makes unprotected transactions
-        let tx = EthereumLegacyTransaction {
-            chain_id: Some(EthereumChainId::from(entry.blockchain)),
-            ..tx
+        let chain_id = EthereumChainId::from(entry.blockchain);
+        let result = if unsigned_tx.is_eip1559() {
+            let tx = unsigned_tx.as_eip1559(&chain_id).map_err(|e| format!("{:?}", e))?;
+            entry.sign_tx(tx, Some(password), &storage)
+        } else {
+            let tx = unsigned_tx.as_legacy(&chain_id).map_err(|e| format!("{:?}", e))?;
+            entry.sign_tx(tx, Some(password), &storage)
         };
 
-        let result = entry
-            .sign_tx(tx, Some(password), &storage)
+        let result = result
             .map_err(|e| format!("Failed to sign: {:?}", e))?;
         Ok(result)
     }

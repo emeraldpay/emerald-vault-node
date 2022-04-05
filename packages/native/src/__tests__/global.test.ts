@@ -56,10 +56,10 @@ describe("Global Key", () => {
             let tx = {
                 from: "0xb4BbAaC4Acd7E86AF282e80C7a62fda78D071950",
                 to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x1051",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x2"
+                value: "4177",
+                gas: 0x5208,
+                gasPrice: "2000000000",
+                nonce: 2,
             };
             let raw = await vault.signTx(entry.id, tx, "test-global");
             expect(raw).toBe("0xf865028477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38210518026a0a8f7aacd400789614602925c4331cf7ccf83548401632da7ee36b634fd5e2ce1a05c554688d38bd762af2e4885b70a2b3e608dffe80a2c33c93606afe4add040c6");
@@ -125,10 +125,10 @@ describe("Global Key", () => {
             let tx = {
                 from: "0xC0628478eaA61b547D5aa0105758247aA93b550c",
                 to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x0",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x19",
+                value: "0",
+                gas: 0x5208,
+                gasPrice: "2000000000",
+                nonce: 0x19,
                 data: ""
             };
             let raw = await vault.signTx(entryId, tx, "test-global");
@@ -157,10 +157,10 @@ describe("Global Key", () => {
             let tx = {
                 from: "0x5753f65cb3db9c350CEC48F9802061BdEfDebfAb",
                 to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
-                value: "0x0",
-                gas: "0x5208",
-                gasPrice: "0x77359400",
-                nonce: "0x19",
+                value: "0",
+                gas: 0x5208,
+                gasPrice: "2000000000",
+                nonce: 0x19,
                 data: ""
             };
             let raw = await vault.signTx(entryId, tx, "test-global");
