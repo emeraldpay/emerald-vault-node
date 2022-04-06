@@ -1,6 +1,24 @@
 export type BlockchainType = "ethereum" | "bitcoin";
+/**
+ * Type of Seed:
+ * - `mnemonic` series of words, as per BIP-39
+ * - `raw` BIP-39 key in bytes, that's what you get after processing BIP-39 phrase and that's what Vault stored on disk
+ * - `ledger` Ledger Hardware Key
+ */
 export type SeedType = "raw" | "ledger" | "mnemonic";
+/**
+ * Type of reference to a Seed:
+ * - `ledger` a currently connected Ledger device
+ * - `mnemonic` provided words as per BIP-39
+ * - `id` of an existing Seed in the Vault
+ */
 export type SeedRefType = "ledger" | "mnemonic" | "id";
+/**
+ * Type of Key that backs the Entry.
+ * Could be:
+ * - `pk` an individual Private Key
+ * - `hd-path` a HDPath on a shared Seed
+ */
 export type EntryType = "pk" | "hd-path";
 export type ImportPkType = "ethereum-json" | "raw-pk-hex" | "hd-path" | "generate-random";
 export type AddressRole = "receive" | "change";
@@ -438,9 +456,11 @@ export type AddEntry = AddJsonEntry | AddRawPkEntry | AddSeedEntry | AddRandomEn
 export type SeedEntry = {
     seed: SeedReference,
     hdPath: string,
-    // (optional) Expected Address on that path
-    // Can used for verification or saved with the created entry, if actual address is impossible to get (ex. when
-    // the seed is Ledger based, but Ledger is not connected)
+    /**
+     * (optional) Expected Address on that path
+     * Can used for verification or saved with the created entry, if actual address is impossible to get (ex. when
+     * the seed is Ledger based, but Ledger is not connected)
+     */
     address?: string
 }
 
@@ -453,9 +473,13 @@ export type SeedDescription = {
 }
 
 export interface BaseSeedDefinition {
-    // Password to _encrypt_ seed data in the vault
+    /**
+     * Password to _encrypt_ seed data in the vault
+     */
     password?: string;
-    // optional label to save with the seed
+    /**
+     * optional label to save with the seed
+     */
     label?: string;
 }
 
@@ -470,17 +494,26 @@ export interface MnemonicSeedDefinition extends BaseSeedDefinition {
 }
 
 /**
- * Full Definition for a new Seed, i.e. to create
+ * Full Definition for a new Seed, i.e. to create a new one in the Vault
  */
 export type SeedDefinition = RawSeedDefinition | MnemonicSeedDefinition;
 
+/**
+ * Reference to a created Seed by its ID
+ */
 export interface IdSeedReference {
     type: "id";
     value: Uuid;
-    // Password to _decrypt_ stored seed data
+    /**
+     * Password to _decrypt_ stored seed data. Only needed when the seed must be decrypted for an action (i.e. create a tx, see addresses on seed, etc)
+     */
     password?: string;
 }
 
+/**
+ * A Seed Reference for _any connected_ Ledger. Supposed to be used only during creation of a wallet.
+ * Otherwise, if an ID is known the `IdSeedReference` must be used.
+ */
 export interface LedgerSeedReference {
     type: "ledger";
 }
@@ -529,7 +562,14 @@ export function isSeedReference(value: Uuid | SeedReference | SeedDefinition): v
 
 export interface LedgerDetails {
     type: "ledger";
+    /**
+     * `true` is Ledger is physically connected.
+     * Note that it doesn't always mean that Ledger can be used, because it depends on which App (`app`) is opened on Ledger
+     */
     connected: boolean;
+    /**
+     * Application which is opened on Ledger. Or `null` if unknown or no app is opened.
+     */
     app: LedgerApp | null;
 }
 

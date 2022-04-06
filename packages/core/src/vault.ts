@@ -73,6 +73,11 @@ export interface IEmeraldVault {
 
     importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid>;
 
+    /**
+     * Check if the seed is available for use. In general, it's application only to Hardware Keys and the methods
+     * checks if the device is connected. For a standard stored Seed it always returns `true`
+     * @param seed reference to a seed to check availability
+     */
     isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean>;
 
     /**
