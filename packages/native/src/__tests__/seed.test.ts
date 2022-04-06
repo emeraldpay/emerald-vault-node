@@ -196,6 +196,9 @@ describe("Seeds", () => {
             let seeds = await vault.listSeeds();
             expect(seeds.length).toBe(1);
 
+            expect(seeds[0].id).toBe(id);
+            expect(seeds[0].type).toBe("raw");
+
             let available = await vault.isSeedAvailable(id);
             expect(available).toBeTruthy();
 

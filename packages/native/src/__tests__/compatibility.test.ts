@@ -29,7 +29,7 @@ describe("Compatibility", () => {
 
             expect(seeds[0].id).toBe("14780c33-0364-4bff-9244-a7a495c0cf33");
             expect(seeds[0].label).toBe("Seed 1");
-            expect(seeds[0].type).toBe("bytes");
+            expect(seeds[0].type).toBe("raw");
             expect(seeds[0].available).toBeTruthy();
 
             expect(seeds[1].id).toBe("9a33431c-8f38-464f-92bd-c4a2fedf942d");

@@ -44,7 +44,7 @@ pub struct SeedJson {
 pub enum SeedType {
     #[serde(rename = "ledger")]
     Ledger,
-    #[serde(rename = "bytes")]
+    #[serde(rename = "raw")]
     Bytes,
 }
 
