@@ -31,6 +31,10 @@ env_logger = "0.8.1"
 log = "0.4.11"
 byteorder = "1.4.3"
 num-bigint = "^0.4"
+neon-frame = "0.1"
+neon-frame-macro = "0.1"
+#neon-frame = { path = "../../../../neon-frame/neon-frame" }
+#neon-frame-macro = { path = "../../../../neon-frame/neon-frame-macro" }
 
 [dependencies.neon]
 version = "0.9.1"

@@ -1,7 +1,7 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 
-use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString, JsValue};
+use neon::prelude::{FunctionContext, JsNumber, JsString};
 use uuid::Uuid;
 
 use access::{args_get_str, VaultConfig, WrappedVault, AccountIndex};
@@ -25,12 +25,11 @@ use emerald_vault::{
     EthereumPrivateKey,
 };
 use hdpath::{StandardHDPath, AccountHDPath};
-use json::{StatusResult, AsJsObject};
 use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
 use address::AddressRefJson;
 use bitcoin::Address;
 use emerald_vault::blockchain::bitcoin::XPub;
-use neon::context::Context;
+use errors::{VaultNodeError, JsonError};
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -169,12 +168,14 @@ impl<T: ToString> From<&EntryAddress<T>> for CurrentAddressJson {
     }
 }
 
-impl From<(&WalletEntry, &Wallet, Option<&AccountIndex>)> for WalletEntryJson {
-    fn from(value: (&WalletEntry, &Wallet, Option<&AccountIndex>)) -> Self {
+impl TryFrom<(&WalletEntry, &Wallet, Option<&AccountIndex>)> for WalletEntryJson {
+    type Error = VaultNodeError;
+
+    fn try_from(value: (&WalletEntry, &Wallet, Option<&AccountIndex>)) -> Result<Self, Self::Error> {
         let a = value.0;
         let wallet = value.1;
         let index = value.2;
-        WalletEntryJson {
+        let result = WalletEntryJson {
             id: EntryId::from(wallet, a).to_string(),
             blockchain: a.blockchain as u32,
             address: a.address.as_ref().map(|v| v.clone().into()),
@@ -199,12 +200,14 @@ impl From<(&WalletEntry, &Wallet, Option<&AccountIndex>)> for WalletEntryJson {
                                 vec![
                                     CurrentXpubJson {
                                         xpub: xpub.for_receiving()
-                                            .expect("no receive address").to_string(),
+                                            .map_err(|_| VaultNodeError::MissingData("no receive address".to_string()))?
+                                            .to_string(),
                                         role: "receive".to_string(),
                                     },
                                     CurrentXpubJson {
                                         xpub: xpub.for_change()
-                                            .expect("no change address").to_string(),
+                                            .map_err(|_| VaultNodeError::MissingData("no change address".to_string()))?
+                                            .to_string(),
                                         role: "change".to_string(),
                                     }
                                 ]
@@ -222,7 +225,8 @@ impl From<(&WalletEntry, &Wallet, Option<&AccountIndex>)> for WalletEntryJson {
                 },
                 None => vec![]
             }
-        }
+        };
+        Ok(result)
     }
 }
 
@@ -238,7 +242,9 @@ impl From<(Wallet, &Vec<AccountIndex>)> for WalletJson {
             .entries
             .iter()
             .map(|a| (a, &wallet, indexes_for_entry(&wallet, &a, indexes)))
-            .map(|a| a.into())
+            .map(|a| a.try_into())
+            .filter(|a| a.is_ok()) //TODO return error?
+            .map(|a| a.unwrap())
             .collect();
         let reserved: Vec<ReservedAccountJson> = wallet
             .reserved
@@ -255,29 +261,29 @@ impl From<(Wallet, &Vec<AccountIndex>)> for WalletJson {
     }
 }
 
-fn read_wallet_id(cx: &mut FunctionContext, pos: i32) -> Uuid {
+fn read_wallet_id(cx: &mut FunctionContext, pos: i32) -> Result<Uuid, VaultNodeError> {
     let wallet_id = cx
         .argument::<JsString>(pos)
-        .expect("wallet_id is not provided")
+        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "wallet_id".to_string()))?
         .value(cx);
-    let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
-    wallet_id
+    Uuid::parse_str(wallet_id.as_str()).map_err(|_| VaultNodeError::InvalidArgument(pos as usize))
 }
 
-fn read_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> (Uuid, usize) {
+fn read_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> Result<(Uuid, usize), VaultNodeError> {
     let wallet_id = cx
         .argument::<JsString>(pos)
-        .expect("wallet_id is not provided")
+        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "wallet_id".to_string()))?
         .value(cx);
-    let wallet_id = Uuid::parse_str(wallet_id.as_str()).expect("Invalid UUID");
+    let wallet_id = Uuid::parse_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(pos as usize))?;
 
     let entry_id = cx
         .argument::<JsNumber>(pos + 1)
-        .expect("entry_id is not provided")
+        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize + 1, "entry_id".to_string()))?
         .value(cx);
     let entry_id = entry_id as usize;
 
-    (wallet_id, entry_id)
+    Ok((wallet_id, entry_id))
 }
 
 fn with_std_addresses(entry: &WalletEntry, index: Option<&AccountIndex>) -> Vec<CurrentAddressJson> {
@@ -326,15 +332,18 @@ impl WrappedVault {
             .map(|_| id)
     }
 
-    fn create_entry(&self, wallet_id: Uuid, entry: AddEntryJson) -> Result<usize, VaultError> {
-        let blockchain = Blockchain::try_from(entry.blockchain)?;
+    fn create_entry(&self, wallet_id: Uuid, entry: AddEntryJson) -> Result<usize, VaultNodeError> {
+        let blockchain = Blockchain::try_from(entry.blockchain)
+            .map_err(|_| VaultNodeError::InvalidArgumentByName("Blockchain".to_string()))?;
         let storage = &self.cfg.get_storage();
         let result = match entry.key_value {
             AddEntryType::EthereumJson(json) => {
-                let json = EthereumJsonV3File::try_from(json)?;
-                let json_password = entry.json_password.expect("JSON Password is not provided");
+                let json = EthereumJsonV3File::try_from(json)
+                    .map_err(|_| VaultNodeError::InvalidArgumentValue("Invalid Web3 JSON format".to_string()))?;
+                let json_password = entry.json_password
+                    .ok_or(VaultNodeError::JsonError(JsonError::MissingField("json_password".to_string())))?;
                 if entry.password.is_none() {
-                    panic!("Password is required".to_string())
+                    return Err(VaultNodeError::from(JsonError::MissingField("password".to_string())));
                 }
                 let id = storage.add_ethereum_entry(wallet_id)
                     .json(&json, json_password.as_str(), blockchain, entry.password.unwrap().as_str())?;
@@ -342,7 +351,7 @@ impl WrappedVault {
             }
             AddEntryType::RawHex(hex) => {
                 if entry.password.is_none() {
-                    panic!("Password is required".to_string())
+                    return Err(VaultNodeError::from(JsonError::MissingField("password".to_string())));
                 }
                 let hex = trim_hex(hex.as_str());
                 let hex = hex::decode(hex)?;
@@ -418,14 +427,13 @@ impl WrappedVault {
                                 )?
                         }
                     }
-                    SeedDefinitionOrReferenceType::Mnemonic(_) => panic!(
-                        "Direct creation from Mnemonic is not implemented. Create Seed first"
-                    ),
+                    SeedDefinitionOrReferenceType::Mnemonic(_) =>
+                        return Err(VaultNodeError::OtherInput("Direct creation from Mnemonic is not implemented. Create Seed first".to_string()))
                 }
             }
             AddEntryType::GenerateRandom => {
                 if entry.password.is_none() {
-                    panic!("Password is required".to_string())
+                    return Err(VaultNodeError::from(JsonError::MissingField("password".to_string())));
                 }
                 let pk = EthereumPrivateKey::gen();
                 storage.add_ethereum_entry(wallet_id).raw_pk(
@@ -463,89 +471,78 @@ impl WrappedVault {
     }
 }
 
-pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn list(cx: &mut FunctionContext) -> Result<Vec<WalletJson>, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg.clone());
-    let wallets = vault.load_wallets();
+    let wallets = vault.load_wallets()?;
 
     let mut result = Vec::new();
     for w in wallets {
         result.push(WalletJson::from((w, &cfg.account_indexes)));
     }
 
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    Ok(result)
 }
 
-pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn add(cx: &mut FunctionContext) -> Result<Uuid, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let json = cx
         .argument::<JsString>(1)
-        .expect("Input JSON with options is not provided")
-        .value(&mut cx);
-    let parsed: AddWalletJson =
-        serde_json::from_str(json.as_str()).expect("Invalid JSON with options");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .value(cx);
+    let parsed: AddWalletJson = serde_json::from_str(json.as_str())
+        .map_err(|_| JsonError::InvalidData)?;
 
-    let id = vault.create_wallet(parsed).expect("Wallet not created");
-
-    let status = StatusResult::Ok(id.to_string()).as_json();
-    Ok(cx.string(status))
+     vault.create_wallet(parsed).map_err(VaultNodeError::from)
 }
 
-pub fn add_entry_to_wallet(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn add_entry_to_wallet(cx: &mut FunctionContext) -> Result<usize, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
-    let wallet_id = read_wallet_id(&mut cx, 1);
+    let wallet_id = read_wallet_id(cx, 1)?;
     let json = cx
         .argument::<JsString>(2)
-        .expect("Input JSON is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "json".to_string()))?
+        .value(cx);
 
-    let parsed: AddEntryJson = serde_json::from_str(json.as_str()).expect("Invalid JSON");
+    let parsed: AddEntryJson = serde_json::from_str(json.as_str())
+        .map_err(|_| JsonError::InvalidData)?;
 
-    let id = vault
-        .create_entry(wallet_id, parsed)
-        .expect("Entry not created");
-
-    let status = StatusResult::Ok(id).as_json();
-    Ok(cx.string(status))
+    vault.create_entry(wallet_id, parsed).map_err(VaultNodeError::from)
 }
 
-pub fn update_label(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn update_label(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
-    let wallet_id = read_wallet_id(&mut cx, 1);
+    let wallet_id = read_wallet_id(cx, 1)?;
 
-    let title = args_get_str(&mut cx, 2);
-    let result = vault.set_title(wallet_id, title).is_ok();
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    let title = args_get_str(cx, 2);
+    vault.set_title(wallet_id, title).map(|_| true).map_err(VaultNodeError::from)
 }
 
-pub fn remove_entry(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn remove_entry(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
-    let (wallet_id, entry_id) = read_wallet_and_entry_ids(&mut cx, 1);
+    let (wallet_id, entry_id) = read_wallet_and_entry_ids(cx, 1)?;
 
-    let result = vault
-        .remove_entry(wallet_id, entry_id)
-        .expect("Not deleted");
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    vault.remove_entry(wallet_id, entry_id).map_err(VaultNodeError::from)
 }
 
-pub fn remove(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn remove(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
-    let wallet_id = read_wallet_id(&mut cx, 1);
-    let result = vault.remove(wallet_id).expect("Not deleted");
-
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    let wallet_id = read_wallet_id(cx, 1)?;
+    vault.remove(wallet_id).map_err(VaultNodeError::from)
 }

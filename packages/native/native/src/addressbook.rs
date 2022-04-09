@@ -11,12 +11,12 @@ use emerald_vault::{
     structs::{book::AddressRef, book::BookmarkDetails},
     EthereumAddress,
 };
-use json::StatusResult;
 use std::convert::{TryFrom, TryInto};
 use address::AddressRefJson;
+use errors::VaultNodeError;
 
 #[derive(Serialize, Clone)]
-struct AddressBookmarkJson {
+pub struct AddressBookmarkJson {
     pub address: AddressRefJson,
     pub name: Option<String>,
     pub description: Option<String>,
@@ -104,8 +104,9 @@ impl WrappedVault {
     }
 }
 
-pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn list(cx: &mut FunctionContext) -> Result<Vec<AddressBookmarkJson>, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let list = vault.list_addressbook();
@@ -113,38 +114,36 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
     let result: Vec<AddressBookmarkJson> =
         list.iter().map(|b| AddressBookmarkJson::from(b)).collect();
 
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    Ok(result)
 }
 
-pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn add(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let add_js = cx
         .argument::<JsString>(1)
-        .expect("Address Book item not provided")
-        .value(&mut cx);
-    let item =
-        serde_json::from_str::<NewAddressBookItem>(add_js.as_str()).expect("Invalid input JSON");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "item".to_string()))?
+        .value(cx);
+    let item = serde_json::from_str::<NewAddressBookItem>(add_js.as_str())
+            .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let result = vault.add_to_addressbook(item);
-
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    Ok(result)
 }
 
-pub fn remove(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn remove(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let address = cx
         .argument::<JsString>(1)
-        .expect("Address no provided")
-        .value(&mut cx);
-    let address = EthereumAddress::from_str(address.as_str()).expect("Invalid address");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "address".to_string()))?
+        .value(cx);
+    let address = EthereumAddress::from_str(address.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
 
     let removed = vault.remove_addressbook_by_addr(&address);
-
-    let status = StatusResult::Ok(removed).as_json();
-    Ok(cx.string(status))
+    Ok(removed)
 }

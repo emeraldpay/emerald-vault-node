@@ -9,12 +9,12 @@ use emerald_vault::{
     convert::json::keyfile::EthereumJsonV3File, storage::error::VaultError, EthereumAddress,
     EthereumPrivateKey,
 };
-use json::StatusResult;
 use emerald_vault::structs::book::AddressRef;
 use wallets::CurrentAddressJson;
 use emerald_vault::structs::wallet::{AddressRole};
 use emerald_vault::chains::BlockchainType;
 use bitcoin::Address;
+use errors::VaultNodeError;
 
 #[derive(Deserialize)]
 pub struct UpdateAccount {
@@ -43,7 +43,7 @@ pub struct NewMnemonicAccount {
     pub hd_path: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ExportedWeb3Json {
     pub password: String,
     pub json: String,
@@ -96,7 +96,7 @@ impl WrappedVault {
         match &wallet
             .entries
             .first()
-            .expect("Wallet without address")
+            .ok_or(VaultError::DataNotFound)?
             .address
         {
             Some(e) => match e {
@@ -107,26 +107,27 @@ impl WrappedVault {
         }
     }
 
-    fn put(&self, pk: &EthereumJsonV3File, json_password: String, global_password: String) -> Uuid {
+    fn put(&self, pk: &EthereumJsonV3File, json_password: String, global_password: String) -> Result<Uuid, VaultNodeError> {
         let storage = &self.cfg.get_storage();
         let id = storage
             .create_new()
-            .ethereum(pk, json_password.as_str(), self.get_blockchain(), global_password.as_str())
-            .expect("Keyfile not saved");
-        id
+            .ethereum(pk, json_password.as_str(), self.get_blockchain()?, global_password.as_str())
+            .map_err(|_| VaultNodeError::VaultError("Keyfile not saved".to_string()))?;
+        Ok(id)
     }
 
-    fn export_pk(&self, wallet_id: Uuid, entry_id: usize, password: String) -> EthereumPrivateKey {
+    fn export_pk(&self, wallet_id: Uuid, entry_id: usize, password: String) -> Result<EthereumPrivateKey, VaultNodeError> {
         let storage = &self.cfg.get_storage();
 
         let wallet = storage
             .wallets()
             .get(wallet_id)
-            .expect("Wallet doesn't exit");
-        let account = wallet.get_entry(entry_id).expect("Entry doesn't exist");
+            .map_err(|_| VaultNodeError::MissingData(format!("Wallet {}", wallet_id)))?;
+        let account = wallet.get_entry(entry_id)
+            .map_err(|_| VaultNodeError::MissingData(format!("Entry {} on wallet {}", entry_id, wallet_id)))?;
         account
             .export_ethereum_pk(password, storage)
-            .expect("PrivateKey unavailable")
+            .map_err(|_| VaultNodeError::VaultError("Private Kye Unavailable".to_string()))
     }
 
     fn export_web3(
@@ -134,181 +135,151 @@ impl WrappedVault {
         wallet_id: Uuid,
         entry_id: usize,
         password: Option<String>,
-    ) -> (String, EthereumJsonV3File) {
+    ) -> Result<(String, EthereumJsonV3File), VaultNodeError> {
         let storage = &self.cfg.get_storage();
 
         let wallet = storage
             .wallets()
             .get(wallet_id)
-            .expect("Wallet doesn't exit");
-        let account = wallet.get_entry(entry_id).expect("Account doesn't exist");
-        let password = password.expect("Password is not provided");
+            .map_err(|_| VaultNodeError::MissingData(format!("Wallet {}", wallet_id)))?;
+        let account = wallet.get_entry(entry_id)
+            .map_err(|_| VaultNodeError::MissingData(format!("Entry {} on wallet {}", entry_id, wallet_id)))?;
+        let password = password.ok_or(VaultNodeError::OtherProcessing("Password is not provided".to_string()))?;
         account
             .export_ethereum_web3(password.as_str(), storage)
-            .expect("PrivateKey unavailable")
+            .map_err(|_| VaultNodeError::VaultError("Private Kye Unavailable".to_string()))
     }
 }
 
-pub fn import_ethereum(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let cfg = VaultConfig::get_config(&mut cx);
-    let vault = WrappedVault::new(cfg);
-
-    let raw = cx
-        .argument::<JsString>(1)
-        .expect("Input JSON is not provided")
-        .value(&mut cx);
-    let json_password = cx
-        .argument::<JsString>(2)
-        .expect("JSON password is not provided")
-        .value(&mut cx);
-    let global_password = cx
-        .argument::<JsString>(3)
-        .expect("Global Password is not provided")
-        .value(&mut cx);
-
-    let pk = EthereumJsonV3File::try_from(raw).expect("Invalid JSON");
-    let id = vault.put(&pk, json_password, global_password);
-    let address = vault
-        .get_wallet_address(id)
-        .expect("Address not initialized");
-
-    let result = JsObject::new(&mut cx);
-    let id_handle = cx.string(id.to_string());
-    result
-        .set(&mut cx, "id", id_handle)
-        .expect("Failed to set id");
-    let addr_handle = cx.string(address.to_string());
-    result
-        .set(&mut cx, "address", addr_handle)
-        .expect("Failed to set address");
-
-    Ok(result)
-}
-
-pub fn export(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn export(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
-        .expect("wallet_id not provided")
-        .value(&mut cx);
-    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::from_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let entry_id = cx
         .argument::<JsNumber>(2)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .value(cx) as usize;
 
-    let password = args_get_str(&mut cx, 3);
+    let password = args_get_str(cx, 3);
 
-    let pk = vault.export_web3(wallet_id, entry_id, password);
+    let pk = vault.export_web3(wallet_id, entry_id, password)?;
 
-    let result_json = serde_json::to_string_pretty(&pk.1).expect("Failed to convert to JSON");
+    let result_json = serde_json::to_string_pretty(&pk.1)
+        .map_err(|_| VaultNodeError::OtherProcessing("Failed to convert to JSON".to_string()))?;
     let result = ExportedWeb3Json {
         password: pk.0,
         json: result_json,
     };
-    let result = serde_json::to_string(&result).map_err(|_| "Cannot convert to JSON".to_string());
-
-    let status = StatusResult::from(result).as_json();
-    Ok(cx.string(status))
+    // we export result as a string, not as an object, because that's how it expected to be user/saved/etc
+    let result = serde_json::to_string(&result)
+        .map_err(|_| VaultNodeError::OtherProcessing("Failed to convert to JSON".to_string()))?;
+    Ok(result)
 }
 
-pub fn export_pk(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn export_pk(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
-        .expect("wallet_id not provided")
-        .value(&mut cx);
-    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::from_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let entry_id = cx
         .argument::<JsNumber>(2)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .value(cx) as usize;
     let password = cx
         .argument::<JsString>(3)
-        .expect("Password is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(3, "password".to_string()))?
+        .value(cx);
 
-    let pk = vault.export_pk(wallet_id, entry_id, password);
+    let pk = vault.export_pk(wallet_id, entry_id, password)?;
     let result = format!("0x{}", hex::encode(pk.0));
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    Ok(result)
 }
 
-pub fn update_label(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn update_label(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
-        .expect("wallet_id not provided")
-        .value(&mut cx);
-    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::from_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let entry_id = cx
         .argument::<JsNumber>(2)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
-    let label = args_get_str(&mut cx, 3);
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .value(cx) as usize;
+    let label = args_get_str(cx, 3);
 
     let result = vault.set_label(wallet_id, entry_id, label);
-
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    Ok(result)
 }
 
-pub fn update_receive_disabled(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn update_receive_disabled(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
-        .expect("wallet_id not provided")
-        .value(&mut cx);
-    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::from_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let entry_id = cx
         .argument::<JsNumber>(2)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .value(cx) as usize;
     let disabled = cx
         .argument::<JsBoolean>(3)
-        .expect("receive_disabled not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(3, "is_disabled".to_string()))?
+        .value(cx);
 
     let result = vault.set_receive_disabled(wallet_id, entry_id, disabled);
-
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    Ok(result)
 }
 
-pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn list_addresses(cx: &mut FunctionContext) -> Result<Vec<CurrentAddressJson>, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
-        .expect("wallet_id not provided")
-        .value(&mut cx);
-    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::from_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let entry_id = cx
         .argument::<JsNumber>(2)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
-    let role = args_get_str(&mut cx, 3).expect("address_role not provided");
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .value(cx) as usize;
+    let role = args_get_str(cx, 3)
+        .ok_or(VaultNodeError::ArgumentMissing(2, "address_role".to_string()))?;
+
     let start = cx
         .argument::<JsNumber>(4)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
+        .map_err(|_| VaultNodeError::ArgumentMissing(4, "start".to_string()))?
+        .value(cx) as usize;
     let limit = cx
         .argument::<JsNumber>(5)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
+        .map_err(|_| VaultNodeError::ArgumentMissing(5, "limit".to_string()))?
+        .value(cx) as usize;
 
-    let result = vault.list_entry_addresses(wallet_id, entry_id, role, start, limit)
-        .expect("failed to get addresses");
-
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    let result = vault.list_entry_addresses(wallet_id, entry_id, role, start, limit)?;
+    Ok(result)
 }

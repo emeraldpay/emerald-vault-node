@@ -14,6 +14,8 @@ extern crate env_logger;
 #[macro_use]
 extern crate log;
 extern crate num_bigint;
+#[macro_use]
+extern crate neon_frame_macro;
 
 use neon::prelude::*;
 
@@ -22,11 +24,11 @@ mod address;
 mod addressbook;
 mod admin;
 mod entries;
-mod json;
 mod seeds;
 mod sign;
 mod wallets;
 mod global;
+mod errors;
 
 use env_logger::Builder;
 use chrono::Local;
@@ -64,8 +66,6 @@ register_module!(mut cx, {
     cx.export_function("wallets_removeEntry", wallets::remove_entry)
         .expect("wallets_removeEntry not exported");
 
-    cx.export_function("entries_import", entries::import_ethereum)
-        .expect("entries_import not exported");
     cx.export_function("entries_export", entries::export)
         .expect("entries_export not exported");
     cx.export_function("entries_exportPk", entries::export_pk)

@@ -9,7 +9,6 @@ use emerald_vault::{mnemonic::{Language, Mnemonic, MnemonicSize}, storage::error
     seed::{LedgerSource, Seed, SeedSource},
 }, EthereumAddress};
 use hdpath::{StandardHDPath, AccountHDPath, CustomHDPath, HDPath};
-use json::StatusResult;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use emerald_vault::blockchain::chains::BlockchainType;
@@ -21,6 +20,7 @@ use emerald_hwkey::errors::HWKeyError;
 use emerald_hwkey::ledger::app_bitcoin::{BitcoinApp, BitcoinApps};
 use emerald_hwkey::ledger::traits::LedgerApp;
 use emerald_hwkey::ledger::app_ethereum::{EthereumApp, EthereumApps};
+use errors::VaultNodeError;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
@@ -121,70 +121,69 @@ impl SeedDefinitionOrReferenceJson {
     }
 }
 
-pub fn is_available(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+#[neon_frame_fn(channel=2)]
+pub fn is_available<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
+
     let json = cx
         .argument::<JsString>(1)
-        .expect("Input JSON is not provided")
-        .value(&mut cx);
-    let parsed: SeedDefinitionOrReferenceJson =
-        serde_json::from_str(json.as_str()).expect("Invalid JSON");
-    let cfg = VaultConfig::get_config(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .value(cx);
+    let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+    let cfg = VaultConfig::get_config(cx)?;
 
-    let handler = cx.argument::<JsFunction>(2)?.root(&mut cx);
-    let queue = cx.channel();
     std::thread::spawn(move || {
         let vault = WrappedVault::new(cfg.clone());
-        let result: Result<bool, VaultError> = match vault.is_available(parsed.clone()) {
+        let result: Result<bool, VaultNodeError> = match vault.is_available(parsed.clone()) {
             Ok(avail) => Ok(avail),
             Err(_) => Ok(false),
         };
-        let status = StatusResult::from(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        handler(result);
     });
-    Ok(cx.undefined())
+
+    Ok(())
 }
 
-pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+#[neon_frame_fn(channel=4)]
+pub fn list_addresses<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<HashMap<String, String>, VaultNodeError>) + Send + 'static {
+
     let json = cx
         .argument::<JsString>(1)
-        .expect("Input JSON is not provided")
-        .value(&mut cx);
-    let parsed: SeedDefinitionOrReferenceJson =
-        serde_json::from_str(json.as_str()).expect("Invalid JSON");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .value(cx);
+    let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
 
     let blockchain = cx
         .argument::<JsNumber>(2)
-        .expect("Input JSON is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "blockchain".to_string()))?
+        .value(cx);
     let blockchain = Blockchain::try_from(blockchain as u32)
-        .expect("Invalid blockchain id");
+        .map_err(|_| VaultNodeError::InvalidArgument(2))?;
 
-    let hd_path_all: Vec<String> = cx
+    let hd_path_all_js = cx
         .argument::<JsArray>(3)
-        .expect("List of HD Path is not provided")
-        .to_vec(&mut cx)
-        .expect("Failed to convert to Rust vector")
-        .into_iter()
-        .map(|item| {
-            item.downcast::<JsString, _>(&mut cx)
-                .expect("Expected string element in array")
-                .value(&mut cx)
-        })
-        .collect();
+        .map_err(|_| VaultNodeError::ArgumentMissing(3, "hd_path".to_string()))?
+        .to_vec(cx)
+        .map_err(|_| VaultNodeError::InvalidArgument(3))?;
 
-    let cfg = VaultConfig::get_config(&mut cx);
+    let mut hd_path_all: Vec<String> = vec![];
+    for item in hd_path_all_js {
+        let s = item.downcast::<JsString, _>(cx)
+            .map_err(|_| VaultNodeError::InvalidArgument(3))?
+            .value(cx);
+        hd_path_all.push(s)
+    }
 
-    let handler = cx.argument::<JsFunction>(4)?.root(&mut cx);
-    let queue = cx.channel();
+    let cfg = VaultConfig::get_config(cx)?;
+
     std::thread::spawn(move || {
         let vault = WrappedVault::new(cfg.clone());
-        let result: Result<HashMap<String, String>, String> = match vault.list_addresses(parsed.clone(), hd_path_all.clone(), blockchain) {
+        let result: Result<HashMap<String, String>, VaultNodeError> = match vault.list_addresses(parsed.clone(), hd_path_all.clone(), blockchain) {
             Ok(addresses) => {
                 let mut result = HashMap::new();
                 for address in addresses {
@@ -195,42 +194,35 @@ pub fn list_addresses(mut cx: FunctionContext) -> JsResult<JsUndefined> {
                 }
                 Ok(result)
             }
-            Err(e) => Err(format!("{:?}", e))
+            Err(e) => Err(VaultNodeError::from(e))
         };
-        let status = StatusResult::from(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        handler(result);
     });
-    Ok(cx.undefined())
+    Ok(())
 }
 
-pub fn add(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn add(cx: &mut FunctionContext) -> Result<Uuid, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let json = cx
         .argument::<JsString>(1)
-        .expect("Input JSON is not provided")
-        .value(&mut cx);
-    let parsed: SeedDefinitionOrReferenceJson =
-        serde_json::from_str(json.as_str()).expect("Invalid JSON");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .value(cx);
+    let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let parsed = parsed.clean();
 
-    let result = vault.add_seed(parsed).expect("Seed not added");
-
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    let result = vault.add_seed(parsed)?;
+    Ok(result)
 }
 
-pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn list(cx: &mut FunctionContext) -> Result<Vec<SeedJson>, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
-    let seeds = vault.list_seeds().expect("List not loaded");
+    let seeds = vault.list_seeds().map_err(VaultNodeError::from)?;
 
     let mut result: Vec<SeedJson> = seeds.iter().map(|s| SeedJson::from(s.clone())).collect();
 
@@ -253,23 +245,23 @@ pub fn list(mut cx: FunctionContext) -> JsResult<JsString> {
             })
             .collect()
     }
-
-    let status = StatusResult::Ok(result).as_json();
-    Ok(cx.string(status))
+    Ok(result)
 }
 
-pub fn generate_mnemonic(mut cx: FunctionContext) -> JsResult<JsString> {
+#[neon_frame_fn]
+pub fn generate_mnemonic(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
     let size = cx
         .argument::<JsNumber>(0)
-        .expect("Mnemonic size is not provided")
-        .value(&mut cx) as usize;
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "size".to_string()))?
+        .value(cx) as usize;
 
-    let size = MnemonicSize::from_length(size).expect("Invalid mnemonic size");
-    let mnemonic = Mnemonic::new(Language::English, size).expect("Failed to generate mnemonic");
+    let size = MnemonicSize::from_length(size)
+        .map_err(|_| VaultNodeError::InvalidArgumentValue("Invalid mnemonic size".to_string()))?;
+    let mnemonic = Mnemonic::new(Language::English, size)
+        .map_err(|_| VaultNodeError::InvalidArgumentValue("Failed to generate mnemonic".to_string()))?;
     let sentence = mnemonic.sentence();
 
-    let status = StatusResult::Ok(sentence).as_json();
-    Ok(cx.string(status))
+    Ok(sentence)
 }
 
 fn get_bitcoin_app(k: &LedgerKey) -> Option<String> {
@@ -290,11 +282,13 @@ fn get_ethereum_app(k: &LedgerKey) -> Option<String> {
     )
 }
 
-pub fn list_hwkey(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let hadnler = cx.argument::<JsFunction>(1)?.root(&mut cx);
-    let queue = cx.channel();
+#[neon_frame_fn(channel=1)]
+pub fn list_hwkey<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Vec<LedgerDetails>, VaultNodeError>) + Send + 'static {
+
     std::thread::spawn(move || {
-        let result: Result<Vec<LedgerDetails>, VaultError> = match LedgerKey::new_connected() {
+        let result: Result<Vec<LedgerDetails>, VaultNodeError> = match LedgerKey::new_connected() {
             Ok(k) => {
                 let mut result: Vec<LedgerDetails> = Vec::new();
                 let name = get_bitcoin_app(&k).or_else(|| get_ethereum_app(&k));
@@ -305,19 +299,12 @@ pub fn list_hwkey(mut cx: FunctionContext) -> JsResult<JsUndefined> {
                 });
                 Ok(result)
             },
-            Err(e) => Err(VaultError::HWKeyFailed(e))
+            Err(e) => Err(VaultNodeError::from(VaultError::HWKeyFailed(e)))
         };
-        let status = StatusResult::from(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = hadnler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        handler(result.map_err(VaultNodeError::from));
     });
 
-    Ok(cx.undefined())
+    Ok(())
 }
 
 impl WrappedVault {
@@ -428,7 +415,7 @@ impl WrappedVault {
             }
             SeedDefinitionOrReferenceType::Mnemonic(m) => {
                 let mnemonic = Mnemonic::try_from(Language::English, m.value.as_str())
-                    .expect("Failed to parse mnemonic phrase");
+                    .map_err(|_| VaultError::InvalidDataError("Failed to parse mnemonic phrase".to_string()))?;
                 let temp_seed = SeedSource::create_raw(mnemonic.seed(m.password))?;
                 self.list_seed_addresses(temp_seed, Some("NONE".to_string()), hd_path_all, blockchain)?
             }

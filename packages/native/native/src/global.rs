@@ -1,97 +1,78 @@
 use emerald_vault::crypto::error::CryptoError;
 use emerald_vault::storage::error::VaultError;
-use neon::context::{Context, FunctionContext};
-use neon::handle::Handle;
+use neon::context::{FunctionContext};
 use neon::object::Object;
-use neon::prelude::{JsFunction, JsResult, JsString, JsUndefined, JsValue};
+use neon::prelude::{JsString};
 use access::VaultConfig;
-use json::StatusResult;
+use errors::VaultNodeError;
 
-pub fn is_set(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn(channel=1)]
+pub fn is_set<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
+    let cfg = VaultConfig::get_config(cx)?;
 
-    let handler = cx.argument::<JsFunction>(1)?.root(&mut cx);
-    let queue = cx.channel();
     std::thread::spawn(move || {
         let storage = cfg.get_storage();
         let result = storage.global_key().is_set();
-
-        let status = StatusResult::Ok(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        handler(Ok(result));
     });
-    Ok(cx.undefined())
+    Ok(())
 }
 
-pub fn create(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn(channel=2)]
+pub fn create<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
+    let cfg = VaultConfig::get_config(cx)?;
     let password = cx
         .argument::<JsString>(1)
-        .expect("Password is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "password".to_string()))?
+        .value(cx);
 
-    let handler = cx.argument::<JsFunction>(2)?.root(&mut cx);
-    let queue = cx.channel();
     std::thread::spawn(move || {
         let storage = cfg.get_storage();
         let result = storage.global_key().create(password.as_str())
-            .map(|_| true);
-
-        let status = StatusResult::from(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+            .map(|_| true)
+            .map_err(VaultNodeError::from);
+        handler(result);
     });
-    Ok(cx.undefined())
+    Ok(())
 }
 
-pub fn verify(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn(channel=2)]
+pub fn verify<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
+    let cfg = VaultConfig::get_config(cx)?;
     let password = cx
         .argument::<JsString>(1)
-        .expect("Password is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "password".to_string()))?
+        .value(cx);
 
-    let handler = cx.argument::<JsFunction>(2)?.root(&mut cx);
-    let queue = cx.channel();
     std::thread::spawn(move || {
         let storage = cfg.get_storage();
-        let result = storage.global_key().verify_password(password.as_str());
-
-        let status = StatusResult::from(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        let result = storage.global_key().verify_password(password.as_str())
+            .map_err(VaultNodeError::from);
+        handler(result);
     });
-    Ok(cx.undefined())
+    Ok(())
 }
 
-pub fn change_password(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn(channel=3)]
+pub fn change_password<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
+    let cfg = VaultConfig::get_config(cx)?;
     let current_password = cx
         .argument::<JsString>(1)
-        .expect("Current Password is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "current_password".to_string()))?
+        .value(cx);
     let new_password = cx
         .argument::<JsString>(2)
-        .expect("New Password is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "new_password".to_string()))?
+        .value(cx);
 
-    let handler = cx.argument::<JsFunction>(3)?.root(&mut cx);
-    let queue = cx.channel();
     std::thread::spawn(move || {
         let storage = cfg.get_storage();
         let result = storage.global_key()
@@ -106,16 +87,9 @@ pub fn change_password(mut cx: FunctionContext) -> JsResult<JsUndefined> {
                     _ => Err(e)
                 },
                 |_| Ok(true))
+            .map_err(VaultNodeError::from)
             ;
-
-        let status = StatusResult::from(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        handler(result);
     });
-    Ok(cx.undefined())
+    Ok(())
 }

@@ -2,12 +2,12 @@ use std::convert::TryInto;
 use std::str::FromStr;
 
 use hex::FromHex;
-use neon::prelude::{FunctionContext, JsNumber, JsObject, JsResult, JsString};
+use neon::prelude::{FunctionContext, JsNumber, JsString};
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault};
 use emerald_vault::{align_bytes, to_arr, to_even_str, to_u64, trim_hex, EthereumAddress, EthereumLegacyTransaction, to_32bytes};
-use json::{JsonError, StatusResult};
+use errors::{JsonError, VaultNodeError};
 use emerald_vault::structs::book::AddressRef;
 use emerald_vault::blockchain::chains::BlockchainType;
 use emerald_vault::blockchain::bitcoin::{BitcoinTransferProposal, InputReference, InputScriptSource, KeyMapping, XPub};
@@ -16,7 +16,6 @@ use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{Address, TxOut, OutPoint, Txid};
 use emerald_vault::chains::EthereumChainId;
 use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, EthereumTransaction, TxAccess};
-use neon::context::Context;
 use emerald_vault::structs::types::UsesOddKey;
 use num_bigint::BigUint;
 
@@ -288,50 +287,52 @@ impl WrappedVault {
     }
 }
 
-pub fn sign_tx(mut cx: FunctionContext) -> JsResult<JsString> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn sign_tx(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
+    let cfg = VaultConfig::get_config(cx)?;
     let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
-        .expect("wallet_id not provided")
-        .value(&mut cx);
-    let wallet_id = Uuid::from_str(wallet_id.as_str()).expect("Invalid wallet_id");
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::from_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
 
     let entry_id = cx
         .argument::<JsNumber>(2)
-        .expect("entry_id not provided")
-        .value(&mut cx) as usize;
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .value(cx) as usize;
 
     let unsigned_tx = cx
         .argument::<JsString>(3)
-        .expect("Transaction JSON not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(3, "tx_json".to_string()))?
+        .value(cx);
 
     let password = cx
         .argument::<JsString>(4)
-        .expect("Password not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(3, "password".to_string()))?
+        .value(cx);
 
-    let entry = vault.get_entry(wallet_id, entry_id).expect("Unknown wallet entry");
+    let entry = vault.get_entry(wallet_id, entry_id)
+        .map_err(|_| VaultNodeError::OtherInput(format!("Unknown entry {} at {:}", entry_id, wallet_id)))?;
 
     let result = match entry.blockchain.get_type() {
         BlockchainType::Ethereum => {
             let unsigned_tx =
                 serde_json::from_str::<UnsignedEthereumTxJson>(unsigned_tx.as_str())
-                    .expect("Invalid transaction JSON");
+                    .map_err(|_| VaultNodeError::InvalidArgument(3))?;
             vault.sign_ethereum_tx(wallet_id, entry_id, unsigned_tx, password)
         }
         BlockchainType::Bitcoin => {
             let unsigned_tx =
                 serde_json::from_str::<UnsignedBitcoinTxJson>(unsigned_tx.as_str())
-                    .expect("Invalid transaction JSON");
+                    .map_err(|_| VaultNodeError::InvalidArgument(3))?;
             vault.sign_bitcoin_tx(wallet_id, entry_id, unsigned_tx, password)
         }
     };
 
-    let result = result.map(|b| hex::encode(b));
-
-    let status = StatusResult::from(result).as_json();
-    Ok(cx.string(status))
+    result
+        .map_err(VaultNodeError::OtherProcessing)
+        .map(|b| hex::encode(b))
 }

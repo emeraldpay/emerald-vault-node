@@ -15,7 +15,7 @@ use emerald_vault::{
 use uuid::Uuid;
 use emerald_vault::structs::wallet::WalletEntry;
 use emerald_vault::storage::error::VaultError;
-use neon::context::Context;
+use errors::{JsonError, VaultNodeError};
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct VaultConfig {
@@ -40,28 +40,28 @@ pub struct AccountIndex {
 
 impl AccountIndex {
     fn from_json(cx: &mut FunctionContext,
-                 obj: Handle<JsObject>) -> AccountIndex {
+                 obj: Handle<JsObject>) -> Result<AccountIndex, VaultNodeError> {
         let wallet_id = obj_get_str(cx, &obj, "walletId")
-            .map(|s| Uuid::from_str(s.as_str()).expect("Invalid UUID for walletId"))
-            .expect("No walletId field");
+            .ok_or(VaultNodeError::JsonError(JsonError::MissingField("walletId".to_string())))?
+            .parse::<Uuid>().map_err(|_| VaultNodeError::JsonError(JsonError::InvalidValue("walletId".to_string())))?;
         let entry_id = obj_get_number(cx, &obj, "entryId")
             .filter(|v| *v >= 0 && *v < 0x8fffffff)
             .map(|v| v as usize)
-            .expect("No entryId field");
+            .ok_or(VaultNodeError::JsonError(JsonError::MissingField("entryId".to_string())))?;
         let receive = obj_get_number(cx, &obj, "receive")
             .filter(|v| *v >= 0 && *v < 0x8fffffff)
             .map(|v| v as u32)
-            .expect("No receive field");
+            .ok_or(VaultNodeError::JsonError(JsonError::MissingField("receive".to_string())))?;
         let change = obj_get_number(cx, &obj, "change")
             .filter(|v| *v >= 0 && *v < 0x8fffffff)
             .map(|v| v as u32)
-            .expect("No change field");
-        AccountIndex {
+            .ok_or(VaultNodeError::JsonError(JsonError::MissingField("change".to_string())))?;
+        Ok(AccountIndex {
             wallet_id,
             entry_id,
             receive,
             change,
-        }
+        })
     }
 }
 
@@ -117,42 +117,48 @@ pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
 }
 
 impl VaultConfig {
-    pub fn get_config(cx: &mut FunctionContext) -> VaultConfig {
+    pub fn get_config(cx: &mut FunctionContext) -> Result<VaultConfig, VaultNodeError> {
         let config = cx
             .argument::<JsObject>(0)
-            .expect("Vault Config is not provided");
+            .map_err(|_| VaultNodeError::ArgumentMissing(0, "config".to_string()))?;
 
-        let account_indexes: Vec<AccountIndex> = match config.get(cx, "accountIndexes") {
+        let mut account_indexes: Vec<AccountIndex> = vec![];
+        match config.get(cx, "accountIndexes") {
             Ok(value) => {
-                let items: Handle<JsArray> = value.downcast(cx).expect("accountIndexes is not an array");
-                items.to_vec(cx).expect("accountIndexes is not a vector").iter()
-                    .map(|it| {
-                        let val = it.downcast(cx).expect("Not an object");
-                        AccountIndex::from_json(cx, val)
-                    })
-                    .collect()
+                let items: Handle<JsArray> = value.downcast(cx)
+                    .map_err(|_| VaultNodeError::JsonError(JsonError::InvalidValue("accountIndexes".to_string())))?;
+                let items_js = items.to_vec(cx)
+                    .map_err(|_| VaultNodeError::JsonError(JsonError::InvalidValue("accountIndexes".to_string())))?;
+                for item in items_js {
+                    let val = item.downcast(cx)
+                        .map_err(|_| VaultNodeError::JsonError(JsonError::InvalidValue("accountIndexes[]".to_string())))?;
+                    account_indexes.push(AccountIndex::from_json(cx, val)?)
+                }
             },
-            _ => vec![]
+            _ => { }
         };
 
         let dir = match obj_get_str(cx, &config, "dir") {
             Some(val) => val,
             None => default_path()
                 .to_str()
-                .expect("No default path for current OS")
+                .ok_or(VaultNodeError::VaultError("No default path for current OS".to_string()))?
                 .to_string(),
         };
 
         let chain = match obj_get_str(cx, &config, "chain") {
-            Some(chain) => Some(EthereumChainId::from_str(chain.as_str()).expect("Invalid chain")),
+            Some(chain) => Some(
+                EthereumChainId::from_str(chain.as_str())
+                    .map_err(|_| VaultNodeError::JsonError(JsonError::InvalidValue("chain".to_string())))?
+            ),
             None => None,
         };
 
-        return VaultConfig {
+        return Ok(VaultConfig {
             chain,
             dir: dir.to_string(),
             account_indexes,
-        };
+        });
     }
 
     pub fn get_storage(&self) -> VaultStorage {
@@ -163,20 +169,20 @@ impl VaultConfig {
 }
 
 impl MigrationConfig {
-    pub fn get_config(cx: &mut FunctionContext) -> MigrationConfig {
+    pub fn get_config(cx: &mut FunctionContext) -> Result<MigrationConfig, VaultNodeError> {
         let config = cx
             .argument::<JsObject>(0)
-            .expect("Vault Config is not provided");
+            .map_err(|_| VaultNodeError::ArgumentMissing(0, "config".to_string()))?;
         let dir = match obj_get_str(cx, &config, "dir") {
             Some(val) => val,
             None => default_path()
                 .to_str()
-                .expect("No default path for current OS")
+                .ok_or(VaultNodeError::VaultError("No default path for current OS".to_string()))?
                 .to_string(),
         };
-        return MigrationConfig {
+        return Ok(MigrationConfig {
             dir: dir.to_string(),
-        };
+        });
     }
 }
 
@@ -189,23 +195,24 @@ impl WrappedVault {
         WrappedVault { cfg }
     }
 
-    pub fn get_blockchain(&self) -> Blockchain {
-        Blockchain::try_from(self.cfg.chain.unwrap()).expect("Unsupported chain")
+    pub fn get_blockchain(&self) -> Result<Blockchain, VaultNodeError> {
+        Blockchain::try_from(self.cfg.chain.unwrap())
+            .map_err(|_| VaultNodeError::InvalidArgumentValue("Unsupported chain".to_string()))
     }
 
-    pub fn load_wallets(&self) -> Vec<Wallet> {
+    pub fn load_wallets(&self) -> Result<Vec<Wallet>, VaultNodeError> {
         let storage = &self.cfg.get_storage();
         let wallets: Vec<Wallet> = storage
             .wallets()
             .list()
-            .expect("Wallets are not loaded")
+            .map_err(|_| VaultNodeError::VaultError("Wallets are not loaded".to_string()))?
             .iter()
             .map(|id| storage.wallets().get(*id))
             .map(|w| w.ok())
             .filter(|w| w.is_some())
             .map(|w| w.unwrap())
             .collect();
-        wallets
+        Ok(wallets)
     }
 
     pub fn get_entry(&self, wallet_id: Uuid, entry_id: usize) -> Result<WalletEntry, VaultError> {

@@ -1,38 +1,27 @@
-use neon::context::Context;
-use neon::handle::Handle;
 use neon::object::Object;
-use neon::prelude::{FunctionContext, JsArray, JsFunction, JsNumber, JsResult, JsString, JsUndefined, JsValue};
+use neon::prelude::{FunctionContext, JsString};
 use uuid::Uuid;
 
 use access::{MigrationConfig, VaultConfig, WrappedVault};
 use emerald_vault::storage::admin::VaultAdmin;
-use emerald_vault::storage::error::VaultError;
 use emerald_vault::storage::global_key::LegacyEntryRef;
-use json::StatusResult;
+use errors::VaultNodeError;
 
-pub fn migrate(mut cx: FunctionContext) -> JsResult<JsArray> {
-    let cfg = MigrationConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn migrate(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let cfg = MigrationConfig::get_config(cx)?;
     emerald_vault::migration::auto_migrate(cfg.dir.clone());
 
-    //TODO
-    let result = JsArray::new(&mut cx, 0 as u32);
-    Ok(result)
+    Ok(true)
 }
 
-pub fn autofix(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn]
+pub fn autofix(cx: &mut FunctionContext) -> Result<usize, VaultNodeError> {
+    let cfg = VaultConfig::get_config( cx)?;
     let storage = cfg.get_storage();
-    let recovered = match storage.revert_backups() {
-        Ok(count) => count as i32,
-        Err(e) => {
-            println!("Failed to recover Vault. {:?}", e); //TODO use log
-            -1
-        }
-    };
 
-    //TODO
-    let result = JsNumber::new(&mut cx, recovered);
-    Ok(result)
+    storage.revert_backups()
+        .map_err(|e| VaultNodeError::OtherProcessing(format!("Failed to recover Vault. {:?}", e)))
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -53,54 +42,44 @@ impl From<&LegacyEntryRef> for LegacyEntryRefJson {
     }
 }
 
-pub fn list_odd(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let cfg = VaultConfig::get_config(&mut cx);
+#[neon_frame_fn(channel=1)]
+pub fn list_odd<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Vec<LegacyEntryRefJson>, VaultNodeError>) + Send + 'static {
 
-    let handler = cx.argument::<JsFunction>(1)?.root(&mut cx);
-    let queue = cx.channel();
+    let cfg = VaultConfig::get_config(cx)?;
+
     std::thread::spawn(move || {
         let storage = cfg.get_storage();
-        let result: Result<Vec<LegacyEntryRefJson>, VaultError> = storage.get_global_key_missing()
-            .map(|l| l.iter().map(|r| LegacyEntryRefJson::from(r)).collect());
-        let status = StatusResult::from(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        let result: Result<Vec<LegacyEntryRefJson>, VaultNodeError> = storage.get_global_key_missing()
+            .map(|l| l.iter().map(|r| LegacyEntryRefJson::from(r)).collect())
+            .map_err(VaultNodeError::from);
+        handler(result);
     });
-    Ok(cx.undefined())
+    Ok(())
 }
 
-pub fn upgrade_odd(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+#[neon_frame_fn(channel=3)]
+pub fn upgrade_odd<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Vec<Uuid>, VaultNodeError>) + Send + 'static {
+
     let password = cx
         .argument::<JsString>(1)
-        .expect("Legacy Password is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "legacy_password".to_string()))?
+        .value(cx);
     let global_password = cx
         .argument::<JsString>(2)
-        .expect("Global Key Password is not provided")
-        .value(&mut cx);
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "new_password".to_string()))?
+        .value(cx);
 
-    let cfg = VaultConfig::get_config(&mut cx);
+    let cfg = VaultConfig::get_config(cx)?;
 
-    let handler = cx.argument::<JsFunction>(3)?.root(&mut cx);
-    let queue = cx.channel();
     std::thread::spawn(move || {
         let storage = cfg.get_storage();
         let admin = VaultAdmin::create(storage);
         let result = admin.upgrade_all_legacy(password.as_str(), global_password.as_str());
-
-        let status = StatusResult::Ok(result).as_json();
-        queue.send(move |mut cx| {
-            let callback = handler.into_inner(&mut cx);
-            let this = cx.undefined();
-            let args: Vec<Handle<JsValue>> = vec![cx.string(status).upcast()];
-            callback.call(&mut cx, this, args)?;
-            Ok(())
-        });
+        handler(Ok(result));
     });
-    Ok(cx.undefined())
+    Ok(())
 }
