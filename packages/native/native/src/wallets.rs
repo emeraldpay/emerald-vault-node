@@ -300,12 +300,21 @@ fn with_std_addresses(entry: &WalletEntry, index: Option<&AccountIndex>) -> Vec<
     };
     match entry.blockchain.get_type() {
         BlockchainType::Bitcoin => {
+            // we need two addresses, one for Receiving, and one for Change
+            let mut results = vec![];
             entry.get_addresses::<Address>(AddressRole::Receive, index.receive, 1)
                 .or_else::<Vec<Address>, _>(|_| Ok(vec![]))
                 .unwrap()
                 .iter()
                 .map(|a| CurrentAddressJson::from(a))
-                .collect()
+                .for_each(|a| results.push(a));
+            entry.get_addresses::<Address>(AddressRole::Change, index.change, 1)
+                .or_else::<Vec<Address>, _>(|_| Ok(vec![]))
+                .unwrap()
+                .iter()
+                .map(|a| CurrentAddressJson::from(a))
+                .for_each(|a| results.push(a));
+            results
         },
         _ => vec![]
     }

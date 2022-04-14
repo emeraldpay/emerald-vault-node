@@ -934,6 +934,15 @@ describe("Entries", () => {
                 },
             ]);
 
+            let entry = (await vault.getWallet(walletId)).entries[0];
+            let currentAddresses = (entry as BitcoinEntry).addresses;
+            expect(currentAddresses.length).toBe(2);
+            expect(currentAddresses[0].role).toBe("receive");
+            expect(currentAddresses[0].hdPath).toBe("m/84'/0'/0'/0/0");
+            expect(currentAddresses[0].address).toBe("bc1qxqz4qerrm662nt4hxh39mqltvqcffcvzzfc49z");
+            expect(currentAddresses[1].role).toBe("change");
+            expect(currentAddresses[1].hdPath).toBe("m/84'/0'/0'/1/0");
+            expect(currentAddresses[1].address).toBe("bc1qpyv2pkpfcf0dk0uc2vn9ck7yq6tp53snnq39he");
         });
 
         test("Get bitcoin addresses - acc 3", async () => {
