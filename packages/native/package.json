@@ -55,7 +55,7 @@
     "package:electron": "node-pre-gyp package --runtime=electron --target=15.0.0",
     "prepublishOnly": "npm run clean && npm run build && npm run test && npm run clean:native:ifpublish",
     "version:electron": "./node_modules/.bin/electron --version",
-    "prepack": "npm run build"
+    "prepack": "npm run clean && npm run build:ts"
   },
   "dependencies": {
     "@emeraldpay/emerald-vault-core": "0.9.0-dev"
