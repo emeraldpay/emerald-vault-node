@@ -1,0 +1,102 @@
+name: Pubslish Development Artifacts
+on:
+  push:
+    branches:
+      - master
+      - ci/*
+      - release/*
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  gcp:
+    name: Publish to GCP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      # Prepare a commit version. Gets a git tag or a commit hash
+      # https://github.com/marketplace/actions/get-tag-or-sha
+      - uses: tenhaus/get-release-or-tag@v2
+        id: tag
+
+      # on Windows the GCP Actions needs a path to Python, see https://github.com/GoogleCloudPlatform/github-actions/issues/100
+      - name: Setup GCP (windows)
+        uses: google-github-actions/setup-gcloud@v0
+        env:
+          CLOUDSDK_PYTHON: ${{env.pythonLocation}}\python.exe
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+        if: runner.os == 'Windows'
+
+      - name: Setup GCP (non windows)
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+        if: runner.os != 'Windows'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          always-auth: true
+
+      - name: Configure NPM
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+#      - name: Install Rust
+#        uses: actions-rs/toolchain@v1
+#        with:
+#          profile: minimal
+#          toolchain: stable
+#          override: true
+#
+#      - name: Instal system libs
+#        run: sudo apt-get install libusb-1.0-0-dev
+
+      - name: Instal JS dependencies
+        run: yarn install
+
+      - name: Configure Node.js Path
+        run: npm config set scripts-prepend-node-path true
+
+      - name: Pack - core
+        run: yarn workspace @emeraldpay/emerald-vault-core pack
+
+      - name: Pack - native
+        run: yarn workspace @emeraldpay/emerald-vault-native pack
+        env:
+          NO_NPM_BINARY: "true"
+
+      - name: Check Version
+        id: package
+        uses: codex-team/action-nodejs-package-info@v1
+        with:
+          path: packages/core
+
+      # on Windows the GCP Actions needs a path to Python, see https://github.com/GoogleCloudPlatform/github-actions/issues/100
+      - name: Upload to GCP (windows)
+        run: |
+          gsutil cp -n packages/core/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/
+          gsutil cp -n packages/native/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/
+        if: runner.os == 'Windows'
+        env:
+          CLOUDSDK_PYTHON: ${{env.pythonLocation}}\python.exe
+
+      - name: Upload to GCP (non windows)
+        run: |
+          gsutil cp -n packages/core/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/
+          gsutil cp -n packages/native/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/
+        if: runner.os != 'Windows'
+
+      - name: Links to published artifacts
+        run: |
+          echo "Publishing artifacts to:"
+          echo "  https://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/emeraldpay-emerald-vault-core-v${{ steps.package.outputs.version }}.tgz"
+          echo "  https://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/emeraldpay-emerald-vault-native-v${{ steps.package.outputs.version }}.tgz"
