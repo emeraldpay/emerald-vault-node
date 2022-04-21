@@ -1,0 +1,65 @@
+name: Publish Development Artifacts
+on:
+  push:
+    branches:
+      - master
+      - ci/*
+      - release/*
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  gcp:
+    name: Publish to GCP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Setup GCP
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_ARTIFACTS_KEY }}
+          export_default_credentials: true
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          always-auth: true
+
+      - name: Configure NPM
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Instal JS dependencies
+        run: yarn install
+
+      - name: Configure Node.js Path
+        run: npm config set scripts-prepend-node-path true
+
+      - name: Pack - core
+        run: yarn workspace @emeraldpay/emerald-vault-core pack
+
+      - name: Pack - native
+        run: yarn workspace @emeraldpay/emerald-vault-native pack
+        env:
+          NO_NPM_BINARY: "true"
+
+      - name: Check Version
+        id: package
+        uses: codex-team/action-nodejs-package-info@v1
+        with:
+          path: packages/core
+
+      - name: Upload to GCP
+        run: |
+          gsutil cp -n packages/core/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/
+          gsutil cp -n packages/native/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/
+
+      - name: Links to published artifacts
+        run: |
+          echo "Publishing artifacts to:"
+          echo "  https://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/emeraldpay-emerald-vault-core-v${{ steps.package.outputs.version }}.tgz"
+          echo "  https://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/emeraldpay-emerald-vault-native-v${{ steps.package.outputs.version }}.tgz"
