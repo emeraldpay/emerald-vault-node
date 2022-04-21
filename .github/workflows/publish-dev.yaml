@@ -17,11 +17,6 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
 
-      # Prepare a commit version. Gets a git tag or a commit hash
-      # https://github.com/marketplace/actions/get-tag-or-sha
-      - uses: tenhaus/get-release-or-tag@v2
-        id: tag
-
       - name: Setup GCP
         uses: google-github-actions/setup-gcloud@v0
         with:
@@ -37,16 +32,6 @@ jobs:
 
       - name: Configure NPM
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-#      - name: Install Rust
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          profile: minimal
-#          toolchain: stable
-#          override: true
-#
-#      - name: Instal system libs
-#        run: sudo apt-get install libusb-1.0-0-dev
 
       - name: Instal JS dependencies
         run: yarn install
@@ -70,11 +55,11 @@ jobs:
 
       - name: Upload to GCP
         run: |
-          gsutil cp -n packages/core/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/
-          gsutil cp -n packages/native/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/
+          gsutil cp -n packages/core/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/
+          gsutil cp -n packages/native/*.tgz gs://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/
 
       - name: Links to published artifacts
         run: |
           echo "Publishing artifacts to:"
-          echo "  https://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/emeraldpay-emerald-vault-core-v${{ steps.package.outputs.version }}.tgz"
-          echo "  https://artifacts.emerald.cash/builds/vault-node/${{ steps.tag.outputs.tag }}/emeraldpay-emerald-vault-native-v${{ steps.package.outputs.version }}.tgz"
+          echo "  https://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/emeraldpay-emerald-vault-core-v${{ steps.package.outputs.version }}.tgz"
+          echo "  https://artifacts.emerald.cash/builds/vault-node/${GITHUB_SHA::8}/emeraldpay-emerald-vault-native-v${{ steps.package.outputs.version }}.tgz"
