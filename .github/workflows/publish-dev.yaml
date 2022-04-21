@@ -1,4 +1,4 @@
-name: Pubslish Development Artifacts
+name: Publish Development Artifacts
 on:
   push:
     branches:
