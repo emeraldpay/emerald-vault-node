@@ -166,13 +166,13 @@ describe("Entries", () => {
             let wallets = await vault.listWallets();
             let wallet = WalletsOp.of(wallets).getWallet(walletId).value;
             let entry = wallet.entries[0] as BitcoinEntry;
-            expect(entry.addresses).toEqual([
+            expect(entry.addresses[0]).toEqual(
                 {
                     "address": "bc1qv0upcfs7j20xu83z9kmh7gvd7hfexdmnd37yxs",
                     "hdPath": "m/84'/0'/0'/0/5",
                     "role": "receive"
                 }
-            ]);
+            );
         })
     });
 
@@ -842,7 +842,12 @@ describe("Entries", () => {
                     "address": "bc1qxqz4qerrm662nt4hxh39mqltvqcffcvzzfc49z",
                     "hdPath": "m/84'/0'/0'/0/0",
                     "role": "receive"
-                }
+                },
+                {
+                    "address": "bc1qpyv2pkpfcf0dk0uc2vn9ck7yq6tp53snnq39he",
+                    "hdPath": "m/84'/0'/0'/1/0",
+                    "role": "change",
+                },
             ]);
             expect(entry.xpub).toEqual([
                 {
@@ -1048,7 +1053,12 @@ describe("Entries", () => {
                     "address": "bc1q74z03fz8lhy87zx3gfwu4k3t57yew2yefreakn",
                     "hdPath": "m/84'/0'/2'/0/0",
                     "role": "receive"
-                }
+                },
+                {
+                    "address": "bc1qmtnxrxa8vnfypm0qyezcl239lstpcz7rwf3zsj",
+                    "hdPath": "m/84'/0'/2'/1/0",
+                    "role": "change",
+                },
             ]);
             expect(entry.xpub).toEqual([
                 {
@@ -1105,7 +1115,12 @@ describe("Entries", () => {
                     "address": "tb1qqc860epsueh8zzhx9r8p4e5zk8z09zcm3l47u6",
                     "hdPath": "m/84'/1'/0'/0/0",
                     "role": "receive"
-                }
+                },
+                {
+                    "address": "tb1q92snz5rlee2nj08n5pk3hxlwf6xt4lfu0yu6rn",
+                    "hdPath": "m/84'/1'/0'/1/0",
+                    "role": "change",
+                },
             ]);
         });
     });
