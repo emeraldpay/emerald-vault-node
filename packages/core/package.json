@@ -20,7 +20,8 @@
     "jest": "jest",
     "test": "npm run jest",
     "clean": "rimraf lib",
-    "prepublishOnly": "npm run clean && npm run build && npm run test"
+    "prepublishOnly": "npm run clean && npm run build && npm run test",
+    "prepack": "npm run build"
   },
   "dependencies": {},
   "devDependencies": {
