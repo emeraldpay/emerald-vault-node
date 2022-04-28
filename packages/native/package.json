@@ -31,8 +31,9 @@
   "scripts": {
     "build:ts": "tsc",
     "build:rs": "neon build --release",
-    "build:rs:electron": "node build-electron.js",
+    "build:rs:electron": "npm run build:rs",
     "build:rs:node": "npm run build:rs",
+    "build:rs:hwkeyemulate": "neon build --release -- --features hwkey-emulate",
     "build": "npm run clean && npm run build:rs && npm run build:ts",
     "jest": "npm run jest:unit",
     "jest:unit": "jest",
