@@ -1,4 +1,4 @@
-use emerald_vault::storage::error::VaultError;
+use emerald_vault::error::VaultError;
 
 #[derive(Debug, Clone)]
 pub enum VaultNodeError {

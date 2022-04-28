@@ -4,10 +4,15 @@ use uuid::Uuid;
 use access::{VaultConfig, WrappedVault};
 use chrono::{DateTime, Utc};
 use emerald_vault::util::none_if_empty;
-use emerald_vault::{mnemonic::{Language, Mnemonic, MnemonicSize}, storage::error::VaultError, structs::{
-    crypto::Encrypted,
-    seed::{LedgerSource, Seed, SeedSource},
-}, EthereumAddress};
+use emerald_vault::{
+    mnemonic::{Language, Mnemonic, MnemonicSize},
+    error::VaultError,
+    structs::{
+        crypto::Encrypted,
+        seed::{LedgerSource, Seed, SeedSource},
+    },
+    EthereumAddress
+};
 use hdpath::{StandardHDPath, AccountHDPath, CustomHDPath, HDPath};
 use std::collections::HashMap;
 use std::convert::TryFrom;

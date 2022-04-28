@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use access::{args_get_str, VaultConfig, WrappedVault};
 use emerald_vault::{
-    convert::json::keyfile::EthereumJsonV3File, storage::error::VaultError, EthereumAddress,
+    convert::json::keyfile::EthereumJsonV3File, error::VaultError, EthereumAddress,
     EthereumPrivateKey,
 };
 use emerald_vault::structs::book::AddressRef;

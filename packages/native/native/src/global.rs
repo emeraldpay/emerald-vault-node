@@ -1,5 +1,5 @@
 use emerald_vault::crypto::error::CryptoError;
-use emerald_vault::storage::error::VaultError;
+use emerald_vault::error::VaultError;
 use neon::context::{FunctionContext};
 use neon::object::Object;
 use neon::prelude::{JsString};

@@ -14,7 +14,7 @@ use emerald_vault::{
 };
 use uuid::Uuid;
 use emerald_vault::structs::wallet::WalletEntry;
-use emerald_vault::storage::error::VaultError;
+use emerald_vault::error::VaultError;
 use errors::{JsonError, VaultNodeError};
 
 #[derive(Clone, Eq, PartialEq, Debug)]

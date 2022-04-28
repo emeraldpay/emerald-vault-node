@@ -13,7 +13,7 @@ use emerald_vault::{
     },
     convert::json::keyfile::EthereumJsonV3File,
     storage::entry::AddEntryOptions,
-    storage::error::VaultError,
+    error::VaultError,
     structs::{
         wallet::Wallet,
         wallet::{EntryId, PKType, ReservedPath, WalletEntry, AddressRole, EntryAddress},

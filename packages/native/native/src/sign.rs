@@ -131,7 +131,7 @@ impl UnsignedEthereumTxJson {
         let data = to_even_str(trim_hex(self.data.as_str()));
 
         let result = EthereumLegacyTransaction {
-            chain_id: Some(chain_id.clone()),
+            chain_id: chain_id.clone(),
             nonce: self.nonce,
             gas_price: BigUint::from_str(gas_price.as_str())
                 .map_err(|_| JsonError::InvalidValue("gasPrice".to_string()))?,
@@ -273,7 +273,7 @@ impl WrappedVault {
             network: entry.blockchain.as_bitcoin_network(),
             seed: vec![seed],
             keys,
-            input: convert_inputs(unsigned_tx.inputs, xpub, seed_id, &hd_account)?,
+            input: convert_inputs(unsigned_tx.inputs, &xpub, seed_id, &hd_account)?,
             output: convert_output(unsigned_tx.outputs)?,
             change: entry.clone(),
             expected_fee: unsigned_tx.fee,
