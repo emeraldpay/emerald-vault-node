@@ -29,6 +29,7 @@ mod sign;
 mod wallets;
 mod global;
 mod errors;
+mod snapshot;
 
 use env_logger::Builder;
 use chrono::Local;
@@ -121,6 +122,11 @@ register_module!(mut cx, {
         .expect("admin_listOdd not exported");
     cx.export_function("admin_upgradeOdd", admin::upgrade_odd)
         .expect("admin_upgradeOdd not exported");
+
+    cx.export_function("snapshot_create", snapshot::create)
+        .expect("snapshot_create not exported");
+    cx.export_function("snapshot_restore", snapshot::restore)
+        .expect("snapshot_restore not exported");
 
     Ok(())
 });

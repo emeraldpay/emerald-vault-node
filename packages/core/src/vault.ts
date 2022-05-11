@@ -132,4 +132,28 @@ export interface IEmeraldVault {
      * @return ids of successfully upgraded items
      */
     tryUpgradeOddItems(odd_password: string, global_password: string): Promise<Uuid[]>;
+
+    /**
+     * Make a snapshot of the current Vault and copy its content to the specified file. The snapshot contains all critical
+     * information stored in the Vault, including keys, seeds, and wallets. All sensitive details are encrypted, as in the Vault, and cannot
+     * be used to make transactions without the password.
+     * The file can be used to restore the Vault on a new machine or with a new installation.
+     *
+     * Expected extension: .emrldvault
+     * @param targetFile path to a file to write Vault content
+     */
+    snapshotCreate(targetFile: string): Promise<boolean>;
+
+    /**
+     * Restore from an existing snapshot, if the provided password is valid (i.e., can decrypt values). It's a potentially destructive
+     * operation because it replaces all values in the current vault with data from the snapshot.
+     *
+     * Returns `false` if password is invalid. Or error for other less expected errors, like IO Error, invalid data, etc.
+     *
+     * @param sourceFile path to a file with an existing snapshot to restore
+     * @param password to decrypt Global Key used by Vault in snapshot
+     * @return id for the following operations (Cancel or Complete)
+     */
+    snapshotRestore(sourceFile: string, password: string): Promise<boolean>;
+
 }

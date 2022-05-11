@@ -414,4 +414,15 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
+    snapshotCreate(targetFile: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            addon.snapshot_create(this.conf, targetFile, neonToPromise(resolve, reject));
+        });
+    }
+
+    snapshotRestore(sourceFile: string, password: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            addon.snapshot_restore(this.conf, sourceFile, password, neonToPromise(resolve, reject));
+        });
+    }
 }
