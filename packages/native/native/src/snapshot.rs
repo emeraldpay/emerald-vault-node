@@ -14,10 +14,6 @@ use std::str::FromStr;
 
 fn create_internal(storage: VaultStorage, target_file: String) -> Result<bool, VaultError> {
     let target = PathBuf::from(&target_file);
-    if target.exists() {
-        return Err(VaultError::FilesystemError(format!("File exists: {}", target_file)))
-    }
-
     let mut target = File::create(target)
         .map_err(|e| format!("Cannot create file {}. Error: {}", target_file, e))?;
 

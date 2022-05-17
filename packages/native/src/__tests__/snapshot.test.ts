@@ -37,6 +37,33 @@ describe("Snapshots", () => {
             expect(ok).toBeTruthy();
         });
 
+        test('Create replaces an existing file', async () => {
+            await vault.createGlobalKey("test-global");
+
+            let walletId = await vault.addWallet("test");
+            let seedId = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test-global"
+            });
+
+            let otherDir = tempPath("snapshot-create");
+            await fs.promises.mkdir(otherDir)
+
+            let snapshot = `${otherDir}/snap-1.emrldvault`;
+            await fs.promises.writeFile(snapshot, "test");
+            let stats = await fs.promises.lstat(snapshot);
+            expect(stats.size).toBe(4);
+
+            let ok = await vault.snapshotCreate(snapshot);
+            expect(ok).toBeTruthy();
+
+            stats = await fs.promises.lstat(snapshot);
+            expect(stats.size).toBeGreaterThan(100);
+        });
+
         test('Create and restore', async () => {
             await vault.createGlobalKey("test-global");
 
