@@ -112,20 +112,14 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
 name = "bitcoin"
-version = "0.27.1"
+version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a41df6ad9642c5c15ae312dd3d074de38fd3eb7cc87ad4ce10f90292a83fe4d"
+checksum = "05bba324e6baf655b882df672453dbbc527bc938cadd27750ae510aaccc3a66a"
 dependencies = [
  "bech32",
- "bitcoin_hashes 0.10.0",
+ "bitcoin_hashes",
  "secp256k1",
 ]
-
-[[package]]
-name = "bitcoin_hashes"
-version = "0.9.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ce18265ec2324ad075345d5814fbeed4f41f0a660055dc78840b74d19b874b1"
 
 [[package]]
 name = "bitcoin_hashes"
@@ -364,8 +358,9 @@ dependencies = [
 
 [[package]]
 name = "emerald-hwkey"
-version = "0.2.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-hwkey?branch=master#c5f15bb475896a618cf12d395f686aeea03e42a5"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c86c05ab2bb85ed6333cc85f16d6c2efc97c2f799ef38da1ff3e2ce2dfd41a7b"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -384,14 +379,15 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault"
-version = "0.30.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#716ad71e066cacd2f5396a548bf9c2ad9c9a6bd9"
+version = "0.31.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fabbf22b255af92e4c9e5fbaf85fcde12be452385455410a9ae4144fdbe6e3e2"
 dependencies = [
  "aes-ctr",
  "argon2",
  "base64 0.13.0",
  "bitcoin",
- "bitcoin_hashes 0.9.7",
+ "bitcoin_hashes",
  "byte-array-struct",
  "byteorder",
  "chrono",
@@ -429,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.9.0-dev"
+version = "0.9.0"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -651,9 +647,9 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "hdpath"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72adf5a17a0952ecfcddf8d46d071271d5ee52e78443f07ba0b2dcfe3063a132"
+checksum = "dafb09e5d85df264339ad786a147d9de1da13687a3697c52244297e5e7c32d9c"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -1290,9 +1286,9 @@ dependencies = [
 
 [[package]]
 name = "secp256k1"
-version = "0.20.3"
+version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97d03ceae636d0fed5bae6a7f4f664354c5f4fcedf6eef053fef17e49f837d0a"
+checksum = "26947345339603ae8395f68e2f3d85a6b0a8ddfe6315818e80b8504415099db0"
 dependencies = [
  "rand 0.6.5",
  "secp256k1-sys",
@@ -1300,9 +1296,9 @@ dependencies = [
 
 [[package]]
 name = "secp256k1-sys"
-version = "0.4.2"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "957da2573cde917463ece3570eab4a0b3f19de6f1646cde62e6fd3868f566036"
+checksum = "152e20a0fd0519390fc43ab404663af8a0b794273d2a91d60ad4a39f13ffe110"
 dependencies = [
  "cc",
 ]
