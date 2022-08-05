@@ -73,15 +73,6 @@ impl WrappedVault {
         for_chain
     }
 
-    fn add_to_addressbook(&self, item: NewAddressBookItem) -> bool {
-        let storage = &self.cfg.get_storage();
-        let blockchain = Blockchain::try_from(item.blockchain).expect("Invalid blockchain id");
-        storage
-            .addressbook()
-            .add(item.into_bookmark(blockchain))
-            .is_ok()
-    }
-
     //TODO support bitcoin addresses
     fn remove_addressbook_by_addr(&self, address: &EthereumAddress) -> bool {
         let storage = &self.cfg.get_storage();
@@ -114,21 +105,6 @@ pub fn list(cx: &mut FunctionContext) -> Result<Vec<AddressBookmarkJson>, VaultN
     let result: Vec<AddressBookmarkJson> =
         list.iter().map(|b| AddressBookmarkJson::from(b)).collect();
 
-    Ok(result)
-}
-
-#[neon_frame_fn]
-pub fn add(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
-    let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
-
-    let add_js = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "item".to_string()))?
-        .value(cx);
-    let item = serde_json::from_str::<NewAddressBookItem>(add_js.as_str())
-            .map_err(|_| VaultNodeError::InvalidArgument(1))?;
-    let result = vault.add_to_addressbook(item);
     Ok(result)
 }
 

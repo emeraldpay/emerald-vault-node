@@ -63,8 +63,6 @@ export interface IEmeraldVault {
 
     listAddressBook(blockchain: number): Promise<AddressBookItem[]>;
 
-    addToAddressBook(item: CreateAddressBookItem): Promise<boolean>;
-
     removeFromAddressBook(blockchain: number, address: string): Promise<boolean>;
 
     listSeeds(): Promise<SeedDescription[]>;

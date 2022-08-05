@@ -86,8 +86,6 @@ register_module!(mut cx, {
 
     cx.export_function("addrbook_list", addressbook::list)
         .expect("addrbook_list not exported");
-    cx.export_function("addrbook_add", addressbook::add)
-        .expect("addrbook_add not exported");
     cx.export_function("addrbook_remove", addressbook::remove)
         .expect("addrbook_remove not exported");
 

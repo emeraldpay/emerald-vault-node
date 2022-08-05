@@ -307,6 +307,8 @@ export interface BitcoinEntry extends BaseEntry {
     /**
      * Current addresses to use, can include multiple available addresses (depending on the configuration and implementation).
      * May be empty, when xpub is unavailable or the entry is not supposed to receive any transaction.
+     *
+     * @deprecated use vault.listEntryAddresses instead
      */
     addresses: CurrentAddress[];
     /**
