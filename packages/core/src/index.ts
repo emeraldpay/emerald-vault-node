@@ -48,6 +48,7 @@ export {
     MnemonicSeed,
     RawSeed,
 
+    SeedDetails,
     SeedDescription,
 
     SeedReference,

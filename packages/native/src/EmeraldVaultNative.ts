@@ -12,14 +12,23 @@ import {
     WalletsOp,
     WalletCreateOptions,
     IEmeraldVault,
-    EntryId, EntryIdOp,
+    EntryId,
+    EntryIdOp,
     SeedReference,
     LedgerSeedReference,
     CreateAddressBookItem,
     WalletState,
     CurrentAddress,
-    AddressRole, getBlockchainType, isEthereumTx, HWKeyDetails, OddPasswordItem, ExportedWeb3Json
+    AddressRole,
+    getBlockchainType,
+    isEthereumTx,
+    HWKeyDetails,
+    OddPasswordItem,
+    ExportedWeb3Json,
+    IdSeedReference,
+    isIdSeedReference
 } from "@emeraldpay/emerald-vault-core";
+import {SeedDetails} from "@emeraldpay/emerald-vault-core/lib/types";
 
 var addon = require('../native/index.node');
 
@@ -375,6 +384,17 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
         return new Promise((resolve, reject) => {
             addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath, neonToPromise(resolve, reject));
+        });
+    }
+
+    updateSeed(seed: Uuid | IdSeedReference, details: Partial<SeedDetails>): Promise<boolean> {
+        let seed_id = seed;
+        if (isIdSeedReference(seed)) {
+            seed_id = seed.value;
+        }
+
+        return new Promise((resolve, reject) => {
+            addon.seed_update(this.conf, seed_id, JSON.stringify(details), neonToPromise(resolve, reject));
         });
     }
 

@@ -2,8 +2,8 @@ import {
     AddEntry,
     AddressBookItem, AddressRole, BlockchainType,
     CreateAddressBookItem, CurrentAddress,
-    EntryId, ExportedWeb3Json, HWKeyDetails, LedgerSeedReference, OddPasswordItem, SeedDefinition,
-    SeedDescription, SeedReference,
+    EntryId, ExportedWeb3Json, HWKeyDetails, IdSeedReference, LedgerSeedReference, OddPasswordItem, SeedDefinition,
+    SeedDescription, SeedDetails, SeedReference,
     UnsignedTx,
     Uuid,
     Wallet,
@@ -88,6 +88,14 @@ export interface IEmeraldVault {
      * @param hdpath list of hdpath to address or account
      */
     listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: number, hdpath: string[]): Promise<{ [key: string]: string }>;
+
+    /**
+     * Update seed details, such as `label`
+     *
+     * @param seed reference to a seed
+     * @param details the new details
+     */
+    updateSeed(seed: Uuid | IdSeedReference, details: Partial<SeedDetails>): Promise<boolean>;
 
     /**
      * Create a Global Key that will used to encrypt all Secrets in the Vault. Can be created only once.

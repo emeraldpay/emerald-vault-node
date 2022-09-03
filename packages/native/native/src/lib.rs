@@ -93,6 +93,8 @@ register_module!(mut cx, {
         .expect("seed_generateMnemonic not exported");
     cx.export_function("seed_add", seeds::add)
         .expect("seed_add not exported");
+    cx.export_function("seed_update", seeds::update)
+        .expect("seed_update not exported");
     cx.export_function("seed_list", seeds::list)
         .expect("seed_list not exported");
     cx.export_function("seed_isAvailable", seeds::is_available)

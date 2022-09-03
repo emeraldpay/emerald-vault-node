@@ -25,13 +25,19 @@ use emerald_hwkey::errors::HWKeyError;
 use emerald_hwkey::ledger::app_bitcoin::{BitcoinApp, BitcoinApps};
 use emerald_hwkey::ledger::traits::LedgerApp;
 use emerald_hwkey::ledger::app_ethereum::{EthereumApp, EthereumApps};
-use errors::VaultNodeError;
+use errors::{JsonError, VaultNodeError};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
     address: String,
     hd_path: String,
 }
+
+#[derive(Deserialize, Clone)]
+pub struct SeedUpdateJson {
+    pub label: Option<String>,
+}
+
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SeedJson {
@@ -307,6 +313,43 @@ pub fn list_hwkey<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultN
             Err(e) => Err(VaultNodeError::from(VaultError::HWKeyFailed(e)))
         };
         handler(result.map_err(VaultNodeError::from));
+    });
+
+    Ok(())
+}
+
+#[neon_frame_fn(channel=3)]
+pub fn update<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
+
+    let cfg = VaultConfig::get_config(cx)?;
+    let vault = WrappedVault::new(cfg);
+
+    let json = cx
+        .argument::<JsString>(1 as i32)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "seed".to_string()))?
+        .value(cx);
+    let seed_id = Uuid::parse_str(json.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgumentByName("seed".to_string()))?;
+
+    let json = cx
+        .argument::<JsString>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "details".to_string()))?
+        .value(cx);
+    let update: SeedUpdateJson = serde_json::from_str(json.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(2))?;
+
+    std::thread::spawn(move || {
+        let seed_storage = vault.cfg.get_storage().seeds();
+        let result = match seed_storage.get(seed_id) {
+            Ok(mut seed) => {
+                seed.label = update.label;
+                seed_storage.update(seed)
+            },
+            Err(e) => Err(e)
+        };
+        handler(result.map_err(|e| VaultNodeError::from(e)));
     });
 
     Ok(())

@@ -466,12 +466,21 @@ export type SeedEntry = {
     address?: string
 }
 
-export type SeedDescription = {
+export interface SeedDetails {
+    /**
+     * User assigned label
+     */
+    label?: string,
+    /**
+     * System assigned date when the seed was added to the Vault
+     */
+    createdAt: Date,
+}
+
+export interface SeedDescription extends SeedDetails {
     id?: Uuid,
     type: SeedType,
     available: boolean,
-    label?: string,
-    createdAt: Date,
 }
 
 export interface BaseSeedDefinition {
@@ -550,12 +559,12 @@ export function isMnemonic(value: RawSeed | MnemonicSeed, parent: SeedDefinition
     return typeof parent == "object" && typeof value == "object" && parent.type === "mnemonic";
 }
 
-export function isLedger(value: SeedReference): value is LedgerSeedReference {
-    return isSeedReference(value) && value.type === "ledger";
+export function isLedger(value: Uuid | SeedReference): value is LedgerSeedReference {
+    return typeof value === "object" && isSeedReference(value) && value.type === "ledger";
 }
 
-export function isIdSeedReference(value: SeedReference): value is IdSeedReference {
-    return isSeedReference(value) && value.type === "id";
+export function isIdSeedReference(value: Uuid | SeedReference): value is IdSeedReference {
+    return typeof value === "object" && isSeedReference(value) && value.type === "id";
 }
 
 export function isSeedReference(value: Uuid | SeedReference | SeedDefinition): value is SeedReference {

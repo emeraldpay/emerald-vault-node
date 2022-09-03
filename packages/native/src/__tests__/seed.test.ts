@@ -248,4 +248,72 @@ describe("Seeds", () => {
 
     });
 
+    describe("Update Seed", () => {
+        let vault: EmeraldVaultNative;
+        beforeEach(async () => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("seed-create")
+            });
+            await vault.createGlobalKey("test-global")
+        });
+
+        test("Set label", async () => {
+            let id = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test-global",
+            });
+            expect(id).toBeDefined();
+
+            let updated = await vault.updateSeed(id, {label: "Hello World!"});
+            expect(updated).toBeTruthy();
+
+            let seed = (await vault.listSeeds())[0];
+            expect(seed.id).toBe(id);
+            expect(seed.label).toBe("Hello World!");
+        });
+
+        test("Remove label", async () => {
+            let id = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test-global",
+                label: "Something"
+            });
+            expect(id).toBeDefined();
+
+            let updated = await vault.updateSeed(id, {label: null});
+            expect(updated).toBeTruthy();
+
+            let seed = (await vault.listSeeds())[0];
+            expect(seed.id).toBe(id);
+            expect(seed.label).toBeNull();
+        });
+
+        test("Set label multiple times", async () => {
+            let id = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "ordinary tuition injury hockey setup magnet vibrant exit win turkey success caught direct rich field evil ranch crystal step album charge daughter setup sea"
+                },
+                password: "test-global",
+            });
+            expect(id).toBeDefined();
+
+            let updated1 = await vault.updateSeed(id, {label: "Hello World! 11111"});
+            expect(updated1).toBeTruthy();
+
+            let updated2 = await vault.updateSeed(id, {label: "Hello World! 22222"});
+            expect(updated2).toBeTruthy();
+
+            let seed = (await vault.listSeeds())[0];
+            expect(seed.id).toBe(id);
+            expect(seed.label).toBe("Hello World! 22222");
+        });
+    });
+
 });
