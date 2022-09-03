@@ -611,3 +611,14 @@ export interface ExportedWeb3Json {
      */
     password: string;
 }
+
+export interface AccountIndex {
+    walletId: Uuid,
+    entryId: number;
+    receive: number;
+    change: number;
+}
+
+export interface WalletState {
+    accountIndexes: AccountIndex[];
+}

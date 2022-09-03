@@ -79,7 +79,9 @@ export {
     LedgerApp,
 
     OddPasswordItem,
-    ExportedWeb3Json
+    ExportedWeb3Json,
+
+    AccountIndex, WalletState
 } from './types';
 
 export {
@@ -87,5 +89,5 @@ export {
 } from './ops'
 
 export {
-    IEmeraldVault, AccountIndex, WalletState
+    IEmeraldVault,
 } from './vault';

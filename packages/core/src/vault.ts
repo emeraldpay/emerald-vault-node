@@ -1,25 +1,15 @@
 import {
     AddEntry,
-    AddressBookItem, AddressRole, BlockchainType,
-    CreateAddressBookItem, CurrentAddress,
+    AddressBookItem, AddressRole,
+    CurrentAddress,
     EntryId, ExportedWeb3Json, HWKeyDetails, IdSeedReference, LedgerSeedReference, OddPasswordItem, SeedDefinition,
     SeedDescription, SeedDetails, SeedReference,
     UnsignedTx,
     Uuid,
     Wallet,
-    WalletCreateOptions
+    WalletCreateOptions,
+    WalletState,
 } from "./types";
-
-export interface AccountIndex {
-    walletId: Uuid,
-    entryId: number;
-    receive: number;
-    change: number;
-}
-
-export interface WalletState {
-    accountIndexes: AccountIndex[];
-}
 
 export interface IEmeraldVault {
     vaultVersion(): string;
