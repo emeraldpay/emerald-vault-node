@@ -1,3 +1,4 @@
+use emerald_vault::convert::error::ConversionError;
 use emerald_vault::error::VaultError;
 
 #[derive(Debug, Clone)]
@@ -47,6 +48,12 @@ impl From<hdpath::Error> for VaultNodeError {
 impl From<VaultError> for VaultNodeError {
     fn from(e: VaultError) -> Self {
         VaultNodeError::VaultError(format!("{:?}", e))
+    }
+}
+
+impl From<ConversionError> for VaultNodeError {
+    fn from(e: ConversionError) -> Self {
+        VaultNodeError::from(VaultError::from(e))
     }
 }
 

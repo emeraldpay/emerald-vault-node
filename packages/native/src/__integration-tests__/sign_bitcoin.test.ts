@@ -106,10 +106,11 @@ describe('Sign different tx combinations (slow to execute)', () => {
                         // console.log("raw", raw);
 
                         expect(raw).toBeDefined();
-                        expect(raw.length > 100).toBeTruthy();
+                        expect(raw.raw.length > 100).toBeTruthy();
 
-                        const parsed = bitcoin.Transaction.fromHex(raw);
+                        const parsed = bitcoin.Transaction.fromHex(raw.raw);
                         expect(parsed.hasWitnesses()).toBeTruthy();
+                        expect(parsed.getId()).toBe(raw.txid);
 
                         expect(parsed.ins.length).toBe(fromCount);
                         for (let j = 0; j < fromCount; j++) {

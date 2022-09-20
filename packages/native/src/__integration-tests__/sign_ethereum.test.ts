@@ -93,14 +93,14 @@ describe('Sign different tx combinations (slow to execute)', () => {
                                             expect(raw).toBeDefined();
                                             let parsed;
                                             try {
-                                                parsed = new Transaction(raw, chainConfig);
+                                                parsed = new Transaction(raw.raw, chainConfig);
                                             } catch (e) {
                                                 console.error("Invalid signature", tx);
                                                 console.error("Raw", raw);
                                                 console.error(e);
                                             }
-
                                             expect(parsed).toBeDefined();
+                                            expect(convertHex(parsed.hash(true))).toBe(raw.txid);
                                             expect(convertHex(parsed.getSenderAddress())).toBe("0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1");
                                             expect(convertHex(parsed.to)).toBe(to);
                                             expect(hexQuantity(convertHex(parsed.value))).toBe(value);
@@ -207,7 +207,7 @@ describe('Sign different key combinations (slow to execute)', () => {
             expect(raw).toBeDefined();
             let parsed;
             try {
-                parsed = new Transaction(raw);
+                parsed = new Transaction(raw.raw);
             } catch (e) {
                 console.error("Invalid signature", tx);
                 console.error("Raw", raw);

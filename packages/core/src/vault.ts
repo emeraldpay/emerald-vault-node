@@ -3,7 +3,7 @@ import {
     AddressBookItem, AddressRole,
     CurrentAddress,
     EntryId, ExportedWeb3Json, HWKeyDetails, IdSeedReference, LedgerSeedReference, OddPasswordItem, SeedDefinition,
-    SeedDescription, SeedDetails, SeedReference,
+    SeedDescription, SeedDetails, SeedReference, SignedTx,
     UnsignedTx,
     Uuid,
     Wallet,
@@ -36,7 +36,14 @@ export interface IEmeraldVault {
 
     setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): Promise<boolean>;
 
-    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<string>;
+    /**
+     * Sign transaction
+     *
+     * @param entryId Wallet Entry that initiates the transaction. It contains the Secret Key to sign it
+     * @param tx unsigned transaction details
+     * @param password global password
+     */
+    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<SignedTx>;
 
     exportRawPk(entryId: EntryId, password: string): Promise<string>;
 

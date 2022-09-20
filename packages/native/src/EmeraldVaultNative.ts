@@ -6,7 +6,9 @@ import {
     isReference,
     SeedDefinition,
     SeedDescription,
+    SeedDetails,
     UnsignedTx,
+    SignedTx,
     Uuid,
     Wallet,
     WalletsOp,
@@ -28,7 +30,6 @@ import {
     IdSeedReference,
     isIdSeedReference
 } from "@emeraldpay/emerald-vault-core";
-import {SeedDetails} from "@emeraldpay/emerald-vault-core/lib/types";
 
 var addon = require('../native/index.node');
 
@@ -241,18 +242,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
         });
     }
 
-    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<string> {
+    signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<SignedTx> {
         return new Promise((resolve, reject) => {
             let op = EntryIdOp.of(entryId);
-            let status: Status<string> = JSON.parse(addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            if (isEthereumTx(tx)) {
-                resolve("0x" + status.result);
-            } else {
-                resolve(status.result);
-            }
+            addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password, neonToPromise(resolve, reject))
         });
     }
 

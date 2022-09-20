@@ -201,6 +201,20 @@ export function isEthereumTx(tx: UnsignedTx): tx is UnsignedEthereumTx {
     return typeof tx == "object" && Object.keys(tx).indexOf("from") >= 0;
 }
 
+/**
+ * Signed transaction
+ */
+export interface SignedTx {
+    /**
+     * Actual data for the signed transaction
+     */
+    raw: string;
+    /**
+     * ID or Hash of the transaction that can be used to reference it in blockchain
+     */
+    txid: string;
+}
+
 export type ImportMnemonic = {
     name?: string | null,
     description?: string | null,

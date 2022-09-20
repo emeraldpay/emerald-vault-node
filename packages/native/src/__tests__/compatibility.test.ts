@@ -120,7 +120,7 @@ describe("Compatibility", () => {
                 nonce: 2
             };
             let raw = await vault.signTx(entry.id, tx, "test");
-            expect(raw).toBe("0xf865028477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38210518026a0a8f7aacd400789614602925c4331cf7ccf83548401632da7ee36b634fd5e2ce1a05c554688d38bd762af2e4885b70a2b3e608dffe80a2c33c93606afe4add040c6");
+            expect(raw.raw).toBe("0xf865028477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38210518026a0a8f7aacd400789614602925c4331cf7ccf83548401632da7ee36b634fd5e2ce1a05c554688d38bd762af2e4885b70a2b3e608dffe80a2c33c93606afe4add040c6");
         });
 
         test('Check global key', async () => {
