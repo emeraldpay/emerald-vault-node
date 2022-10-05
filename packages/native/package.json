@@ -59,7 +59,8 @@
     "prepack": "npm run clean && npm run build:ts"
   },
   "dependencies": {
-    "@emeraldpay/emerald-vault-core": "0.10.0-dev"
+    "@emeraldpay/emerald-vault-core": "0.10.0-dev",
+    "@emeraldpay/neon-frame": "0.1.1"
   },
   "devDependencies": {
     "typescript": "^3.9.10",

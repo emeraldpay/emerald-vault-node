@@ -480,24 +480,32 @@ impl WrappedVault {
     }
 }
 
-#[neon_frame_fn]
-pub fn list(cx: &mut FunctionContext) -> Result<Vec<WalletJson>, VaultNodeError> {
+#[neon_frame_fn(channel=1)]
+pub fn list<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Vec<WalletJson>, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg.clone());
-    let wallets = vault.load_wallets()?;
 
-    let mut result = Vec::new();
-    for w in wallets {
-        result.push(WalletJson::from((w, &cfg.account_indexes)));
-    }
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let wallets = vault.load_wallets().map(|wallets| {
+            let mut result = Vec::new();
+            for w in wallets {
+                result.push(WalletJson::from((w, &cfg.account_indexes)));
+            }
+            result
+        });
 
-    Ok(result)
+        handler(wallets);
+    });
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn add(cx: &mut FunctionContext) -> Result<Uuid, VaultNodeError> {
+#[neon_frame_fn(channel=2)]
+pub fn add<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Uuid, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let json = cx
         .argument::<JsString>(1)
@@ -506,52 +514,88 @@ pub fn add(cx: &mut FunctionContext) -> Result<Uuid, VaultNodeError> {
     let parsed: AddWalletJson = serde_json::from_str(json.as_str())
         .map_err(|_| JsonError::InvalidData)?;
 
-     vault.create_wallet(parsed).map_err(VaultNodeError::from)
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result = vault.create_wallet(parsed)
+            .map_err(VaultNodeError::from);
+        handler(result);
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn add_entry_to_wallet(cx: &mut FunctionContext) -> Result<usize, VaultNodeError> {
+#[neon_frame_fn(channel=3)]
+pub fn add_entry_to_wallet<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<usize, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let wallet_id = read_wallet_id(cx, 1)?;
-    let json = cx
+    let entry = cx
         .argument::<JsString>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "json".to_string()))?
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry".to_string()))?
         .value(cx);
-
-    let parsed: AddEntryJson = serde_json::from_str(json.as_str())
+    let entry: AddEntryJson = serde_json::from_str(entry.as_str())
         .map_err(|_| JsonError::InvalidData)?;
 
-    vault.create_entry(wallet_id, parsed).map_err(VaultNodeError::from)
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result = vault.create_entry(wallet_id, entry)
+            .map_err(VaultNodeError::from);
+        handler(result);
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn update_label(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+#[neon_frame_fn(channel=3)]
+pub fn update_label<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
-
     let wallet_id = read_wallet_id(cx, 1)?;
-
     let title = args_get_str(cx, 2);
-    vault.set_title(wallet_id, title).map(|_| true).map_err(VaultNodeError::from)
+
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result = vault.set_title(wallet_id, title).map(|_| true)
+            .map_err(VaultNodeError::from);
+        handler(result);
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn remove_entry(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+#[neon_frame_fn(channel=3)]
+pub fn remove_entry<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
-
     let (wallet_id, entry_id) = read_wallet_and_entry_ids(cx, 1)?;
 
-    vault.remove_entry(wallet_id, entry_id).map_err(VaultNodeError::from)
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result = vault.remove_entry(wallet_id, entry_id)
+            .map_err(VaultNodeError::from);
+        handler(result);
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn remove(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+#[neon_frame_fn(channel=2)]
+pub fn remove<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static  {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
-
     let wallet_id = read_wallet_id(cx, 1)?;
-    vault.remove(wallet_id).map_err(VaultNodeError::from)
+
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result = vault.remove(wallet_id)
+            .map_err(VaultNodeError::from);
+        handler(result);
+    });
+
+    Ok(())
 }

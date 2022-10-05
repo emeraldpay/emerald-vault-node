@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use hex::FromHex;
-use neon::prelude::{FunctionContext, JsNumber, JsString, Object};
+use neon::prelude::{FunctionContext, JsNumber, JsString};
 use uuid::Uuid;
 
 use access::{VaultConfig, WrappedVault};
@@ -15,7 +15,7 @@ use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{Address, TxOut, OutPoint, Txid, Transaction};
 use bitcoin::consensus::Decodable;
 use emerald_vault::chains::EthereumChainId;
-use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, EthereumTransaction, TxAccess};
+use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, TxAccess};
 use emerald_vault::structs::types::UsesOddKey;
 use num_bigint::BigUint;
 
@@ -83,14 +83,6 @@ pub struct OutputJson {
 }
 
 impl UnsignedEthereumTxJson {
-
-    fn is_valid(&self) -> bool {
-        self.gas_price.is_some() || (self.priority_gas_price.is_some() && self.max_gas_price.is_some())
-    }
-
-    fn is_legacy(&self) -> bool {
-        self.gas_price.is_some()
-    }
 
     fn is_eip1559(&self) -> bool {
         self.priority_gas_price.is_some() && self.max_gas_price.is_some()

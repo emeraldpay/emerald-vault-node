@@ -809,9 +809,9 @@ checksum = "ad9febc63f515156d4311a0c43899d3ace46352ecdd591c21b98ca3974f2a0d0"
 
 [[package]]
 name = "neon-frame"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db48f85aa989d621e8fbeafd886dbf6770b86d6c9457bc34db673010c7163174"
+checksum = "ac47d01ce9cb4e80a5419c56fe3f768185c40e064c07f008c56ea75ddc41b872"
 dependencies = [
  "serde",
  "serde_derive",
@@ -820,9 +820,9 @@ dependencies = [
 
 [[package]]
 name = "neon-frame-macro"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36ce190fea45dc470a812a5c1b0b945e07e6d40fe74ec53927f90971535040d2"
+checksum = "a1fd5665501aa7975c62de935a64ce32b97193a5dd3508c66c50015115286a41"
 dependencies = [
  "proc-macro2",
  "quote",

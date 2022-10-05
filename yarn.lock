@@ -940,6 +940,11 @@
     global-agent "^3.0.0"
     global-tunnel-ng "^2.7.1"
 
+"@emeraldpay/neon-frame@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@emeraldpay/neon-frame/-/neon-frame-0.1.1.tgz#26ec8935d59f720da7b9aee48d3379330222ba10"
+  integrity sha512-/oKiKNvyC3k9QJxH7OK8+1sI5sopq1yJeIRYgDG05zVIlN5ad2mP79gO8C6IINH8G4082HqZ+AgW7qIqYL+Z1Q==
+
 "@gar/promisify@^1.0.1":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.2.tgz#30aa825f11d438671d585bd44e7fd564535fc210"

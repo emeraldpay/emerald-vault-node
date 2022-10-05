@@ -1,8 +1,7 @@
-use neon::object::Object;
 use neon::prelude::{FunctionContext, JsString};
 use uuid::Uuid;
 
-use access::{MigrationConfig, VaultConfig, WrappedVault};
+use access::{MigrationConfig, VaultConfig};
 use emerald_vault::storage::admin::VaultAdmin;
 use emerald_vault::storage::global_key::LegacyEntryRef;
 use errors::VaultNodeError;

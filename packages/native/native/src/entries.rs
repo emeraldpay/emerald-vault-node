@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::str::FromStr;
 
 use neon::prelude::*;
@@ -9,7 +8,6 @@ use emerald_vault::{
     convert::json::keyfile::EthereumJsonV3File, error::VaultError, EthereumAddress,
     EthereumPrivateKey,
 };
-use emerald_vault::structs::book::AddressRef;
 use wallets::CurrentAddressJson;
 use emerald_vault::structs::wallet::{AddressRole};
 use emerald_vault::chains::BlockchainType;
@@ -90,32 +88,6 @@ impl WrappedVault {
         result.is_ok()
     }
 
-    fn get_wallet_address(&self, id: Uuid) -> Result<EthereumAddress, VaultError> {
-        let storage = &self.cfg.get_storage();
-        let wallet = storage.wallets().get(id)?;
-        match &wallet
-            .entries
-            .first()
-            .ok_or(VaultError::DataNotFound)?
-            .address
-        {
-            Some(e) => match e {
-                AddressRef::EthereumAddress(address) => Ok(address.clone()),
-                _ => Err(VaultError::UnsupportedDataError("No ethereum".to_string()))
-            },
-            None => Err(VaultError::IncorrectIdError),
-        }
-    }
-
-    fn put(&self, pk: &EthereumJsonV3File, json_password: String, global_password: String) -> Result<Uuid, VaultNodeError> {
-        let storage = &self.cfg.get_storage();
-        let id = storage
-            .create_new()
-            .ethereum(pk, json_password.as_str(), self.get_blockchain()?, global_password.as_str())
-            .map_err(|_| VaultNodeError::VaultError("Keyfile not saved".to_string()))?;
-        Ok(id)
-    }
-
     fn export_pk(&self, wallet_id: Uuid, entry_id: usize, password: String) -> Result<EthereumPrivateKey, VaultNodeError> {
         let storage = &self.cfg.get_storage();
 
@@ -151,10 +123,25 @@ impl WrappedVault {
     }
 }
 
-#[neon_frame_fn]
-pub fn export(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
+fn export_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, password: Option<String>) -> Result<String, VaultNodeError> {
+    let pk = vault.export_web3(wallet_id, entry_id, password)?;
+
+    let result_json = serde_json::to_string_pretty(&pk.1)
+        .map_err(|_| VaultNodeError::OtherProcessing("Failed to convert to JSON".to_string()))?;
+    let result = ExportedWeb3Json {
+        password: pk.0,
+        json: result_json,
+    };
+    // we export result as a string, not as an object, because that's how it expected to be user/saved/etc
+    serde_json::to_string(&result)
+        .map_err(|_| VaultNodeError::OtherProcessing("Failed to convert to JSON".to_string()))
+}
+
+#[neon_frame_fn(channel=4)]
+pub fn export<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<String, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
@@ -169,24 +156,26 @@ pub fn export(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
 
     let password = args_get_str(cx, 3);
 
-    let pk = vault.export_web3(wallet_id, entry_id, password)?;
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg);
 
-    let result_json = serde_json::to_string_pretty(&pk.1)
-        .map_err(|_| VaultNodeError::OtherProcessing("Failed to convert to JSON".to_string()))?;
-    let result = ExportedWeb3Json {
-        password: pk.0,
-        json: result_json,
-    };
-    // we export result as a string, not as an object, because that's how it expected to be user/saved/etc
-    let result = serde_json::to_string(&result)
-        .map_err(|_| VaultNodeError::OtherProcessing("Failed to convert to JSON".to_string()))?;
+        handler(export_internal(vault, wallet_id, entry_id, password));
+    });
+
+    Ok(())
+}
+
+fn export_pk_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, password: String) -> Result<String, VaultNodeError> {
+    let pk = vault.export_pk(wallet_id, entry_id, password)?;
+    let result = format!("0x{}", hex::encode(pk.0));
     Ok(result)
 }
 
-#[neon_frame_fn]
-pub fn export_pk(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
+#[neon_frame_fn(channel=4)]
+pub fn export_pk<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<String, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
@@ -203,15 +192,20 @@ pub fn export_pk(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
         .map_err(|_| VaultNodeError::ArgumentMissing(3, "password".to_string()))?
         .value(cx);
 
-    let pk = vault.export_pk(wallet_id, entry_id, password)?;
-    let result = format!("0x{}", hex::encode(pk.0));
-    Ok(result)
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg);
+
+        handler(export_pk_internal(vault, wallet_id, entry_id, password));
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn update_label(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+#[neon_frame_fn(channel=4)]
+pub fn update_label<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
@@ -225,14 +219,21 @@ pub fn update_label(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
         .value(cx) as usize;
     let label = args_get_str(cx, 3);
 
-    let result = vault.set_label(wallet_id, entry_id, label);
-    Ok(result)
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg);
+        let result = vault.set_label(wallet_id, entry_id, label);
+
+        handler(Ok(result));
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn update_receive_disabled(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+#[neon_frame_fn(channel=4)]
+pub fn update_receive_disabled<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
@@ -249,14 +250,21 @@ pub fn update_receive_disabled(cx: &mut FunctionContext) -> Result<bool, VaultNo
         .map_err(|_| VaultNodeError::ArgumentMissing(3, "is_disabled".to_string()))?
         .value(cx);
 
-    let result = vault.set_receive_disabled(wallet_id, entry_id, disabled);
-    Ok(result)
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg);
+        let result = vault.set_receive_disabled(wallet_id, entry_id, disabled);
+
+        handler(Ok(result));
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn list_addresses(cx: &mut FunctionContext) -> Result<Vec<CurrentAddressJson>, VaultNodeError> {
+#[neon_frame_fn(channel=6)]
+pub fn list_addresses<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Vec<CurrentAddressJson>, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let wallet_id = cx
         .argument::<JsString>(1)
@@ -280,6 +288,15 @@ pub fn list_addresses(cx: &mut FunctionContext) -> Result<Vec<CurrentAddressJson
         .map_err(|_| VaultNodeError::ArgumentMissing(5, "limit".to_string()))?
         .value(cx) as usize;
 
-    let result = vault.list_entry_addresses(wallet_id, entry_id, role, start, limit)?;
-    Ok(result)
+
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg);
+        let result = vault
+            .list_entry_addresses(wallet_id, entry_id, role, start, limit)
+            .map_err(|e| VaultNodeError::from(e));
+
+        handler(result);
+    });
+
+    Ok(())
 }

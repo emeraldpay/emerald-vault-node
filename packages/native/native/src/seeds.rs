@@ -25,7 +25,7 @@ use emerald_hwkey::errors::HWKeyError;
 use emerald_hwkey::ledger::app_bitcoin::{BitcoinApp, BitcoinApps};
 use emerald_hwkey::ledger::traits::LedgerApp;
 use emerald_hwkey::ledger::app_ethereum::{EthereumApp, EthereumApps};
-use errors::{JsonError, VaultNodeError};
+use errors::{VaultNodeError};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
@@ -212,10 +212,11 @@ pub fn list_addresses<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vau
     Ok(())
 }
 
-#[neon_frame_fn]
-pub fn add(cx: &mut FunctionContext) -> Result<Uuid, VaultNodeError> {
+#[neon_frame_fn(channel=2)]
+pub fn add<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Uuid, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
 
     let json = cx
         .argument::<JsString>(1)
@@ -225,16 +226,19 @@ pub fn add(cx: &mut FunctionContext) -> Result<Uuid, VaultNodeError> {
         .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let parsed = parsed.clean();
 
-    let result = vault.add_seed(parsed)?;
-    Ok(result)
+
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg.clone());
+        let result = vault.add_seed(parsed)
+            .map_err(VaultNodeError::from);
+        handler(result);
+    });
+
+    Ok(())
 }
 
-#[neon_frame_fn]
-pub fn list(cx: &mut FunctionContext) -> Result<Vec<SeedJson>, VaultNodeError> {
-    let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
+fn list_internal(vault: WrappedVault) -> Result<Vec<SeedJson>, VaultNodeError> {
     let seeds = vault.list_seeds().map_err(VaultNodeError::from)?;
-
     let mut result: Vec<SeedJson> = seeds.iter().map(|s| SeedJson::from(s.clone())).collect();
 
     let has_ledger = result.iter().any(|e| match e.seed_type {
@@ -259,20 +263,43 @@ pub fn list(cx: &mut FunctionContext) -> Result<Vec<SeedJson>, VaultNodeError> {
     Ok(result)
 }
 
-#[neon_frame_fn]
-pub fn generate_mnemonic(cx: &mut FunctionContext) -> Result<String, VaultNodeError> {
-    let size = cx
-        .argument::<JsNumber>(0)
-        .map_err(|_| VaultNodeError::ArgumentMissing(0, "size".to_string()))?
-        .value(cx) as usize;
+#[neon_frame_fn(channel=1)]
+pub fn list<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<Vec<SeedJson>, VaultNodeError>) + Send + 'static {
+    let cfg = VaultConfig::get_config(cx)?;
 
+    std::thread::spawn(move || {
+        let vault = WrappedVault::new(cfg);
+        handler(list_internal(vault));
+    });
+
+    Ok(())
+}
+
+fn generate_mnemonic_internal(size: usize) -> Result<String, VaultNodeError> {
     let size = MnemonicSize::from_length(size)
         .map_err(|_| VaultNodeError::InvalidArgumentValue("Invalid mnemonic size".to_string()))?;
     let mnemonic = Mnemonic::new(Language::English, size)
         .map_err(|_| VaultNodeError::InvalidArgumentValue("Failed to generate mnemonic".to_string()))?;
     let sentence = mnemonic.sentence();
-
     Ok(sentence)
+}
+
+#[neon_frame_fn(channel=1)]
+pub fn generate_mnemonic<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<String, VaultNodeError>) + Send + 'static {
+    let size = cx
+        .argument::<JsNumber>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "size".to_string()))?
+        .value(cx) as usize;
+
+    std::thread::spawn(move || {
+        handler(generate_mnemonic_internal(size));
+    });
+
+    Ok(())
 }
 
 fn get_bitcoin_app(k: &LedgerKey) -> Option<String> {

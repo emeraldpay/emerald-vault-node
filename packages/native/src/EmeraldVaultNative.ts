@@ -30,46 +30,12 @@ import {
     IdSeedReference,
     isIdSeedReference
 } from "@emeraldpay/emerald-vault-core";
+import {neonFrameHandlerCall, neonFrameDirectCall} from "@emeraldpay/neon-frame";
 
 var addon = require('../native/index.node');
 
-function statusFail<T>(code: StatusCode = StatusCode.UNKNOWN, message: string = ""): Status<T> {
-    return {
-        succeeded: false,
-        result: undefined,
-        error: {
-            code, message
-        }
-    }
-}
-
-function statusOk<T>(result: T): Status<T> {
-    return {
-        succeeded: true,
-        result,
-        error: undefined
-    }
-}
-
 const DEFAULT_CONFIG: Config & WalletState = {
     accountIndexes: []
-}
-
-function resolveStatus(status: Status<any>, err: Error | undefined, resolve, reject) {
-    if (!status.succeeded) {
-        return reject(new Error(status.error.message));
-    }
-    if (err) {
-        return reject(err);
-    }
-    resolve(status.result);
-}
-
-// Neon Callback for Status<T>
-type NeonCallback<T> = (status: string) => void;
-
-function neonToPromise<T>(resolve, reject): NeonCallback<T> {
-    return (status) => resolveStatus(JSON.parse(status), undefined, resolve, reject)
 }
 
 export class EmeraldVaultNative implements IEmeraldVault {
@@ -124,233 +90,146 @@ export class EmeraldVaultNative implements IEmeraldVault {
     }
 
     listWallets(): Promise<Wallet[]> {
-        return new Promise((resolve, reject) => {
-            let status: Status<Wallet[]> = JSON.parse(addon.wallets_list(this.conf));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message))
-            }
-            resolve(status.result);
-        });
+        return neonFrameHandlerCall(addon, "wallets_list", [this.conf])
     }
 
     getWallet(id: Uuid): Promise<Wallet | undefined> {
-        return new Promise((resolve, reject) => {
-            let status: Status<Wallet[]> = JSON.parse(addon.wallets_list(this.conf));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message))
-            }
-            resolve(WalletsOp.of(status.result).getWallet(id).value)
-        });
+        return this.listWallets()
+            .then((wallets) => {
+                    return WalletsOp.of(wallets).getWallet(id).value
+                }
+            )
     }
 
     addWallet(labelOrOptions?: string | WalletCreateOptions | undefined): Promise<Uuid> {
-        return new Promise((resolve, reject) => {
-            let options: WalletCreateOptions = {};
-            if (typeof labelOrOptions === 'string') {
-                options = {name: labelOrOptions}
-            } else if (typeof labelOrOptions === 'object') {
-                options = labelOrOptions
-            }
-            let status: Status<Uuid> = JSON.parse(addon.wallets_add(this.conf, JSON.stringify(options)));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        let options: WalletCreateOptions = {};
+        if (typeof labelOrOptions === 'string') {
+            options = {name: labelOrOptions}
+        } else if (typeof labelOrOptions === 'object') {
+            options = labelOrOptions
+        }
+        return neonFrameHandlerCall(addon, "wallets_add", [this.conf, JSON.stringify(options)])
     }
 
     setWalletLabel(walletId: Uuid, label: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let status: Status<boolean> = JSON.parse(addon.wallets_updateLabel(this.conf, walletId, label));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        return neonFrameHandlerCall(addon, "wallets_updateLabel", [this.conf, walletId, label])
     }
 
     removeWallet(walletId: Uuid): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let status: Status<boolean> = JSON.parse(addon.wallets_remove(this.conf, walletId));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        return neonFrameHandlerCall(addon, "wallets_remove", [this.conf, walletId])
     }
 
     listEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]> {
-        return new Promise((resolve, reject) => {
-            let fullId = EntryIdOp.of(id);
-            let status: Status<CurrentAddress[]> = JSON.parse(addon.entries_listAddresses(this.conf,
-                fullId.extractWalletId(), fullId.extractEntryInternalId(),
-                role, start, limit
-            ));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        let fullId = EntryIdOp.of(id);
+        return neonFrameHandlerCall(addon, "entries_listAddresses", [this.conf,
+            fullId.extractWalletId(), fullId.extractEntryInternalId(),
+            role, start, limit])
     }
 
     addEntry(walletId: Uuid, entry: AddEntry): Promise<EntryId> {
-        return new Promise((resolve, reject) => {
-            let status: Status<number> = JSON.parse(addon.wallets_addEntry(this.conf, walletId, JSON.stringify(entry)));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(EntryIdOp.create(walletId, status.result).value)
-        });
+        return neonFrameHandlerCall(addon, "wallets_addEntry", [this.conf, walletId, JSON.stringify(entry)])
+            .then((id: number) => EntryIdOp.create(walletId, id).value)
     }
 
     removeEntry(entryFullId: EntryId): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let op = EntryIdOp.of(entryFullId);
-            let status: Status<boolean> = JSON.parse(addon.wallets_removeEntry(this.conf, op.extractWalletId(), op.extractEntryInternalId()));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message))
-            }
-            resolve(status.result);
-        });
+        let op = EntryIdOp.of(entryFullId);
+        return neonFrameHandlerCall(addon, "wallets_removeEntry", [this.conf, op.extractWalletId(), op.extractEntryInternalId()])
     }
 
     setEntryLabel(entryFullId: EntryId, label: string | null): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let op = EntryIdOp.of(entryFullId);
-            let status: Status<boolean> = JSON.parse(addon.entries_updateLabel(this.conf,
-                op.extractWalletId(), op.extractEntryInternalId(),
-                label
-            ));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        let op = EntryIdOp.of(entryFullId);
+        return neonFrameHandlerCall(addon, "entries_updateLabel", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), label])
     }
 
     setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let op = EntryIdOp.of(entryFullId);
-            let status: Status<boolean> = JSON.parse(addon.entries_updateReceiveDisabled(this.conf,
-                op.extractWalletId(), op.extractEntryInternalId(),
-                disabled
-            ));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result)
-        });
+        let op = EntryIdOp.of(entryFullId);
+        return neonFrameHandlerCall(addon, "entries_updateReceiveDisabled", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), disabled])
     }
 
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<SignedTx> {
-        return new Promise((resolve, reject) => {
-            let op = EntryIdOp.of(entryId);
-            addon.sign_tx(this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password, neonToPromise(resolve, reject))
-        });
+        let op = EntryIdOp.of(entryId);
+        return neonFrameHandlerCall(addon, "sign_tx", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password]);
     }
 
     exportRawPk(entryId: EntryId, password: string): Promise<string> {
-        return new Promise((resolve, reject) => {
-            let op = EntryIdOp.of(entryId);
-            let status: Status<string> = JSON.parse(addon.entries_exportPk(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        let op = EntryIdOp.of(entryId);
+        return neonFrameHandlerCall(addon, "entries_exportPk", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), password]);
     }
 
     exportJsonPk(entryId: EntryId, password: string): Promise<ExportedWeb3Json> {
+        let op = EntryIdOp.of(entryId);
+        return neonFrameHandlerCall(addon, "entries_export", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), password])
+            .then((statusPlain: string) => JSON.parse(statusPlain));
+    }
+
+    /**
+     * @deprecated
+     * @param blockchain
+     */
+    listAddressBook(blockchain: number): Promise<AddressBookItem[]> {
         return new Promise((resolve, reject) => {
-            let op = EntryIdOp.of(entryId);
-            let status: Status<ExportedWeb3Json>;
+            let opts = Object.assign({}, this.conf);
             try {
-                let statusPlain: Status<string> = JSON.parse(addon.entries_export(this.conf, op.extractWalletId(), op.extractEntryInternalId(), password));
-                status = {
-                    error: statusPlain.error,
-                    succeeded: statusPlain.succeeded,
-                    result: JSON.parse(statusPlain.result)
-                }
+                resolve(
+                    neonFrameDirectCall(addon, "addrbook_list", [opts])
+                );
             } catch (e) {
-                return reject(e);
+                reject(e)
             }
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
+        });
+    }
+
+    /**
+     * for test only
+     *
+     * @deprecated
+     * @param item
+     */
+    addToAddressBook(item: CreateAddressBookItem): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let opts = Object.assign({}, this.conf);
+            try {
+                resolve(
+                    neonFrameDirectCall(addon, "addrbook_add", [opts])
+                );
+            } catch (e) {
+                reject(e)
             }
-            resolve(status.result);
+        });
+    }
+
+    /**
+     * @deprecated
+     * @param blockchain
+     * @param address
+     */
+    removeFromAddressBook(blockchain: number, address: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            let opts = Object.assign({}, this.conf);
+            try {
+                resolve(
+                    neonFrameDirectCall(addon, "addrbook_remove", [opts])
+                );
+            } catch (e) {
+                reject(e)
+            }
         });
     }
 
     generateMnemonic(size: number): Promise<string> {
-        return new Promise((resolve, reject) => {
-            let status: Status<string> = JSON.parse(addon.seed_generateMnemonic(size));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
-    }
-
-    listAddressBook(blockchain: number): Promise<AddressBookItem[]> {
-        return new Promise((resolve, reject) => {
-            let opts = Object.assign({}, this.conf);
-            let status: Status<AddressBookItem[]> = JSON.parse(addon.addrbook_list(opts));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(
-                status.result
-                    .filter((item) => item.blockchain == blockchain)
-            );
-        });
-    }
-
-    addToAddressBook(item: CreateAddressBookItem): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let opts = Object.assign({}, this.conf);
-            let status: Status<boolean> = JSON.parse(addon.addrbook_add(opts, JSON.stringify(item)));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
-    }
-
-    removeFromAddressBook(blockchain: number, address: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let opts = Object.assign({}, this.conf);
-            let status: Status<boolean> = JSON.parse(addon.addrbook_remove(opts, address));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        return neonFrameHandlerCall(addon, "seed_generateMnemonic", [size]);
     }
 
     listSeeds(): Promise<SeedDescription[]> {
-        return new Promise((resolve, reject) => {
-            let status: Status<SeedDescription[]> = JSON.parse(addon.seed_list(this.conf));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        return neonFrameHandlerCall(addon, "seed_list", [this.conf]);
     }
 
     getConnectedHWDetails(): Promise<HWKeyDetails[]> {
-        return new Promise((resolve, reject) => {
-            addon.seed_hwkey_list(this.conf, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "seed_hwkey_list", [this.conf])
     }
 
     importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid> {
-        return new Promise((resolve, reject) => {
-            let status: Status<Uuid> = JSON.parse(addon.seed_add(this.conf, JSON.stringify(seed)));
-            if (!status.succeeded) {
-                return reject(new Error(status.error.message));
-            }
-            resolve(status.result);
-        });
+        return neonFrameHandlerCall(addon, "seed_add", [this.conf, JSON.stringify(seed)]);
     }
 
     isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean> {
@@ -361,9 +240,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
                 value: seed
             }
         }
-        return new Promise((resolve, reject) => {
-            addon.seed_isAvailable(this.conf, JSON.stringify(ref), neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "seed_isAvailable", [this.conf, JSON.stringify(ref)])
     }
 
     listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: number, hdpath: string[]): Promise<{ [key: string]: string }> {
@@ -374,10 +251,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
                 value: seed
             }
         }
-
-        return new Promise((resolve, reject) => {
-            addon.seed_listAddresses(this.conf, JSON.stringify(ref), blockchain, hdpath, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "seed_listAddresses", [this.conf, JSON.stringify(ref), blockchain, hdpath])
     }
 
     updateSeed(seed: Uuid | IdSeedReference, details: Partial<SeedDetails>): Promise<boolean> {
@@ -385,57 +259,38 @@ export class EmeraldVaultNative implements IEmeraldVault {
         if (isIdSeedReference(seed)) {
             seed_id = seed.value;
         }
-
-        return new Promise((resolve, reject) => {
-            addon.seed_update(this.conf, seed_id, JSON.stringify(details), neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "seed_update", [this.conf, seed_id, JSON.stringify(details)])
     }
 
     createGlobalKey(password: String): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            addon.global_create(this.conf, password, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "global_create", [this.conf, password])
     }
 
     verifyGlobalKey(password: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            addon.global_verify(this.conf, password, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "global_verify", [this.conf, password])
     }
 
     changeGlobalKey(existingPassword: string, newPassword: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            addon.global_change(this.conf, existingPassword, newPassword, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "global_change", [this.conf, existingPassword, newPassword])
     }
 
     isGlobalKeySet(): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            addon.global_isSet(this.conf, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "global_isSet", [this.conf])
     }
 
     getOddPasswordItems(): Promise<OddPasswordItem[]> {
-        return new Promise((resolve, reject) => {
-            addon.admin_listOdd(this.conf, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "admin_listOdd", [this.conf])
     }
 
     tryUpgradeOddItems(odd_password: string, global_password: string): Promise<Uuid[]> {
-        return new Promise((resolve, reject) => {
-            addon.admin_upgradeOdd(this.conf, odd_password, global_password, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "admin_upgradeOdd", [this.conf, odd_password, global_password])
     }
 
     snapshotCreate(targetFile: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            addon.snapshot_create(this.conf, targetFile, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "snapshot_create", [this.conf, targetFile])
     }
 
     snapshotRestore(sourceFile: string, password: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            addon.snapshot_restore(this.conf, sourceFile, password, neonToPromise(resolve, reject));
-        });
+        return neonFrameHandlerCall(addon, "snapshot_restore", [this.conf, sourceFile, password])
     }
 }

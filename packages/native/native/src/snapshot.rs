@@ -1,16 +1,12 @@
 use std::fs::File;
 use std::io;
 use std::path::PathBuf;
-use emerald_vault::crypto::error::CryptoError;
 use emerald_vault::error::VaultError;
 use emerald_vault::storage::vault::VaultStorage;
 use neon::context::{FunctionContext};
-use neon::object::Object;
 use neon::prelude::{JsString};
 use access::VaultConfig;
 use errors::VaultNodeError;
-use uuid::Uuid;
-use std::str::FromStr;
 
 fn create_internal(storage: VaultStorage, target_file: String) -> Result<bool, VaultError> {
     let target = PathBuf::from(&target_file);

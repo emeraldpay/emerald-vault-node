@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::path::Path;
 use std::str::FromStr;
 
@@ -8,7 +7,7 @@ use neon::prelude::{FunctionContext, JsObject, JsString, JsArray, JsNumber};
 use neon::types::{JsNull, JsUndefined};
 
 use emerald_vault::{
-    blockchain::chains::{Blockchain, EthereumChainId},
+    blockchain::chains::{EthereumChainId},
     storage::{default_path, vault::VaultStorage},
     structs::wallet::Wallet,
 };
@@ -193,11 +192,6 @@ pub struct WrappedVault {
 impl WrappedVault {
     pub fn new(cfg: VaultConfig) -> WrappedVault {
         WrappedVault { cfg }
-    }
-
-    pub fn get_blockchain(&self) -> Result<Blockchain, VaultNodeError> {
-        Blockchain::try_from(self.cfg.chain.unwrap())
-            .map_err(|_| VaultNodeError::InvalidArgumentValue("Unsupported chain".to_string()))
     }
 
     pub fn load_wallets(&self) -> Result<Vec<Wallet>, VaultNodeError> {
