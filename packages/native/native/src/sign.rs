@@ -288,8 +288,9 @@ impl WrappedVault {
 }
 
 fn bitcoin_tx_hash(tx: &Vec<u8>) -> Result<String, VaultNodeError> {
-    let raw = tx.as_slice();
-    let parsed = Transaction::consensus_decode(raw)
+    // clone here because consensus_decode want a _mutable reference_, and we don't want any changes to our original transaction
+    let mut raw = tx.as_slice().clone();
+    let parsed = Transaction::consensus_decode(&mut raw)
         .map_err(|_| VaultNodeError::OtherProcessing("Generated an invalid tx".to_string()))?;
     let txid = parsed.txid().as_hash().to_string();
     Ok(txid)
