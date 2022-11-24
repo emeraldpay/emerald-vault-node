@@ -401,7 +401,7 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.10.0-dev"
+version = "0.10.0"
 dependencies = [
  "bitcoin",
  "byteorder",
