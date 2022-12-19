@@ -82,7 +82,13 @@ export {
     OddPasswordItem,
     ExportedWeb3Json,
 
-    AccountIndex, WalletState
+    AccountIndex, WalletState,
+
+    UnsignedMessage, UnsignedMessageEIP191,
+
+    SignedMessage, SignedMessageEIP191,
+    isSignedEIP191,
+
 } from './types';
 
 export {

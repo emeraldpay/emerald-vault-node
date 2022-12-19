@@ -4,7 +4,7 @@ use hex::FromHex;
 use neon::prelude::{FunctionContext, JsNumber, JsString};
 use uuid::Uuid;
 
-use access::{VaultConfig, WrappedVault};
+use access::{args_get_str, VaultConfig, WrappedVault};
 use emerald_vault::{to_even_str, trim_hex, EthereumAddress, EthereumLegacyTransaction, to_32bytes, keccak256};
 use errors::{JsonError, VaultNodeError};
 use emerald_vault::structs::book::AddressRef;
@@ -81,6 +81,21 @@ pub struct OutputJson {
     pub address: String,
     pub amount: u64,
 }
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(tag = "type")]
+pub enum UnsignedMessageJson {
+    #[serde(rename = "eip191")]
+    EIP191 { message: String }
+}
+
+#[derive(Serialize, Debug, Clone)]
+#[serde(tag = "type")]
+pub enum SignedMessageJson {
+    #[serde(rename = "eip191")]
+    EIP191 { signature: String, address: String }
+}
+
 
 impl UnsignedEthereumTxJson {
 
@@ -328,6 +343,29 @@ fn sign_tx_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, tx_js
     Ok(signed_tx)
 }
 
+fn sign_msg_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, msg: UnsignedMessageJson, password: Option<String>) -> Result<SignedMessageJson, VaultNodeError> {
+    let entry = vault.get_entry(wallet_id, entry_id)
+        .map_err(|_| VaultNodeError::OtherInput(format!("Unknown entry {} at {:}", entry_id, wallet_id)))?;
+    let storage = &vault.cfg.get_storage();
+
+    let signed = match entry.blockchain.get_type() {
+        BlockchainType::Ethereum => {
+            match msg {
+                UnsignedMessageJson::EIP191 { message } => {
+                    let signature = entry.sign_message(message, password, storage)?;
+                    let address = entry.address.expect("No address").to_string();
+                    SignedMessageJson::EIP191 { signature, address }
+                }
+            }
+        }
+        BlockchainType::Bitcoin => {
+            return Err(VaultNodeError::OtherInput("Message signing with Bitcoin keys is not available".to_string()))
+        }
+    };
+
+    Ok(signed)
+}
+
 #[neon_frame_fn(channel=5)]
 pub fn sign_tx<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
@@ -355,11 +393,50 @@ pub fn sign_tx<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeE
 
     let password = cx
         .argument::<JsString>(4)
-        .map_err(|_| VaultNodeError::ArgumentMissing(3, "password".to_string()))?
+        .map_err(|_| VaultNodeError::ArgumentMissing(4, "password".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
         let result = sign_tx_internal(vault, wallet_id, entry_id, unsigned_tx, password);
+        handler(result.map_err(|e| VaultNodeError::from(e)));
+    });
+
+    Ok(())
+}
+
+#[neon_frame_fn(channel=5)]
+pub fn sign_message<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<SignedMessageJson, VaultNodeError>) + Send + 'static {
+
+    let cfg = VaultConfig::get_config(cx)?;
+    let vault = WrappedVault::new(cfg);
+
+    let wallet_id = cx
+        .argument::<JsString>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "walletId".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::from_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+
+    let entry_id = cx
+        .argument::<JsNumber>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entryId".to_string()))?
+        .value(cx) as usize;
+
+    let unsigned_msg = cx
+        .argument::<JsString>(3)
+        .map_err(|_| VaultNodeError::ArgumentMissing(3, "message".to_string()))?
+        .value(cx);
+
+    let unsigned_msg =
+        serde_json::from_str::<UnsignedMessageJson>(unsigned_msg.as_str())
+            .map_err(|_| VaultNodeError::InvalidArgument(3))?;
+
+    let password = args_get_str(cx, 4);
+
+    std::thread::spawn(move || {
+        let result = sign_msg_internal(vault, wallet_id, entry_id, unsigned_msg, password);
         handler(result.map_err(|e| VaultNodeError::from(e)));
     });
 

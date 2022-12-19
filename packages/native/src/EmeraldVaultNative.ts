@@ -28,7 +28,9 @@ import {
     OddPasswordItem,
     ExportedWeb3Json,
     IdSeedReference,
-    isIdSeedReference
+    isIdSeedReference,
+    SignedMessage,
+    UnsignedMessage
 } from "@emeraldpay/emerald-vault-core";
 import {neonFrameHandlerCall, neonFrameDirectCall} from "@emeraldpay/neon-frame";
 
@@ -149,6 +151,11 @@ export class EmeraldVaultNative implements IEmeraldVault {
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<SignedTx> {
         let op = EntryIdOp.of(entryId);
         return neonFrameHandlerCall(addon, "sign_tx", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password]);
+    }
+
+    signMessage(entryId: string, msg: UnsignedMessage, password?: string): Promise<SignedMessage> {
+        let op = EntryIdOp.of(entryId);
+        return neonFrameHandlerCall(addon, "sign_message", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(msg), password]);
     }
 
     exportRawPk(entryId: EntryId, password: string): Promise<string> {

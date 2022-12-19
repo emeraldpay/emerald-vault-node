@@ -3,7 +3,7 @@ import {
     AddressBookItem, AddressRole,
     CurrentAddress,
     EntryId, ExportedWeb3Json, HWKeyDetails, IdSeedReference, LedgerSeedReference, OddPasswordItem, SeedDefinition,
-    SeedDescription, SeedDetails, SeedReference, SignedTx,
+    SeedDescription, SeedDetails, SeedReference, SignedMessage, SignedTx, UnsignedMessage,
     UnsignedTx,
     Uuid,
     Wallet,
@@ -44,6 +44,15 @@ export interface IEmeraldVault {
      * @param password global password
      */
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<SignedTx>;
+
+    /**
+     * Sign a message using the private key.
+     *
+     * @param entryId entry that holds the private key
+     * @param msg a message to sign
+     * @param password password if required by the entry
+     */
+    signMessage(entryId: EntryId, msg: UnsignedMessage, password?: string): Promise<SignedMessage>;
 
     exportRawPk(entryId: EntryId, password: string): Promise<string>;
 
