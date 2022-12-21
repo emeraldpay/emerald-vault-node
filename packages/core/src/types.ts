@@ -637,19 +637,17 @@ export interface WalletState {
     accountIndexes: AccountIndex[];
 }
 
-export interface UnsignedMessageEIP191 {
-    type: "eip191";
+export interface UnsignedMessage {
+    type: "eip191" | "eip712";
 
     /**
-     * A message to sign
+     * A message to sign. For EIP-712 it's a JSON encode to string
      */
     message: string;
 }
 
-export type UnsignedMessage = UnsignedMessageEIP191;
-
-export interface SignedMessageEIP191 {
-    type: "eip191";
+export interface SignedMessage {
+    type: "eip191" | "eip712";
 
     /**
      * Signature encoded as a string (hex)
@@ -660,10 +658,4 @@ export interface SignedMessageEIP191 {
      * Signer Address
      */
     address: string;
-}
-
-export type SignedMessage = SignedMessageEIP191;
-
-export function isSignedEIP191(msg: SignedMessage): msg is SignedMessageEIP191 {
-    return msg.type == "eip191"
 }

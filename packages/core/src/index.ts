@@ -84,10 +84,8 @@ export {
 
     AccountIndex, WalletState,
 
-    UnsignedMessage, UnsignedMessageEIP191,
-
-    SignedMessage, SignedMessageEIP191,
-    isSignedEIP191,
+    UnsignedMessage,
+    SignedMessage,
 
 } from './types';
 

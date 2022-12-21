@@ -18,6 +18,7 @@ use emerald_vault::chains::EthereumChainId;
 use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, TxAccess};
 use emerald_vault::structs::types::UsesOddKey;
 use num_bigint::BigUint;
+use emerald_vault::ethereum::eip712::parse_eip712;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct AccessListItemJson {
@@ -86,14 +87,18 @@ pub struct OutputJson {
 #[serde(tag = "type")]
 pub enum UnsignedMessageJson {
     #[serde(rename = "eip191")]
-    EIP191 { message: String }
+    EIP191 { message: String },
+    #[serde(rename = "eip712")]
+    EIP712 { message: String },
 }
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(tag = "type")]
 pub enum SignedMessageJson {
     #[serde(rename = "eip191")]
-    EIP191 { signature: String, address: String }
+    EIP191 { signature: String, address: String },
+    #[serde(rename = "eip712")]
+    EIP712 { signature: String, address: String },
 }
 
 
@@ -352,9 +357,15 @@ fn sign_msg_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, msg:
         BlockchainType::Ethereum => {
             match msg {
                 UnsignedMessageJson::EIP191 { message } => {
-                    let signature = entry.sign_message(message, password, storage)?;
-                    let address = entry.address.expect("No address").to_string();
+                    let signature = entry.sign_message(&message, password, storage)?;
+                    let address = entry.address.expect("No address").to_string(); //TODO
                     SignedMessageJson::EIP191 { signature, address }
+                },
+                UnsignedMessageJson::EIP712 { message } => {
+                    let data = parse_eip712(message)?;
+                    let signature = entry.sign_message(&data, password, storage)?;
+                    let address = entry.address.expect("No address").to_string(); //TODO
+                    SignedMessageJson::EIP712 { signature, address }
                 }
             }
         }
