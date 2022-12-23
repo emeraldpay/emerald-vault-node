@@ -76,6 +76,21 @@ describe("Ethereum Integration Test", () => {
             expect(act["m/44'/60'/0'/0/2"]).toBe(testAddresses["m/44'/60'/0'/0/2"].toLowerCase());
         });
 
+        test('List entries in parallel', async () => {
+            const promises: Promise<{ [key: string]: string }>[] = [
+                vault.listSeedAddresses(ledgerReference, 100, ["m/44'/60'/0'/0/0"]),
+                vault.listSeedAddresses(ledgerReference, 100, ["m/44'/60'/0'/0/1"]),
+            ];
+
+            const addresses = await Promise.all(promises);
+
+            const allAddresses = addresses.reduce((carry, address) => (
+                { ...carry, ...address }
+            ), {});
+
+            expect(allAddresses["m/44'/60'/0'/0/0"]).toBe(testAddresses["m/44'/60'/0'/0/0"].toLowerCase());
+            expect(allAddresses["m/44'/60'/0'/0/1"]).toBe(testAddresses["m/44'/60'/0'/0/1"].toLowerCase());
+        })
 
         test("List ethereum with created ledger", async () => {
             let id: Uuid = await vault.importSeed(ledgerReference)
