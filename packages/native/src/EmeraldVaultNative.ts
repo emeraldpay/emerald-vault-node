@@ -158,6 +158,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
         return neonFrameHandlerCall(addon, "sign_message", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(msg), password]);
     }
 
+    extractMessageSigner(msg: UnsignedMessage, signature: string): Promise<string> {
+        return neonFrameHandlerCall(addon, "sign_signature_author", [this.conf, JSON.stringify(msg), signature]);
+    }
+
     exportRawPk(entryId: EntryId, password: string): Promise<string> {
         let op = EntryIdOp.of(entryId);
         return neonFrameHandlerCall(addon, "entries_exportPk", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), password]);

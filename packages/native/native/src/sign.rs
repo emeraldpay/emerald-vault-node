@@ -16,6 +16,7 @@ use bitcoin::{Address, TxOut, OutPoint, Txid, Transaction};
 use bitcoin::consensus::Decodable;
 use emerald_vault::chains::EthereumChainId;
 use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, TxAccess};
+use emerald_vault::ethereum::signature::{EthereumBasicSignature, SignableHash};
 use emerald_vault::structs::types::UsesOddKey;
 use num_bigint::BigUint;
 use emerald_vault::ethereum::eip712::parse_eip712;
@@ -377,6 +378,21 @@ fn sign_msg_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, msg:
     Ok(signed)
 }
 
+fn signature_author_internal(msg: UnsignedMessageJson, signature: String) -> Result<String, VaultNodeError> {
+
+    let signature = EthereumBasicSignature::from_str(signature.as_str())?;
+    let author= match msg {
+        UnsignedMessageJson::EIP191 { message } => {
+            signature.extract_signer(&message as &dyn SignableHash)?
+        },
+        UnsignedMessageJson::EIP712 { message } => {
+            signature.extract_signer(&parse_eip712(message)? as &dyn SignableHash)?
+        },
+    };
+
+    Ok(author.to_string())
+}
+
 #[neon_frame_fn(channel=5)]
 pub fn sign_tx<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
@@ -448,6 +464,33 @@ pub fn sign_message<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
 
     std::thread::spawn(move || {
         let result = sign_msg_internal(vault, wallet_id, entry_id, unsigned_msg, password);
+        handler(result.map_err(|e| VaultNodeError::from(e)));
+    });
+
+    Ok(())
+}
+
+#[neon_frame_fn(channel=3)]
+pub fn signature_author<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+    where
+        H: FnOnce(Result<String, VaultNodeError>) + Send + 'static {
+
+    let unsigned_msg = cx
+        .argument::<JsString>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "message".to_string()))?
+        .value(cx);
+
+    let unsigned_msg =
+        serde_json::from_str::<UnsignedMessageJson>(unsigned_msg.as_str())
+            .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+
+    let signature =cx
+        .argument::<JsString>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "signature".to_string()))?
+        .value(cx);
+
+    std::thread::spawn(move || {
+        let result = signature_author_internal(unsigned_msg, signature);
         handler(result.map_err(|e| VaultNodeError::from(e)));
     });
 

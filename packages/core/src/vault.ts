@@ -54,6 +54,15 @@ export interface IEmeraldVault {
      */
     signMessage(entryId: EntryId, msg: UnsignedMessage, password?: string): Promise<SignedMessage>;
 
+    /**
+     * Extract the address of the message that produces the specified signature
+     *
+     * @param msg original message
+     * @param signature signature
+     * @returns address for the key which was used to sign the message
+     */
+    extractMessageSigner(msg: UnsignedMessage, signature: string): Promise<string>;
+
     exportRawPk(entryId: EntryId, password: string): Promise<string>;
 
     /**

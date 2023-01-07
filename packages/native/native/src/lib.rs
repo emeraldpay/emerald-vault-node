@@ -85,6 +85,8 @@ register_module!(mut cx, {
         .expect("sign_tx not exported");
     cx.export_function("sign_message", sign::sign_message)
         .expect("sign_message not exported");
+    cx.export_function("sign_signature_author", sign::signature_author)
+        .expect("signature_author not exported");
 
     cx.export_function("addrbook_list", addressbook::list)
         .expect("addrbook_list not exported");
