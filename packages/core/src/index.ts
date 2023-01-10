@@ -87,6 +87,7 @@ export {
     UnsignedMessage,
     SignedMessage,
 
+    IconDetails,
 } from './types';
 
 export {

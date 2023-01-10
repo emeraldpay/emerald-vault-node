@@ -1,9 +1,22 @@
 import {
     AddEntry,
-    AddressBookItem, AddressRole,
+    AddressBookItem,
+    AddressRole,
     CurrentAddress,
-    EntryId, ExportedWeb3Json, HWKeyDetails, IdSeedReference, LedgerSeedReference, OddPasswordItem, SeedDefinition,
-    SeedDescription, SeedDetails, SeedReference, SignedMessage, SignedTx, UnsignedMessage,
+    EntryId,
+    ExportedWeb3Json,
+    HWKeyDetails,
+    IconDetails,
+    IdSeedReference,
+    LedgerSeedReference,
+    OddPasswordItem,
+    SeedDefinition,
+    SeedDescription,
+    SeedDetails,
+    SeedReference,
+    SignedMessage,
+    SignedTx,
+    UnsignedMessage,
     UnsignedTx,
     Uuid,
     Wallet,
@@ -177,4 +190,25 @@ export interface IEmeraldVault {
      */
     snapshotRestore(sourceFile: string, password: string): Promise<boolean>;
 
+    /**
+     * List current icons for the vault items
+     */
+    iconsList(): Promise<IconDetails[]>;
+
+    /**
+     * Get the image for the specified entry. Returns null if image is not set.
+     *
+     * @param id if of the icon, which is the same as the entry id
+     */
+    getIcon(id: Uuid): Promise<ArrayBuffer | null>;
+
+    /**
+     * Set an image for the entry.
+     *
+     * The image must be a square size (32..1024px) PNG not larger than 1Mb.
+     *
+     * @param entryId if of a wallet or seed to assign the image
+     * @param icon image data. Or `null` to remove an existing image
+     */
+    setIcon(entryId: Uuid, icon: ArrayBuffer | Uint8Array | null): Promise<boolean>;
 }

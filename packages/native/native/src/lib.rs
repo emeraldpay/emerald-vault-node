@@ -16,6 +16,7 @@ extern crate log;
 extern crate num_bigint;
 #[macro_use]
 extern crate neon_frame_macro;
+extern crate base64;
 
 use neon::prelude::*;
 
@@ -30,6 +31,7 @@ mod wallets;
 mod global;
 mod errors;
 mod snapshot;
+mod icons;
 
 use env_logger::Builder;
 use chrono::Local;
@@ -131,6 +133,13 @@ register_module!(mut cx, {
         .expect("snapshot_create not exported");
     cx.export_function("snapshot_restore", snapshot::restore)
         .expect("snapshot_restore not exported");
+
+    cx.export_function("icons_list", icons::list)
+        .expect("icons_list not exported");
+    cx.export_function("icons_set", icons::set)
+        .expect("icons_set not exported");
+    cx.export_function("icons_get", icons::get)
+        .expect("icons_get not exported");
 
     Ok(())
 });

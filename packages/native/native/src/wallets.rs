@@ -1,10 +1,10 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 
-use neon::prelude::{FunctionContext, JsNumber, JsString};
+use neon::prelude::{FunctionContext, JsString};
 use uuid::Uuid;
 
-use access::{args_get_str, VaultConfig, WrappedVault, AccountIndex};
+use access::{args_get_str, VaultConfig, WrappedVault, AccountIndex, args_get_wallet_and_entry_ids, args_get_uuid};
 use chrono::{DateTime, Utc};
 use emerald_vault::{
     blockchain::{
@@ -261,30 +261,7 @@ impl From<(Wallet, &Vec<AccountIndex>)> for WalletJson {
     }
 }
 
-fn read_wallet_id(cx: &mut FunctionContext, pos: i32) -> Result<Uuid, VaultNodeError> {
-    let wallet_id = cx
-        .argument::<JsString>(pos)
-        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "wallet_id".to_string()))?
-        .value(cx);
-    Uuid::parse_str(wallet_id.as_str()).map_err(|_| VaultNodeError::InvalidArgument(pos as usize))
-}
 
-fn read_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> Result<(Uuid, usize), VaultNodeError> {
-    let wallet_id = cx
-        .argument::<JsString>(pos)
-        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "wallet_id".to_string()))?
-        .value(cx);
-    let wallet_id = Uuid::parse_str(wallet_id.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(pos as usize))?;
-
-    let entry_id = cx
-        .argument::<JsNumber>(pos + 1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize + 1, "entry_id".to_string()))?
-        .value(cx);
-    let entry_id = entry_id as usize;
-
-    Ok((wallet_id, entry_id))
-}
 
 fn with_std_addresses(entry: &WalletEntry, index: Option<&AccountIndex>) -> Vec<CurrentAddressJson> {
     let index = match index {
@@ -530,7 +507,7 @@ pub fn add_entry_to_wallet<H>(cx: &mut FunctionContext, handler: H) -> Result<()
         H: FnOnce(Result<usize, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
 
-    let wallet_id = read_wallet_id(cx, 1)?;
+    let wallet_id = args_get_uuid(cx, 1)?;
     let entry = cx
         .argument::<JsString>(2)
         .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry".to_string()))?
@@ -553,7 +530,7 @@ pub fn update_label<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let wallet_id = read_wallet_id(cx, 1)?;
+    let wallet_id = args_get_uuid(cx, 1)?;
     let title = args_get_str(cx, 2);
 
     std::thread::spawn(move || {
@@ -571,7 +548,7 @@ pub fn remove_entry<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
     let cfg = VaultConfig::get_config(cx)?;
-    let (wallet_id, entry_id) = read_wallet_and_entry_ids(cx, 1)?;
+    let (wallet_id, entry_id) = args_get_wallet_and_entry_ids(cx, 1)?;
 
     std::thread::spawn(move || {
         let vault = WrappedVault::new(cfg.clone());
@@ -588,7 +565,7 @@ pub fn remove<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeEr
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static  {
     let cfg = VaultConfig::get_config(cx)?;
-    let wallet_id = read_wallet_id(cx, 1)?;
+    let wallet_id = args_get_uuid(cx, 1)?;
 
     std::thread::spawn(move || {
         let vault = WrappedVault::new(cfg.clone());

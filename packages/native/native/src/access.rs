@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use neon::handle::Handle;
 use neon::object::{Object};
-use neon::prelude::{FunctionContext, JsObject, JsString, JsArray, JsNumber};
+use neon::prelude::{FunctionContext, JsObject, JsString, JsArray, JsNumber, JsValue, NeonResult};
 use neon::types::{JsNull, JsUndefined};
 
 use emerald_vault::{
@@ -65,7 +65,8 @@ impl AccountIndex {
 }
 
 pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
-    match obj.get(cx, name) {
+    let value: NeonResult<Handle<JsValue>> = obj.get(cx, name);
+    match value {
         Ok(val) => {
             if val.is_a::<JsNull, _>(cx) {
                 None
@@ -80,7 +81,8 @@ pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str)
 }
 
 pub fn obj_get_number(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<i64> {
-    match obj.get(cx, name) {
+    let value: NeonResult<Handle<JsValue>> = obj.get(cx, name);
+    match value {
         Ok(val) => {
             if val.is_a::<JsNull, _>(cx) {
                 None
@@ -115,6 +117,31 @@ pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
     }
 }
 
+pub fn args_get_uuid(cx: &mut FunctionContext, pos: i32) -> Result<Uuid, VaultNodeError> {
+    let wallet_id = cx
+        .argument::<JsString>(pos)
+        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "id".to_string()))?
+        .value(cx);
+    Uuid::parse_str(wallet_id.as_str()).map_err(|_| VaultNodeError::InvalidArgument(pos as usize))
+}
+
+pub fn args_get_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> Result<(Uuid, usize), VaultNodeError> {
+    let wallet_id = cx
+        .argument::<JsString>(pos)
+        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "wallet_id".to_string()))?
+        .value(cx);
+    let wallet_id = Uuid::parse_str(wallet_id.as_str())
+        .map_err(|_| VaultNodeError::InvalidArgument(pos as usize))?;
+
+    let entry_id = cx
+        .argument::<JsNumber>(pos + 1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize + 1, "entry_id".to_string()))?
+        .value(cx);
+    let entry_id = entry_id as usize;
+
+    Ok((wallet_id, entry_id))
+}
+
 impl VaultConfig {
     pub fn get_config(cx: &mut FunctionContext) -> Result<VaultConfig, VaultNodeError> {
         let config = cx
@@ -122,7 +149,8 @@ impl VaultConfig {
             .map_err(|_| VaultNodeError::ArgumentMissing(0, "config".to_string()))?;
 
         let mut account_indexes: Vec<AccountIndex> = vec![];
-        match config.get(cx, "accountIndexes") {
+        let value: NeonResult<Handle<JsValue>> = config.get(cx, "accountIndexes");
+        match value {
             Ok(value) => {
                 let items: Handle<JsArray> = value.downcast(cx)
                     .map_err(|_| VaultNodeError::JsonError(JsonError::InvalidValue("accountIndexes".to_string())))?;

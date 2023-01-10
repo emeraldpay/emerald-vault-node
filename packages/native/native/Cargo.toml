@@ -10,12 +10,12 @@ name = "emerald_vault_node"
 crate-type = ["cdylib"]
 
 [build-dependencies]
-neon-build = "0.9.1"
+neon-build = "0.10.1"
 
 [dependencies]
 #emerald-vault = "=0.32.0"
 emerald-hwkey = "=0.4.0"
-#emerald-vault = { path = "../../../../emerald-rs" }
+#emerald-vault = { path = "../../../../emerald-vault" }
 #emerald-hwkey = { path = "../../../../emerald-hwkey" }
 emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
 #emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
@@ -35,9 +35,10 @@ neon-frame = "0.1"
 neon-frame-macro = "0.1.1"
 #neon-frame = { path = "../../../../neon-frame/neon-frame" }
 #neon-frame-macro = { path = "../../../../neon-frame/neon-frame-macro" }
+base64 = "0.21.0"
 
 [dependencies.neon]
-version = "0.9.1"
+version = "0.10.1"
 default-features = false
 features = ["napi-6", "channel-api"]
 

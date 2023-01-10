@@ -30,9 +30,10 @@ import {
     IdSeedReference,
     isIdSeedReference,
     SignedMessage,
-    UnsignedMessage
+    UnsignedMessage, IconDetails
 } from "@emeraldpay/emerald-vault-core";
 import {neonFrameHandlerCall, neonFrameDirectCall} from "@emeraldpay/neon-frame";
+import {atob} from "buffer";
 
 var addon = require('../native/index.node');
 
@@ -303,5 +304,25 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     snapshotRestore(sourceFile: string, password: string): Promise<boolean> {
         return neonFrameHandlerCall(addon, "snapshot_restore", [this.conf, sourceFile, password])
+    }
+
+    iconsList(): Promise<IconDetails[]> {
+        return neonFrameHandlerCall(addon, "icons_list", [this.conf])
+    }
+
+    getIcon(id: Uuid): Promise<ArrayBuffer | null> {
+        return neonFrameHandlerCall(addon, "icons_get", [this.conf, id])
+            .then((encoded: string | null) => {
+                // returned as Base64 not actual bytes because the Neon Frame uses JSON to encode values
+                if (encoded != null && encoded.length > 0) {
+                    return Uint8Array.from(atob(encoded), c => c.charCodeAt(0)).buffer
+                } else {
+                    return null
+                }
+            })
+    }
+
+    setIcon(entryId: Uuid, icon: ArrayBuffer | Uint8Array | null): Promise<boolean> {
+        return neonFrameHandlerCall(addon, "icons_set", [this.conf, entryId, icon])
     }
 }

@@ -659,3 +659,23 @@ export interface SignedMessage {
      */
     address: string;
 }
+
+/**
+ * Image details for entry icons
+ */
+export interface IconDetails {
+    /**
+     * ID of the icon. Always same as entry ID
+     */
+    id: Uuid;
+
+    /**
+     * Details about the related entry
+     */
+    entry: {
+        id: Uuid;
+        type: "seed" | "wallet";
+    };
+
+    format: "png";
+}
