@@ -1,6 +1,13 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
-import {LedgerSeedReference, SeedPKRef, Uuid, BitcoinEntry} from "@emeraldpay/emerald-vault-core";
+import {
+    LedgerSeedReference,
+    SeedPKRef,
+    Uuid,
+    BitcoinEntry,
+    UnsignedTx,
+    UnsignedBitcoinTx, EntryId
+} from "@emeraldpay/emerald-vault-core";
 
 const IS_CONNECTED = process.env.EMERALD_TEST_LEDGER === 'true';
 
@@ -262,6 +269,55 @@ describe("Bitcoin Integration Test", () => {
             let entry = (await vault.getWallet(walletId)).entries[0];
             let entryKey = entry.key as SeedPKRef;
             expect(entryKey.seedId).toBe(seedId);
+        });
+    });
+
+    describe('Sign Tx', () => {
+        let vault: EmeraldVaultNative;
+
+        beforeEach(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("ledger-with-wallet-btc")
+            });
+            vault.open();
+        });
+
+        test("Create entry", async () => {
+            let walletId = await vault.addWallet("wallet 1");
+            let seedId = await vault.importSeed({
+                type: "ledger",
+            })
+            let entryId = await vault.addEntry(walletId, {
+                type: "hd-path",
+                blockchain: 1,
+                key: {
+                    seed: {type: "id", value: seedId},
+                    hdPath: "m/84'/0'/0'"
+                },
+            });
+
+            let tx: UnsignedBitcoinTx = {
+                inputs: [{
+                    txid: "38bc4e35c9e63f91ca203439ff7f075c88fe8e63a64a1a462dea01e0c9998dae",
+                    vout: 1,
+                    amount: 123,
+                    hdPath: "m/84'/0'/0'/0/0",
+                    address: "bc1qaaayykrrx84clgnpcfqu00nmf2g3mf7f53pk3n",
+                    entryId: entryId,
+                }],
+                outputs: [{
+                    address: "bc1qaaayykrrx84clgnpcfqu00nmf2g3mf7f53pk3n",
+                    amount: 101,
+                }],
+                fee: 22
+            }
+
+            let txSigned = await vault.signTx(
+                entryId, tx, null
+            )
+
+            expect(txSigned.raw).toBe("02000000000101ae8d99c9e001ea2d461a4aa6638efe885c077fff393420ca913fe6c9354ebc380100000000feffffff016500000000000000160014ef7a42586331eb8fa261c241c7be7b4a911da7c9024730440220336c4f67ca00ecc50e46f48a5d58c0dab01bebcc09958476f507e2b85e99d3a902203d0925123cf2fed7e6fe07089676d0f1b905c32e5f0791d9f5053df28673151e01210365fa75cc427606b99d9aaa326fdc7d0d30add37c545c5795eab1112839ccb40600000000");
+
         });
     });
 })

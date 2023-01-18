@@ -4,7 +4,7 @@ import {
     BitcoinEntry,
     EthereumEntry, isEntryId,
     LedgerSeedReference,
-    SeedPKRef,
+    SeedPKRef, UnsignedBasicEthereumTx,
     Uuid
 } from "@emeraldpay/emerald-vault-core";
 
@@ -323,6 +323,52 @@ describe("Ethereum Integration Test", () => {
                 type: "xpub",
                 value: "zpub6rRF9XhDBRQSKiGLTD9vTaBfdpRrxJA9eG5YHmTwFfRN2Rbv7w7XNgCZg93Gk7CdRdfjY5hwM5ugrwXak9RgVsx5fwHfAdHdbf5UKmokEtJ"
             });
+        });
+    });
+
+    describe('Sign Tx', () => {
+        let vault: EmeraldVaultNative;
+
+        beforeEach(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("ledger-with-wallet")
+            });
+            vault.open();
+        });
+
+        test("Sign standard tx", async () => {
+            if (!IS_CONNECTED) {
+                console.warn("Ignore Ledger tests");
+                return;
+            }
+            let walletId = await vault.addWallet("wallet 1");
+            let seedId = await vault.importSeed({
+                type: "ledger",
+            })
+            let entryId = await vault.addEntry(walletId, {
+                type: "hd-path",
+                blockchain: 100,
+                key: {
+                    seed: {type: "id", value: seedId},
+                    hdPath: "m/44'/60'/0'/0/0",
+                    address: testAddresses["m/44'/60'/0'/0/0"]
+                },
+            });
+
+            let tx: UnsignedBasicEthereumTx = {
+                from: "0x3d66483b4cad3518861029ff86a387ebc4705172",
+                to: "0x3d66483b4cad3518861029ff86a387ebc4705172",
+                value: "0",
+                gas: 21000,
+                gasPrice: "10000000",
+                nonce: 1,
+            }
+
+            let txSigned = await vault.signTx(
+                entryId, tx, null
+            )
+
+            expect(txSigned.raw).toBe("0xf8620183989680825208943d66483b4cad3518861029ff86a387ebc4705172808030a099a1d0271a0e3c3d2cd1f659b262675646653a0a3ca6adc6f1c3ec93a589572ea039ea3005f6baaf56e03440254065cf5ae7020e7c31cdc3fbf305c7fbe262a3db");
         });
     });
 

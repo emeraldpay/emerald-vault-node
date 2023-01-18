@@ -220,7 +220,7 @@ impl WrappedVault {
         wallet_id: Uuid,
         entry_id: usize,
         unsigned_tx: UnsignedEthereumTxJson,
-        password: String,
+        password: Option<String>,
     ) -> Result<Vec<u8>, VaultNodeError> {
         let storage = &self.cfg.get_storage();
         let entry = self.get_entry(wallet_id, entry_id)?;
@@ -245,10 +245,10 @@ impl WrappedVault {
         let chain_id = EthereumChainId::from(entry.blockchain);
         let result = if unsigned_tx.is_eip1559() {
             let tx = unsigned_tx.as_eip1559(&chain_id)?;
-            entry.sign_tx(tx, Some(password), &storage)?
+            entry.sign_tx(tx, password, &storage)?
         } else {
             let tx = unsigned_tx.as_legacy(&chain_id)?;
-             entry.sign_tx(tx, Some(password), &storage)?
+            entry.sign_tx(tx, password, &storage)?
         };
 
         Ok(result)
@@ -259,7 +259,7 @@ impl WrappedVault {
         wallet_id: Uuid,
         entry_id: usize,
         unsigned_tx: UnsignedBitcoinTxJson,
-        password: String,
+        password: Option<String>,
     ) -> Result<Vec<u8>, VaultNodeError> {
         let storage = &self.cfg.get_storage();
         let entry = self.get_entry(wallet_id, entry_id)?;
@@ -282,11 +282,15 @@ impl WrappedVault {
             None => return Err(VaultNodeError::OtherInput("No address for the entry".to_string()))
         };
 
-        let keys = if seed.is_odd_key() {
-            KeyMapping::single(seed_id, password)
+        let keys = if let Some(password) = password {
+            if seed.is_odd_key() {
+                KeyMapping::single(seed_id, password)
+            } else {
+                let global = storage.global_key().get()?;
+                KeyMapping::global(global, password)
+            }
         } else {
-            let global = storage.global_key().get()?;
-            KeyMapping::global(global, password)
+            KeyMapping::default()
         };
 
         let proposal = BitcoinTransferProposal {
@@ -317,7 +321,7 @@ fn bitcoin_tx_hash(tx: &Vec<u8>) -> Result<String, VaultNodeError> {
     Ok(txid)
 }
 
-fn sign_tx_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, tx_json: String, password: String) -> Result<SignedTxJson, VaultNodeError> {
+fn sign_tx_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, tx_json: String, password: Option<String>) -> Result<SignedTxJson, VaultNodeError> {
     let entry = vault.get_entry(wallet_id, entry_id)
         .map_err(|_| VaultNodeError::OtherInput(format!("Unknown entry {} at {:}", entry_id, wallet_id)))?;
 
@@ -418,10 +422,7 @@ pub fn sign_tx<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeE
         .map_err(|_| VaultNodeError::ArgumentMissing(3, "tx".to_string()))?
         .value(cx);
 
-    let password = cx
-        .argument::<JsString>(4)
-        .map_err(|_| VaultNodeError::ArgumentMissing(4, "password".to_string()))?
-        .value(cx);
+    let password = args_get_str(cx, 4);
 
     std::thread::spawn(move || {
         let result = sign_tx_internal(vault, wallet_id, entry_id, unsigned_tx, password);
