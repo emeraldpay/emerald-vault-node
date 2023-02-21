@@ -88,6 +88,9 @@ export {
     SignedMessage,
 
     IconDetails,
+
+    WatchCurrent, WatchChange, WatchAvailable, WatchRequest,
+    WatchEvent,
 } from './types';
 
 export {

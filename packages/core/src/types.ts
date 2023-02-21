@@ -679,3 +679,66 @@ export interface IconDetails {
 
     format: "png";
 }
+
+/**
+ * Just return the current state
+ */
+export interface WatchCurrent {
+    type: "get-current"
+}
+
+/**
+ * Wait until any change to the list of available devices happen. Could be a new device, a current device disconnect, or another app opened.
+ */
+export interface WatchChange {
+    type: "change",
+    /**
+     * Last know version of the state
+     */
+    version: number,
+}
+
+/**
+ * Wait until the specified blockchain becomes available on the device
+ */
+export interface WatchAvailable {
+    type: "available",
+
+    /**
+     * Requested blockchain
+     */
+    blockchain: number,
+}
+
+export type WatchRequest = WatchCurrent | WatchChange | WatchAvailable;
+
+/**
+ * Response the WatchRequest
+ */
+export interface WatchEvent {
+    /**
+     * Version of the state. It's a monotonic increasing number to reference a particular state.
+     * Used as a basis for WatchChange request
+     */
+    version: number,
+
+    /**
+     * List of currently available devices. Could be empty
+     */
+    devices: [
+        {
+            /**
+             * Uniq device id.
+             */
+            id: Uuid,
+            /**
+             * Seed ID associated with the HW device. If known.
+             */
+            seed?: Uuid | undefined,
+            /**
+             * List of available blockchain. Can be empty (ex., when the Ledger is connected but no app launched)
+             */
+            blockchains: number[]
+        }
+    ]
+}

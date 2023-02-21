@@ -21,7 +21,7 @@ import {
     Uuid,
     Wallet,
     WalletCreateOptions,
-    WalletState,
+    WalletState, WatchEvent, WatchRequest,
 } from "./types";
 
 export interface IEmeraldVault {
@@ -211,4 +211,13 @@ export interface IEmeraldVault {
      * @param icon image data. Or `null` to remove an existing image
      */
     setIcon(entryId: Uuid, icon: ArrayBuffer | Uint8Array | null): Promise<boolean>;
+
+    /**
+     * Watch changes to currently available HW Keys.
+     * The response (i.e., the promise fired) when the request became valid. Ex., when a particular blockchain
+     * is requested then the promise is resolve only when a device is connected and the app is opened.
+     *
+     * @param request
+     */
+    watch(request: WatchRequest): Promise<WatchEvent>;
 }
