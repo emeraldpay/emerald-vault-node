@@ -117,6 +117,11 @@ pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
     }
 }
 
+pub fn args_require_str(cx: &mut FunctionContext, pos: i32, name: &str) -> Result<String, VaultNodeError> {
+    args_get_str(cx, pos)
+        .ok_or(VaultNodeError::ArgumentMissing(pos as usize, name.to_string()))
+}
+
 pub fn args_get_uuid(cx: &mut FunctionContext, pos: i32) -> Result<Uuid, VaultNodeError> {
     let wallet_id = cx
         .argument::<JsString>(pos)

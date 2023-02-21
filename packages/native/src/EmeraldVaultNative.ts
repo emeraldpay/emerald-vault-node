@@ -30,7 +30,7 @@ import {
     IdSeedReference,
     isIdSeedReference,
     SignedMessage,
-    UnsignedMessage, IconDetails
+    UnsignedMessage, IconDetails, WatchRequest, WatchEvent
 } from "@emeraldpay/emerald-vault-core";
 import {neonFrameHandlerCall, neonFrameDirectCall} from "@emeraldpay/neon-frame";
 import {atob} from "buffer";
@@ -324,5 +324,9 @@ export class EmeraldVaultNative implements IEmeraldVault {
 
     setIcon(entryId: Uuid, icon: ArrayBuffer | Uint8Array | null): Promise<boolean> {
         return neonFrameHandlerCall(addon, "icons_set", [this.conf, entryId, icon])
+    }
+
+    watch(request: WatchRequest): Promise<WatchEvent> {
+        return neonFrameHandlerCall(addon, "watch", [this.conf, JSON.stringify(request)])
     }
 }

@@ -14,11 +14,11 @@ neon-build = "0.10.1"
 
 [dependencies]
 #emerald-vault = "=0.32.0"
-emerald-hwkey = "=0.4.0"
+#emerald-hwkey = "=0.4.0"
 #emerald-vault = { path = "../../../../emerald-vault" }
 #emerald-hwkey = { path = "../../../../emerald-hwkey" }
 emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
-#emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
+emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
 hex = "0.4.3"
 hdpath = "0.6"

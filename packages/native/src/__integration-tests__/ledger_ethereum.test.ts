@@ -18,6 +18,23 @@ const testAddresses = {
 
 describe("Ethereum Integration Test", () => {
 
+    describe('Wait', () => {
+        let vault: EmeraldVaultNative;
+        beforeAll(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("ledger-seed")
+            });
+            vault.open();
+        });
+
+        test("Wait connected", async () => {
+            let avail = await vault.watch({type: "available", blockchain: 100});
+            console.log("available", JSON.stringify(avail));
+            expect(avail.devices.length).toBe(1);
+            expect(avail.devices[0].blockchains).toEqual([100]);
+        })
+    })
+
     describe('Verify connection', () => {
         let vault: EmeraldVaultNative;
         beforeAll(() => {

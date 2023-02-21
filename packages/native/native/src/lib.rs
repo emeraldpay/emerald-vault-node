@@ -32,6 +32,7 @@ mod global;
 mod errors;
 mod snapshot;
 mod icons;
+mod watch;
 
 use env_logger::Builder;
 use chrono::Local;
@@ -140,6 +141,9 @@ register_module!(mut cx, {
         .expect("icons_set not exported");
     cx.export_function("icons_get", icons::get)
         .expect("icons_get not exported");
+
+    cx.export_function("watch", watch::watch)
+        .expect("watch not exported");
 
     Ok(())
 });
