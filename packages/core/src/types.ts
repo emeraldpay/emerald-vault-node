@@ -712,6 +712,21 @@ export interface WatchAvailable {
 
 export type WatchRequest = WatchCurrent | WatchChange | WatchAvailable;
 
+interface WatchEventDevice {
+    /**
+     * Uniq device id.
+     */
+    id: Uuid,
+    /**
+     * Seed ID associated with the HW device. If known.
+     */
+    seed?: Uuid | undefined,
+    /**
+     * List of available blockchain. Can be empty (ex., when the Ledger is connected but no app launched)
+     */
+    blockchains: number[]
+}
+
 /**
  * Response the WatchRequest
  */
@@ -725,20 +740,5 @@ export interface WatchEvent {
     /**
      * List of currently available devices. Could be empty
      */
-    devices: [
-        {
-            /**
-             * Uniq device id.
-             */
-            id: Uuid,
-            /**
-             * Seed ID associated with the HW device. If known.
-             */
-            seed?: Uuid | undefined,
-            /**
-             * List of available blockchain. Can be empty (ex., when the Ledger is connected but no app launched)
-             */
-            blockchains: number[]
-        }
-    ]
+    devices: WatchEventDevice[]
 }
