@@ -30,10 +30,10 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Instal system libs
-        run: sudo apt-get install libusb-1.0-0-dev
+      - name: Install system libs
+        run: sudo apt-get install libusb-1.0-0-dev libudev-dev
 
-      - name: Instal JS dependencies
+      - name: Install JS dependencies
         run: yarn install
 
       - name: Configure Node.js Path

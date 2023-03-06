@@ -33,19 +33,19 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Instal LLVM (windows)
+      - name: Install LLVM (windows)
         run: choco install -y llvm
         if: runner.os == 'Windows'
 
-      - name: Instal system libs (not windows)
-        run: sudo apt-get install libusb-1.0-0-dev
+      - name: Install system libs (not windows)
+        run: sudo apt-get install libusb-1.0-0-dev libudev-dev
         if: runner.os == 'Linux'
 
       - name: Install build tools (windows)
         run: choco install -y visualcpp-build-tools
         if: runner.os == 'Windows'
 
-      - name: Instal JS dependencies
+      - name: Install JS dependencies
         run: yarn install
 
       - name: Build Rust lib (windows)
