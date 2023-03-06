@@ -191,14 +191,14 @@ describe("Wallets", () => {
                 const walletCreatedAt = new Date(wallet.value.createdAt);
                 expect(walletCreatedAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
                 // give extra 10 ms, because on windows it may swing in a couple of millis here
-                expect(walletCreatedAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
+                expect(walletCreatedAt.getTime()).toBeLessThanOrEqual(new Date().getTime() + 10);
 
                 expect(wallet.getEthereumEntries()[0].id).toBe(entryId);
                 expect(wallet.getEthereumEntries()[0].createdAt).toBeDefined();
                 const entryCreatedAt = new Date(wallet.getEthereumEntries()[0].createdAt);
                 expect(entryCreatedAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
                 // give extra 10 ms, because on windows it may swing in a couple of millis here
-                expect(entryCreatedAt.getTime()).toBeLessThanOrEqual(new Date().getTime());
+                expect(entryCreatedAt.getTime()).toBeLessThanOrEqual(new Date().getTime() + 10);
             });
 
             test("Create and import 2 keys", async () => {
