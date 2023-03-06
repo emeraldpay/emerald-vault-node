@@ -38,7 +38,7 @@ jobs:
         run: choco install -y visualcpp-build-tools
         if: runner.os == 'Windows'
 
-      - name: Instal JS dependencies
+      - name: Install JS dependencies
         run: yarn install
 
       - name: Build Rust lib (windows)
