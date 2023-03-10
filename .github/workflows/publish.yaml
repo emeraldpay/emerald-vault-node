@@ -31,7 +31,7 @@ jobs:
           override: true
 
       - name: Install system libs
-        run: sudo apt-get install libusb-1.0-0-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install libusb-1.0-0-dev libudev-dev
 
       - name: Install JS dependencies
         run: yarn install
