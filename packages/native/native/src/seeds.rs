@@ -303,21 +303,29 @@ pub fn generate_mnemonic<H>(cx: &mut FunctionContext, handler: H) -> Result<(), 
 }
 
 fn get_bitcoin_app(k: &LedgerKey) -> Option<String> {
-    BitcoinApp::new(&k).is_open().map(
-        |app| match app {
-            BitcoinApps::Mainnet => "bitcoin".to_string(),
-            BitcoinApps::Testnet => "bitcoin-testnet".to_string()
-        },
-    )
+    if let Ok(app) = k.access::<BitcoinApp>() {
+        app.is_open().map(
+            |app| match app {
+                BitcoinApps::Mainnet => "bitcoin".to_string(),
+                BitcoinApps::Testnet => "bitcoin-testnet".to_string()
+            },
+        )
+    } else {
+        None
+    }
 }
 
 fn get_ethereum_app(k: &LedgerKey) -> Option<String> {
-    EthereumApp::new(&k).is_open().map(
-        |app| match app {
-            EthereumApps::Ethereum => "ethereum".to_string(),
-            EthereumApps::EthereumClassic => "ethereum-classic".to_string()
-        },
-    )
+    if let Ok(app) = k.access::<EthereumApp>() {
+        app.is_open().map(
+            |app| match app {
+                EthereumApps::Ethereum => "ethereum".to_string(),
+                EthereumApps::EthereumClassic => "ethereum-classic".to_string()
+            },
+        )
+    } else {
+        None
+    }
 }
 
 #[neon_frame_fn(channel=1)]
