@@ -455,7 +455,7 @@ dependencies = [
 [[package]]
 name = "emerald-hwkey"
 version = "0.5.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-hwkey?branch=master#85fc1d90366f2a5d8fd5ab05d80b4a98ff1999fa"
+source = "git+https://github.com/emeraldpay/emerald-hwkey?branch=master#95503c715dcc786a0492c7a5e36eafab166d2774"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -475,7 +475,7 @@ dependencies = [
 [[package]]
 name = "emerald-vault"
 version = "0.33.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#7d8d81950b20bf5e5be57dab78e41fca0e2ee8c1"
+source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#ecdb30beb066e6ae680538791832152927b5011b"
 dependencies = [
  "aes",
  "argon2",
