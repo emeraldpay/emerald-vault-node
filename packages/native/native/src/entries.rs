@@ -3,7 +3,7 @@ use std::str::FromStr;
 use neon::prelude::*;
 use uuid::Uuid;
 
-use access::{args_get_str, VaultConfig, WrappedVault};
+use access::{args_get_str};
 use emerald_vault::{
     convert::json::keyfile::EthereumJsonV3File, error::VaultError, EthereumAddress,
     EthereumPrivateKey,
@@ -13,6 +13,7 @@ use emerald_vault::structs::wallet::{AddressRole};
 use emerald_vault::chains::BlockchainType;
 use bitcoin::Address;
 use errors::VaultNodeError;
+use instance::{Instance, WrappedVault};
 
 #[derive(Deserialize)]
 pub struct UpdateAccount {
@@ -123,7 +124,7 @@ impl WrappedVault {
     }
 }
 
-fn export_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, password: Option<String>) -> Result<String, VaultNodeError> {
+fn export_internal(vault: &WrappedVault, wallet_id: Uuid, entry_id: usize, password: Option<String>) -> Result<String, VaultNodeError> {
     let pk = vault.export_web3(wallet_id, entry_id, password)?;
 
     let result_json = serde_json::to_string_pretty(&pk.1)
@@ -137,90 +138,90 @@ fn export_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, passwo
         .map_err(|_| VaultNodeError::OtherProcessing("Failed to convert to JSON".to_string()))
 }
 
-#[neon_frame_fn(channel=4)]
+#[neon_frame_fn(channel=3)]
 pub fn export<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<String, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     let wallet_id = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "wallet_id".to_string()))?
         .value(cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str())
         .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let entry_id = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entry_id".to_string()))?
         .value(cx) as usize;
 
-    let password = args_get_str(cx, 3);
+    let password = args_get_str(cx, 2);
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg);
+        let vault = vault.lock().unwrap();
 
-        handler(export_internal(vault, wallet_id, entry_id, password));
+        handler(export_internal(&vault, wallet_id, entry_id, password));
     });
 
     Ok(())
 }
 
-fn export_pk_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, password: String) -> Result<String, VaultNodeError> {
+fn export_pk_internal(vault: &WrappedVault, wallet_id: Uuid, entry_id: usize, password: String) -> Result<String, VaultNodeError> {
     let pk = vault.export_pk(wallet_id, entry_id, password)?;
     let result = format!("0x{}", hex::encode(pk.0));
     Ok(result)
 }
 
-#[neon_frame_fn(channel=4)]
+#[neon_frame_fn(channel=3)]
 pub fn export_pk<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<String, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     let wallet_id = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "wallet_id".to_string()))?
         .value(cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str())
         .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let entry_id = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entry_id".to_string()))?
         .value(cx) as usize;
     let password = cx
-        .argument::<JsString>(3)
-        .map_err(|_| VaultNodeError::ArgumentMissing(3, "password".to_string()))?
+        .argument::<JsString>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "password".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg);
+        let vault = vault.lock().unwrap();
 
-        handler(export_pk_internal(vault, wallet_id, entry_id, password));
+        handler(export_pk_internal(&vault, wallet_id, entry_id, password));
     });
 
     Ok(())
 }
 
-#[neon_frame_fn(channel=4)]
+#[neon_frame_fn(channel=3)]
 pub fn update_label<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     let wallet_id = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "wallet_id".to_string()))?
         .value(cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
     let entry_id = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entry_id".to_string()))?
         .value(cx) as usize;
-    let label = args_get_str(cx, 3);
+    let label = args_get_str(cx, 2);
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg);
+        let vault = vault.lock().unwrap();
         let result = vault.set_label(wallet_id, entry_id, label);
 
         handler(Ok(result));
@@ -229,29 +230,29 @@ pub fn update_label<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
     Ok(())
 }
 
-#[neon_frame_fn(channel=4)]
+#[neon_frame_fn(channel=3)]
 pub fn update_receive_disabled<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     let wallet_id = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "wallet_id".to_string()))?
         .value(cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
     let entry_id = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entry_id".to_string()))?
         .value(cx) as usize;
     let disabled = cx
-        .argument::<JsBoolean>(3)
-        .map_err(|_| VaultNodeError::ArgumentMissing(3, "is_disabled".to_string()))?
+        .argument::<JsBoolean>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "is_disabled".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg);
+        let vault = vault.lock().unwrap();
         let result = vault.set_receive_disabled(wallet_id, entry_id, disabled);
 
         handler(Ok(result));
@@ -260,37 +261,37 @@ pub fn update_receive_disabled<H>(cx: &mut FunctionContext, handler: H) -> Resul
     Ok(())
 }
 
-#[neon_frame_fn(channel=6)]
+#[neon_frame_fn(channel=5)]
 pub fn list_addresses<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Vec<CurrentAddressJson>, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     let wallet_id = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "wallet_id".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "wallet_id".to_string()))?
         .value(cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
     let entry_id = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry_id".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entry_id".to_string()))?
         .value(cx) as usize;
-    let role = args_get_str(cx, 3)
+    let role = args_get_str(cx, 2)
         .ok_or(VaultNodeError::ArgumentMissing(2, "address_role".to_string()))?;
 
     let start = cx
-        .argument::<JsNumber>(4)
-        .map_err(|_| VaultNodeError::ArgumentMissing(4, "start".to_string()))?
+        .argument::<JsNumber>(3)
+        .map_err(|_| VaultNodeError::ArgumentMissing(3, "start".to_string()))?
         .value(cx) as usize;
     let limit = cx
-        .argument::<JsNumber>(5)
-        .map_err(|_| VaultNodeError::ArgumentMissing(5, "limit".to_string()))?
+        .argument::<JsNumber>(4)
+        .map_err(|_| VaultNodeError::ArgumentMissing(4, "limit".to_string()))?
         .value(cx) as usize;
 
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg);
+        let vault = vault.lock().unwrap();
         let result = vault
             .list_entry_addresses(wallet_id, entry_id, role, start, limit)
             .map_err(|e| VaultNodeError::from(e));

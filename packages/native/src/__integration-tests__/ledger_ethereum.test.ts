@@ -26,6 +26,9 @@ describe("Ethereum Integration Test", () => {
             });
             vault.open();
         });
+        afterAll(() => {
+            vault.close();
+        });
 
         test("Wait connected", async () => {
             let avail = await vault.watch({type: "available", blockchain: 100});
@@ -42,6 +45,9 @@ describe("Ethereum Integration Test", () => {
                 dir: tempPath("ledger-seed")
             });
             vault.open();
+        });
+        afterAll(() => {
+            vault.close();
         });
 
         const ledgerReference: LedgerSeedReference = {
@@ -116,6 +122,9 @@ describe("Ethereum Integration Test", () => {
                 dir: tempPath("ledger-with-wallet")
             });
             vault.open();
+        });
+        afterEach(() => {
+            vault.close();
         });
 
         test("Create entry", async () => {
@@ -351,6 +360,9 @@ describe("Ethereum Integration Test", () => {
                 dir: tempPath("ledger-with-wallet")
             });
             vault.open();
+        });
+        afterEach(() => {
+            vault.close();
         });
 
         test("Sign standard tx", async () => {

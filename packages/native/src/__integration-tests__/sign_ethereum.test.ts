@@ -42,6 +42,9 @@ describe('Sign different tx combinations (slow to execute)', () => {
         });
         await vault.createGlobalKey("global-password");
     });
+    afterAll(() => {
+        vault.close();
+    });
 
     let pk = {
         "version": 3,
@@ -166,6 +169,9 @@ describe('Sign different key combinations (slow to execute)', () => {
         vault = new EmeraldVaultNative({
             dir: "./testdata/tmp-sign-key-variants"
         });
+    });
+    afterAll(() => {
+        vault.close();
     });
 
     test("500 keys on same mnemonic", async () => {

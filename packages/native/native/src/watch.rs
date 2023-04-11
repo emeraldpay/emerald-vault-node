@@ -7,9 +7,10 @@ use emerald_vault::storage::{
 };
 
 use neon::prelude::FunctionContext;
-use access::{args_require_str, VaultConfig};
+use access::{args_require_str};
 use emerald_vault::chains::Blockchain;
 use errors::{JsonError, VaultNodeError};
+use instance::Instance;
 
 #[derive(Deserialize, Clone)]
 struct RequestJson {
@@ -81,19 +82,20 @@ fn watch_internal(vault: VaultStorage, request: Request) -> Result<EventJson, Va
         .map(|event| event.into())
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub(crate) fn watch<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<EventJson, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
-    let json = args_require_str(cx, 1, "request")?;
+    let json = args_require_str(cx, 0, "request")?;
     let json: RequestJson = serde_json::from_str(json.as_str())
         .map_err(|_| VaultNodeError::InvalidArgument(1))?;
     let request = Request::try_from(json)?;
 
     std::thread::spawn(move || {
-        let result = watch_internal(cfg.get_storage(), request);
+        let vault = vault.lock().unwrap();
+        let result = watch_internal(vault.cfg.get_storage(), request);
         handler(result);
     });
 

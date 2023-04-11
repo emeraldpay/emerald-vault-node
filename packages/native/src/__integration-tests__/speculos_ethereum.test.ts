@@ -28,6 +28,10 @@ describe('Speculos Ethereum integration', () => {
       vault.open();
     });
 
+    afterAll( () => {
+      vault.close();
+    });
+
     const ledgerReference: LedgerSeedReference = { type: 'ledger' };
 
     test('List addresses', async () => {

@@ -7,11 +7,14 @@ describe("Sign transaction", () => {
     describe('Import and sign', () => {
 
         let vault: EmeraldVaultNative;
-        beforeAll(async () => {
+        beforeEach(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("import-sign")
             });
             await vault.createGlobalKey("test-global")
+        });
+        afterEach(() => {
+            vault.close()
         });
 
         test("sign with scrypt", async () => {

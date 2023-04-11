@@ -193,6 +193,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3ac9f8b63eca6fd385229b3675f6cc0dc5c8a5c8a54a59d4f52ffd670d87b0c"
 
 [[package]]
+name = "bytemuck"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17febce684fd15d89027105661fec94afb475cb995fbc59d2865198446ba2eea"
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -280,6 +286,12 @@ dependencies = [
  "crypto-common",
  "inout",
 ]
+
+[[package]]
+name = "color_quant"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 
 [[package]]
 name = "const-oid"
@@ -455,7 +467,7 @@ dependencies = [
 [[package]]
 name = "emerald-hwkey"
 version = "0.5.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-hwkey?branch=master#95503c715dcc786a0492c7a5e36eafab166d2774"
+source = "git+https://github.com/emeraldpay/emerald-hwkey?branch=master#e7b98793095ed6d1f5b32747b817ddcf783f1ae0"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -475,7 +487,7 @@ dependencies = [
 [[package]]
 name = "emerald-vault"
 version = "0.33.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#ecdb30beb066e6ae680538791832152927b5011b"
+source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#bf5f00e8f8f7b4923ec3e78eee035779bb645afa"
 dependencies = [
  "aes",
  "argon2",
@@ -500,13 +512,13 @@ dependencies = [
  "hdpath",
  "hex",
  "hmac",
+ "image",
  "itertools",
  "lazy_static",
  "log",
  "num",
  "num-bigint",
  "pbkdf2",
- "png",
  "protobuf",
  "rand",
  "regex",
@@ -536,6 +548,7 @@ dependencies = [
  "env_logger",
  "hdpath",
  "hex",
+ "lazy_static",
  "log",
  "neon",
  "neon-build",
@@ -849,9 +862,9 @@ dependencies = [
 
 [[package]]
 name = "hdpath"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dafb09e5d85df264339ad786a147d9de1da13687a3697c52244297e5e7c32d9c"
+checksum = "09ae1615f843ce3981b47468f3f7c435ac17deb33c2261e64d7f1e87f5c11acc"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -914,6 +927,21 @@ dependencies = [
  "matches",
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "image"
+version = "0.24.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "527909aa81e20ac3a44803521443a765550f09b5130c2c2fa1ea59c2f8f50a3a"
+dependencies = [
+ "bytemuck",
+ "byteorder",
+ "color_quant",
+ "jpeg-decoder",
+ "num-rational",
+ "num-traits",
+ "png",
 ]
 
 [[package]]
@@ -983,6 +1011,12 @@ name = "itoa"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
+
+[[package]]
+name = "jpeg-decoder"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc0000e42512c92e31c2252315bda326620a4e034105e900c98ec492fa077b3e"
 
 [[package]]
 name = "k256"

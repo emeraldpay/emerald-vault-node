@@ -21,6 +21,9 @@ describe("Bitcoin Integration Test", () => {
             });
             vault.open();
         });
+        afterAll(() => {
+            vault.close();
+        });
 
         const ledgerReference: LedgerSeedReference = {
             type: "ledger",
@@ -52,6 +55,9 @@ describe("Bitcoin Integration Test", () => {
                 dir: tempPath("ledger-list-btc")
             });
             vault.open();
+        });
+        afterAll(() => {
+            vault.close();
         });
 
         const ledgerReference: LedgerSeedReference = {
@@ -112,6 +118,9 @@ describe("Bitcoin Integration Test", () => {
             });
             vault.open();
         });
+        afterAll(() => {
+            vault.close();
+        });
 
         const ledgerReference: LedgerSeedReference = {
             type: "ledger",
@@ -147,6 +156,9 @@ describe("Bitcoin Integration Test", () => {
                 dir: tempPath("ledger-with-wallet-btc")
             });
             vault.open();
+        });
+        afterEach(() => {
+            vault.close();
         });
 
         test("Create entry", async () => {
@@ -280,6 +292,9 @@ describe("Bitcoin Integration Test", () => {
                 dir: tempPath("ledger-with-wallet-btc")
             });
             vault.open();
+        });
+        afterEach(() => {
+            vault.close();
         });
 
         test("Create entry", async () => {

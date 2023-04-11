@@ -2,35 +2,37 @@ use emerald_vault::crypto::error::CryptoError;
 use emerald_vault::error::VaultError;
 use neon::context::{FunctionContext};
 use neon::prelude::{JsString};
-use access::VaultConfig;
 use errors::VaultNodeError;
+use instance::Instance;
 
-#[neon_frame_fn(channel=1)]
-pub fn is_set<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+#[neon_frame_fn(channel=0)]
+pub fn is_set<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     std::thread::spawn(move || {
-        let storage = cfg.get_storage();
+        let vault = vault.lock().unwrap();
+        let storage = vault.cfg.get_storage();
         let result = storage.global_key().is_set();
         handler(Ok(result));
     });
     Ok(())
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn create<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
     let password = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "password".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "password".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
-        let storage = cfg.get_storage();
+        let vault = vault.lock().unwrap();
+        let storage = vault.cfg.get_storage();
         let result = storage.global_key().create(password.as_str())
             .map(|_| true)
             .map_err(VaultNodeError::from);
@@ -39,18 +41,19 @@ pub fn create<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeEr
     Ok(())
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn verify<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
     let password = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "password".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "password".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
-        let storage = cfg.get_storage();
+        let vault = vault.lock().unwrap();
+        let storage = vault.cfg.get_storage();
         let result = storage.global_key().verify_password(password.as_str())
             .map_err(VaultNodeError::from);
         handler(result);
@@ -58,22 +61,23 @@ pub fn verify<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeEr
     Ok(())
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn change_password<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
     let current_password = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "current_password".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "current_password".to_string()))?
         .value(cx);
     let new_password = cx
-        .argument::<JsString>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "new_password".to_string()))?
+        .argument::<JsString>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "new_password".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
-        let storage = cfg.get_storage();
+        let vault = vault.lock().unwrap();
+        let storage = vault.cfg.get_storage();
         let result = storage.global_key()
             .change_password(current_password.as_str(), new_password.as_str())
             .map_or_else(

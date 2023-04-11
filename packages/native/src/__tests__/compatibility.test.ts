@@ -14,6 +14,9 @@ describe("Compatibility", () => {
             });
             vault.open();
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         test('List wallets', async () => {
             let wallets = WalletsOp.of(await vault.listWallets());

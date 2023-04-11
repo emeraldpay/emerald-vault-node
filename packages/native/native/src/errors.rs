@@ -12,6 +12,7 @@ pub enum VaultNodeError {
     OtherInput(String),
     OtherProcessing(String),
     MissingData(String),
+    Misconfigured,
 }
 
 #[derive(Debug, Clone)]
@@ -73,6 +74,7 @@ impl From<VaultNodeError> for (usize, String) {
             VaultNodeError::OtherProcessing(msg) => (161, msg),
             VaultNodeError::MissingData(name) => (162, format!("Missing data: {}", name)),
             VaultNodeError::VaultError(msg) => (200, msg),
+            VaultNodeError::Misconfigured => (300, format!("Vault Access is not properly configured")),
         }
     }
 }

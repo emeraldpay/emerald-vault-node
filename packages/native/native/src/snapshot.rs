@@ -5,8 +5,8 @@ use emerald_vault::error::VaultError;
 use emerald_vault::storage::vault::VaultStorage;
 use neon::context::{FunctionContext};
 use neon::prelude::{JsString};
-use access::VaultConfig;
 use errors::VaultNodeError;
+use instance::Instance;
 
 fn create_internal(storage: VaultStorage, target_file: String) -> Result<bool, VaultError> {
     let target = PathBuf::from(&target_file);
@@ -24,18 +24,19 @@ fn create_internal(storage: VaultStorage, target_file: String) -> Result<bool, V
     Ok(true)
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn create<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
     let target_file = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "targetFile".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "targetFile".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
-        let storage = cfg.get_storage();
+        let vault = vault.lock().unwrap();
+        let storage = vault.cfg.get_storage();
 
         let result = create_internal(storage, target_file)
             .map_err(|e| VaultNodeError::from(e));
@@ -67,23 +68,24 @@ fn restore_internal(storage: VaultStorage, source_file: String, password: String
     restore.complete().map(|_| true)
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn restore<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
     let source_file = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "sourceFile".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "sourceFile".to_string()))?
         .value(cx);
 
     let password = cx
-        .argument::<JsString>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "password".to_string()))?
+        .argument::<JsString>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "password".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {
-        let storage = cfg.get_storage();
+        let vault = vault.lock().unwrap();
+        let storage = vault.cfg.get_storage();
         let result = restore_internal(storage, source_file, password)
             .map_err(|e| VaultNodeError::from(e));
         handler(result);

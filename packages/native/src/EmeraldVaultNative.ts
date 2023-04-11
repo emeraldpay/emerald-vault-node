@@ -35,29 +35,35 @@ import {
 import {neonFrameHandlerCall, neonFrameDirectCall} from "@emeraldpay/neon-frame";
 import {atob} from "buffer";
 
-var addon = require('../native/index.node');
-
 const DEFAULT_CONFIG: Config & WalletState = {
     accountIndexes: []
 }
 
 export class EmeraldVaultNative implements IEmeraldVault {
-    private conf: Config & Partial<WalletState>;
+    /**
+     * Mapping to the Rust module through NAPI.
+     *
+     * **Internal. Do not use directly.**
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    readonly addon: any;
+    
 
     constructor(conf?: (Config & Partial<WalletState>) | undefined) {
-        this.conf = conf || DEFAULT_CONFIG;
-        if (typeof this.conf.accountIndexes === "undefined") {
-            this.conf.accountIndexes = DEFAULT_CONFIG.accountIndexes
+        this.addon = require('../native/index.node');
+        let confCopy =  conf || DEFAULT_CONFIG
+        if (typeof confCopy.accountIndexes === "undefined") {
+            confCopy.accountIndexes = DEFAULT_CONFIG.accountIndexes
         }
+        this.addon.open(confCopy);
     }
 
     vaultVersion(): string {
-        return "0.27.0"
+        return "0.33.0-dev"
     }
 
     setState(state: WalletState): Promise<void> {
-        this.conf.accountIndexes = state.accountIndexes || DEFAULT_CONFIG.accountIndexes;
-        return Promise.resolve()
+        return neonFrameHandlerCall(this.addon, "update", [state.accountIndexes]);
     }
 
     /**
@@ -69,6 +75,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
         this.autoMigrate();
         this.autoFix();
     }
+    
+    close() {
+        this.addon.close();
+    }
 
     /**
      * Checks the target directory for the content and if finds that it contains vault in the old format (v1 json files,
@@ -77,8 +87,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
      * Supposed to be called right after constructor
      */
     protected autoMigrate() {
-        let opts = Object.assign({}, this.conf);
-        addon.admin_migrate(opts);
+        this.addon.admin_migrate({});
     }
 
     /**
@@ -88,12 +97,11 @@ export class EmeraldVaultNative implements IEmeraldVault {
      * Supposed to be called after constructor and auto migration
      */
     protected autoFix() {
-        let opts = Object.assign({}, this.conf);
-        addon.admin_autofix(opts);
+        this.addon.admin_autofix({});
     }
 
     listWallets(): Promise<Wallet[]> {
-        return neonFrameHandlerCall(addon, "wallets_list", [this.conf])
+        return neonFrameHandlerCall(this.addon, "wallets_list", [])
     }
 
     getWallet(id: Uuid): Promise<Wallet | undefined> {
@@ -111,66 +119,66 @@ export class EmeraldVaultNative implements IEmeraldVault {
         } else if (typeof labelOrOptions === 'object') {
             options = labelOrOptions
         }
-        return neonFrameHandlerCall(addon, "wallets_add", [this.conf, JSON.stringify(options)])
+        return neonFrameHandlerCall(this.addon, "wallets_add", [JSON.stringify(options)])
     }
 
     setWalletLabel(walletId: Uuid, label: string): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "wallets_updateLabel", [this.conf, walletId, label])
+        return neonFrameHandlerCall(this.addon, "wallets_updateLabel", [walletId, label])
     }
 
     removeWallet(walletId: Uuid): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "wallets_remove", [this.conf, walletId])
+        return neonFrameHandlerCall(this.addon, "wallets_remove", [walletId])
     }
 
     listEntryAddresses(id: EntryId, role: AddressRole, start: number, limit: number): Promise<CurrentAddress[]> {
         let fullId = EntryIdOp.of(id);
-        return neonFrameHandlerCall(addon, "entries_listAddresses", [this.conf,
+        return neonFrameHandlerCall(this.addon, "entries_listAddresses", [
             fullId.extractWalletId(), fullId.extractEntryInternalId(),
             role, start, limit])
     }
 
     addEntry(walletId: Uuid, entry: AddEntry): Promise<EntryId> {
-        return neonFrameHandlerCall(addon, "wallets_addEntry", [this.conf, walletId, JSON.stringify(entry)])
+        return neonFrameHandlerCall(this.addon, "wallets_addEntry", [walletId, JSON.stringify(entry)])
             .then((id: number) => EntryIdOp.create(walletId, id).value)
     }
 
     removeEntry(entryFullId: EntryId): Promise<boolean> {
         let op = EntryIdOp.of(entryFullId);
-        return neonFrameHandlerCall(addon, "wallets_removeEntry", [this.conf, op.extractWalletId(), op.extractEntryInternalId()])
+        return neonFrameHandlerCall(this.addon, "wallets_removeEntry", [op.extractWalletId(), op.extractEntryInternalId()])
     }
 
     setEntryLabel(entryFullId: EntryId, label: string | null): Promise<boolean> {
         let op = EntryIdOp.of(entryFullId);
-        return neonFrameHandlerCall(addon, "entries_updateLabel", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), label])
+        return neonFrameHandlerCall(this.addon, "entries_updateLabel", [op.extractWalletId(), op.extractEntryInternalId(), label])
     }
 
     setEntryReceiveDisabled(entryFullId: EntryId, disabled: boolean): Promise<boolean> {
         let op = EntryIdOp.of(entryFullId);
-        return neonFrameHandlerCall(addon, "entries_updateReceiveDisabled", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), disabled])
+        return neonFrameHandlerCall(this.addon, "entries_updateReceiveDisabled", [op.extractWalletId(), op.extractEntryInternalId(), disabled])
     }
 
     signTx(entryId: EntryId, tx: UnsignedTx, password?: string): Promise<SignedTx> {
         let op = EntryIdOp.of(entryId);
-        return neonFrameHandlerCall(addon, "sign_tx", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password]);
+        return neonFrameHandlerCall(this.addon, "sign_tx", [op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(tx), password]);
     }
 
     signMessage(entryId: string, msg: UnsignedMessage, password?: string): Promise<SignedMessage> {
         let op = EntryIdOp.of(entryId);
-        return neonFrameHandlerCall(addon, "sign_message", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(msg), password]);
+        return neonFrameHandlerCall(this.addon, "sign_message", [op.extractWalletId(), op.extractEntryInternalId(), JSON.stringify(msg), password]);
     }
 
     extractMessageSigner(msg: UnsignedMessage, signature: string): Promise<string> {
-        return neonFrameHandlerCall(addon, "sign_signature_author", [this.conf, JSON.stringify(msg), signature]);
+        return neonFrameHandlerCall(this.addon, "sign_signature_author", [JSON.stringify(msg), signature]);
     }
 
     exportRawPk(entryId: EntryId, password: string): Promise<string> {
         let op = EntryIdOp.of(entryId);
-        return neonFrameHandlerCall(addon, "entries_exportPk", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), password]);
+        return neonFrameHandlerCall(this.addon, "entries_exportPk", [op.extractWalletId(), op.extractEntryInternalId(), password]);
     }
 
     exportJsonPk(entryId: EntryId, password: string): Promise<ExportedWeb3Json> {
         let op = EntryIdOp.of(entryId);
-        return neonFrameHandlerCall(addon, "entries_export", [this.conf, op.extractWalletId(), op.extractEntryInternalId(), password])
+        return neonFrameHandlerCall(this.addon, "entries_export", [op.extractWalletId(), op.extractEntryInternalId(), password])
             .then((statusPlain: string) => JSON.parse(statusPlain));
     }
 
@@ -180,10 +188,9 @@ export class EmeraldVaultNative implements IEmeraldVault {
      */
     listAddressBook(blockchain: number): Promise<AddressBookItem[]> {
         return new Promise((resolve, reject) => {
-            let opts = Object.assign({}, this.conf);
             try {
                 resolve(
-                    neonFrameDirectCall(addon, "addrbook_list", [opts])
+                    neonFrameDirectCall(this.addon, "addrbook_list", [])
                 );
             } catch (e) {
                 reject(e)
@@ -199,10 +206,9 @@ export class EmeraldVaultNative implements IEmeraldVault {
      */
     addToAddressBook(item: CreateAddressBookItem): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            let opts = Object.assign({}, this.conf);
             try {
                 resolve(
-                    neonFrameDirectCall(addon, "addrbook_add", [opts])
+                    neonFrameDirectCall(this.addon, "addrbook_add", [])
                 );
             } catch (e) {
                 reject(e)
@@ -217,10 +223,9 @@ export class EmeraldVaultNative implements IEmeraldVault {
      */
     removeFromAddressBook(blockchain: number, address: string): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            let opts = Object.assign({}, this.conf);
             try {
                 resolve(
-                    neonFrameDirectCall(addon, "addrbook_remove", [opts])
+                    neonFrameDirectCall(this.addon, "addrbook_remove", [])
                 );
             } catch (e) {
                 reject(e)
@@ -229,19 +234,19 @@ export class EmeraldVaultNative implements IEmeraldVault {
     }
 
     generateMnemonic(size: number): Promise<string> {
-        return neonFrameHandlerCall(addon, "seed_generateMnemonic", [size]);
+        return neonFrameHandlerCall(this.addon, "seed_generateMnemonic", [size]);
     }
 
     listSeeds(): Promise<SeedDescription[]> {
-        return neonFrameHandlerCall(addon, "seed_list", [this.conf]);
+        return neonFrameHandlerCall(this.addon, "seed_list", []);
     }
 
     getConnectedHWDetails(): Promise<HWKeyDetails[]> {
-        return neonFrameHandlerCall(addon, "seed_hwkey_list", [this.conf])
+        return neonFrameHandlerCall(this.addon, "seed_hwkey_list", [])
     }
 
     importSeed(seed: SeedDefinition | LedgerSeedReference): Promise<Uuid> {
-        return neonFrameHandlerCall(addon, "seed_add", [this.conf, JSON.stringify(seed)]);
+        return neonFrameHandlerCall(this.addon, "seed_add", [JSON.stringify(seed)]);
     }
 
     isSeedAvailable(seed: Uuid | SeedReference | SeedDefinition): Promise<boolean> {
@@ -252,7 +257,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
                 value: seed
             }
         }
-        return neonFrameHandlerCall(addon, "seed_isAvailable", [this.conf, JSON.stringify(ref)])
+        return neonFrameHandlerCall(this.addon, "seed_isAvailable", [JSON.stringify(ref)])
     }
 
     listSeedAddresses(seed: Uuid | SeedReference | SeedDefinition, blockchain: number, hdpath: string[]): Promise<{ [key: string]: string }> {
@@ -263,7 +268,7 @@ export class EmeraldVaultNative implements IEmeraldVault {
                 value: seed
             }
         }
-        return neonFrameHandlerCall(addon, "seed_listAddresses", [this.conf, JSON.stringify(ref), blockchain, hdpath])
+        return neonFrameHandlerCall(this.addon, "seed_listAddresses", [JSON.stringify(ref), blockchain, hdpath])
     }
 
     updateSeed(seed: Uuid | IdSeedReference, details: Partial<SeedDetails>): Promise<boolean> {
@@ -271,47 +276,47 @@ export class EmeraldVaultNative implements IEmeraldVault {
         if (isIdSeedReference(seed)) {
             seed_id = seed.value;
         }
-        return neonFrameHandlerCall(addon, "seed_update", [this.conf, seed_id, JSON.stringify(details)])
+        return neonFrameHandlerCall(this.addon, "seed_update", [seed_id, JSON.stringify(details)])
     }
 
     createGlobalKey(password: String): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "global_create", [this.conf, password])
+        return neonFrameHandlerCall(this.addon, "global_create", [password])
     }
 
     verifyGlobalKey(password: string): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "global_verify", [this.conf, password])
+        return neonFrameHandlerCall(this.addon, "global_verify", [password])
     }
 
     changeGlobalKey(existingPassword: string, newPassword: string): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "global_change", [this.conf, existingPassword, newPassword])
+        return neonFrameHandlerCall(this.addon, "global_change", [existingPassword, newPassword])
     }
 
     isGlobalKeySet(): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "global_isSet", [this.conf])
+        return neonFrameHandlerCall(this.addon, "global_isSet", [])
     }
 
     getOddPasswordItems(): Promise<OddPasswordItem[]> {
-        return neonFrameHandlerCall(addon, "admin_listOdd", [this.conf])
+        return neonFrameHandlerCall(this.addon, "admin_listOdd", [])
     }
 
     tryUpgradeOddItems(odd_password: string, global_password: string): Promise<Uuid[]> {
-        return neonFrameHandlerCall(addon, "admin_upgradeOdd", [this.conf, odd_password, global_password])
+        return neonFrameHandlerCall(this.addon, "admin_upgradeOdd", [odd_password, global_password])
     }
 
     snapshotCreate(targetFile: string): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "snapshot_create", [this.conf, targetFile])
+        return neonFrameHandlerCall(this.addon, "snapshot_create", [targetFile])
     }
 
     snapshotRestore(sourceFile: string, password: string): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "snapshot_restore", [this.conf, sourceFile, password])
+        return neonFrameHandlerCall(this.addon, "snapshot_restore", [sourceFile, password])
     }
 
     iconsList(): Promise<IconDetails[]> {
-        return neonFrameHandlerCall(addon, "icons_list", [this.conf])
+        return neonFrameHandlerCall(this.addon, "icons_list", [])
     }
 
     getIcon(id: Uuid): Promise<ArrayBuffer | null> {
-        return neonFrameHandlerCall(addon, "icons_get", [this.conf, id])
+        return neonFrameHandlerCall(this.addon, "icons_get", [id])
             .then((encoded: string | null) => {
                 // returned as Base64 not actual bytes because the Neon Frame uses JSON to encode values
                 if (encoded != null && encoded.length > 0) {
@@ -323,10 +328,10 @@ export class EmeraldVaultNative implements IEmeraldVault {
     }
 
     setIcon(entryId: Uuid, icon: ArrayBuffer | Uint8Array | null): Promise<boolean> {
-        return neonFrameHandlerCall(addon, "icons_set", [this.conf, entryId, icon])
+        return neonFrameHandlerCall(this.addon, "icons_set", [entryId, icon])
     }
 
     watch(request: WatchRequest): Promise<WatchEvent> {
-        return neonFrameHandlerCall(addon, "watch", [this.conf, JSON.stringify(request)])
+        return neonFrameHandlerCall(this.addon, "watch", [JSON.stringify(request)])
     }
 }

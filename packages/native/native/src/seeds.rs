@@ -1,7 +1,6 @@
 use neon::prelude::*;
 use uuid::Uuid;
 
-use access::{VaultConfig, WrappedVault};
 use chrono::{DateTime, Utc};
 use emerald_vault::util::none_if_empty;
 use emerald_vault::{
@@ -26,6 +25,7 @@ use emerald_hwkey::ledger::app_bitcoin::{BitcoinApp, BitcoinApps};
 use emerald_hwkey::ledger::traits::LedgerApp;
 use emerald_hwkey::ledger::app_ethereum::{EthereumApp, EthereumApps};
 use errors::{VaultNodeError};
+use instance::{Instance, WrappedVault};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
@@ -132,21 +132,21 @@ impl SeedDefinitionOrReferenceJson {
     }
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn is_available<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
 
     let json = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "json".to_string()))?
         .value(cx);
     let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
-    let cfg = VaultConfig::get_config(cx)?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
+    let vault = Instance::get_vault()?;
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = vault.lock().unwrap();
         let result: Result<bool, VaultNodeError> = match vault.is_available(parsed.clone()) {
             Ok(avail) => Ok(avail),
             Err(_) => Ok(false),
@@ -157,43 +157,43 @@ pub fn is_available<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
     Ok(())
 }
 
-#[neon_frame_fn(channel=4)]
+#[neon_frame_fn(channel=3)]
 pub fn list_addresses<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<HashMap<String, String>, VaultNodeError>) + Send + 'static {
+    let cfg = Instance::get_vault()?;
 
     let json = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "json".to_string()))?
         .value(cx);
     let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
 
     let blockchain = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "blockchain".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "blockchain".to_string()))?
         .value(cx);
     let blockchain = Blockchain::try_from(blockchain as u32)
-        .map_err(|_| VaultNodeError::InvalidArgument(2))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
 
     let hd_path_all_js = cx
-        .argument::<JsArray>(3)
-        .map_err(|_| VaultNodeError::ArgumentMissing(3, "hd_path".to_string()))?
+        .argument::<JsArray>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "hd_path".to_string()))?
         .to_vec(cx)
-        .map_err(|_| VaultNodeError::InvalidArgument(3))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(2))?;
 
     let mut hd_path_all: Vec<String> = vec![];
     for item in hd_path_all_js {
         let s = item.downcast::<JsString, _>(cx)
-            .map_err(|_| VaultNodeError::InvalidArgument(3))?
+            .map_err(|_| VaultNodeError::InvalidArgument(2))?
             .value(cx);
         hd_path_all.push(s)
     }
 
-    let cfg = VaultConfig::get_config(cx)?;
-
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = cfg.lock().unwrap();
+
         let result: Result<HashMap<String, String>, VaultNodeError> = match vault.list_addresses(parsed.clone(), hd_path_all.clone(), blockchain) {
             Ok(addresses) => {
                 let mut result = HashMap::new();
@@ -212,23 +212,23 @@ pub fn list_addresses<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vau
     Ok(())
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn add<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Uuid, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let cfg = Instance::get_vault()?;
 
     let json = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "json".to_string()))?
         .value(cx);
     let parsed: SeedDefinitionOrReferenceJson = serde_json::from_str(json.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
     let parsed = parsed.clean();
 
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = cfg.lock().unwrap();
         let result = vault.add_seed(parsed)
             .map_err(VaultNodeError::from);
         handler(result);
@@ -237,7 +237,7 @@ pub fn add<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError
     Ok(())
 }
 
-fn list_internal(vault: WrappedVault) -> Result<Vec<SeedJson>, VaultNodeError> {
+fn list_internal(vault: &WrappedVault) -> Result<Vec<SeedJson>, VaultNodeError> {
     let seeds = vault.list_seeds().map_err(VaultNodeError::from)?;
     let mut result: Vec<SeedJson> = seeds.iter().map(|s| SeedJson::from(s.clone())).collect();
 
@@ -263,15 +263,15 @@ fn list_internal(vault: WrappedVault) -> Result<Vec<SeedJson>, VaultNodeError> {
     Ok(result)
 }
 
-#[neon_frame_fn(channel=1)]
-pub fn list<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+#[neon_frame_fn(channel=0)]
+pub fn list<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Vec<SeedJson>, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let cfg = Instance::get_vault()?;
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg);
-        handler(list_internal(vault));
+        let vault = cfg.lock().unwrap();
+        handler(list_internal(&vault));
     });
 
     Ok(())
@@ -328,7 +328,7 @@ fn get_ethereum_app(k: &LedgerKey) -> Option<String> {
     }
 }
 
-#[neon_frame_fn(channel=1)]
+#[neon_frame_fn(channel=0)]
 pub fn list_hwkey<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Vec<LedgerDetails>, VaultNodeError>) + Send + 'static {
@@ -353,29 +353,29 @@ pub fn list_hwkey<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultN
     Ok(())
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn update<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
 
-    let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
+    let vault = Instance::get_vault()?;
 
     let json = cx
-        .argument::<JsString>(1 as i32)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "seed".to_string()))?
+        .argument::<JsString>(0 as i32)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "seed".to_string()))?
         .value(cx);
     let seed_id = Uuid::parse_str(json.as_str())
         .map_err(|_| VaultNodeError::InvalidArgumentByName("seed".to_string()))?;
 
     let json = cx
-        .argument::<JsString>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "details".to_string()))?
+        .argument::<JsString>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "details".to_string()))?
         .value(cx);
     let update: SeedUpdateJson = serde_json::from_str(json.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(2))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
 
     std::thread::spawn(move || {
+        let vault = vault.lock().unwrap();
         let seed_storage = vault.cfg.get_storage().seeds();
         let result = match seed_storage.get(seed_id) {
             Ok(mut seed) => {
@@ -517,9 +517,7 @@ impl WrappedVault {
     pub fn add_seed(&self, seed: SeedDefinitionOrReferenceJson) -> Result<Uuid, VaultError> {
         let storage = &self.cfg.get_storage();
         let seed_source = match seed.value {
-            SeedDefinitionOrReferenceType::Ledger => SeedSource::Ledger(LedgerSource {
-                fingerprints: vec![],
-            }),
+            SeedDefinitionOrReferenceType::Ledger => SeedSource::Ledger(LedgerSource::default()),
             SeedDefinitionOrReferenceType::Mnemonic(value) => {
                 if seed.password.is_none() {
                     return Err(VaultError::PasswordRequired);

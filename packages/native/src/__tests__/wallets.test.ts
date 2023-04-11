@@ -20,6 +20,10 @@ describe("Wallets", () => {
                     dir: tempPath("wallet-create")
                 });
             });
+            afterEach(() => {
+                vault.close()
+            });
+
             test("without label", async () => {
                 let id = await vault.addWallet(undefined);
                 let wallets = await vault.listWallets();
@@ -102,6 +106,9 @@ describe("Wallets", () => {
                     dir: tempPath("wallet-import")
                 });
                 await vault.createGlobalKey("test-global")
+            });
+            afterEach(() => {
+                vault.close()
             });
 
             test("Create and import JSON", async () => {
@@ -286,6 +293,9 @@ describe("Wallets", () => {
             });
             await vault.createGlobalKey("test-global");
         });
+        afterEach(() => {
+            vault.close()
+        });
 
         test("Update label", async () => {
 
@@ -347,6 +357,9 @@ describe("Wallets", () => {
                 dir: tempPath("wallet-remove")
             });
             await vault.createGlobalKey("test-global");
+        });
+        afterEach(() => {
+            vault.close()
         });
 
         test("empty", async () => {

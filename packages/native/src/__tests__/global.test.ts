@@ -14,6 +14,9 @@ describe("Global Key", () => {
             });
             vault.open();
         });
+        afterEach(() => {
+            vault.close()
+        });
 
         test('Check global key', async () => {
             let isSet = await vault.isGlobalKeySet();
@@ -74,6 +77,9 @@ describe("Global Key", () => {
                 dir: tempPath("create-global")
             });
             vault.open();
+        });
+        afterEach(() => {
+            vault.close()
         });
 
         test("Create global key and verify", async () => {
@@ -177,6 +183,9 @@ describe("Global Key", () => {
                 dir: tempPath("change-global")
             });
             vault.open();
+        });
+        afterEach(() => {
+            vault.close()
         });
 
         test("Change password", async () => {

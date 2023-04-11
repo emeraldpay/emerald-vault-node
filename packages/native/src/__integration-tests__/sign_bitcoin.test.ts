@@ -3,7 +3,6 @@ import {AddEntry, EntryId, UnsignedBitcoinTx} from "@emeraldpay/emerald-vault-co
 import * as bitcoin from "bitcoinjs-lib";
 import sha256 from 'crypto-js/sha256';
 import CryptoJS from 'crypto-js';
-import {Network} from "bitcoinjs-lib/types/types";
 import {tempPath} from "../__tests__/_commons";
 
 describe('Sign different tx combinations (slow to execute)', () => {
@@ -14,6 +13,9 @@ describe('Sign different tx combinations (slow to execute)', () => {
             dir: tempPath("./testdata/sign-btc-tx-variants")
         });
         await vault.createGlobalKey("global-password");
+    });
+    afterAll(() => {
+        vault.close();
     });
 
     function testAll(entryId: EntryId): Promise<any> {

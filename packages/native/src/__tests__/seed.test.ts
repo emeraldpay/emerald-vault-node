@@ -15,6 +15,9 @@ describe("Seeds", () => {
             });
             vault.open();
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         describe('24 words', () => {
 
@@ -177,6 +180,9 @@ describe("Seeds", () => {
             });
             await vault.createGlobalKey("test-global")
         });
+        afterEach(() => {
+            vault.close()
+        });
 
         test("List empty", async () => {
             let seeds = await vault.listSeeds();
@@ -255,6 +261,9 @@ describe("Seeds", () => {
                 dir: tempPath("seed-create")
             });
             await vault.createGlobalKey("test-global")
+        });
+        afterEach(() => {
+            vault.close()
         });
 
         test("Set label", async () => {

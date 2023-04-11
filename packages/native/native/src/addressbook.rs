@@ -3,7 +3,6 @@ use std::str::FromStr;
 use neon::prelude::*;
 use uuid::Uuid;
 
-use access::{VaultConfig, WrappedVault};
 use chrono::{DateTime, Utc};
 use emerald_vault::{
     blockchain::chains::Blockchain,
@@ -14,6 +13,7 @@ use emerald_vault::{
 use std::convert::{TryFrom, TryInto};
 use address::AddressRefJson;
 use errors::VaultNodeError;
+use instance::{Instance, WrappedVault};
 
 #[derive(Serialize, Clone)]
 pub struct AddressBookmarkJson {
@@ -96,9 +96,9 @@ impl WrappedVault {
 }
 
 #[neon_frame_fn]
-pub fn list(cx: &mut FunctionContext) -> Result<Vec<AddressBookmarkJson>, VaultNodeError> {
-    let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
+pub fn list(_cx: &mut FunctionContext) -> Result<Vec<AddressBookmarkJson>, VaultNodeError> {
+    let vault = Instance::get_vault()?;
+    let vault = vault.lock().unwrap();
 
     let list = vault.list_addressbook();
 
@@ -110,8 +110,8 @@ pub fn list(cx: &mut FunctionContext) -> Result<Vec<AddressBookmarkJson>, VaultN
 
 #[neon_frame_fn]
 pub fn remove(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
-    let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
+    let vault = Instance::get_vault()?;
+    let vault = vault.lock().unwrap();
 
     let address = cx
         .argument::<JsString>(1)
