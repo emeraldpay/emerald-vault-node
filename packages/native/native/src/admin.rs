@@ -6,34 +6,14 @@ use emerald_vault::storage::admin::VaultAdmin;
 use emerald_vault::storage::default_path;
 use emerald_vault::storage::global_key::LegacyEntryRef;
 use errors::VaultNodeError;
-use instance::Instance;
-
-pub struct MigrationConfig {
-    pub dir: String,
-}
-
-impl MigrationConfig {
-    pub fn get_config(cx: &mut FunctionContext) -> Result<MigrationConfig, VaultNodeError> {
-        let config = cx
-            .argument::<JsObject>(0)
-            .map_err(|_| VaultNodeError::ArgumentMissing(0, "config".to_string()))?;
-        let dir = match obj_get_str(cx, &config, "dir") {
-            Some(val) => val,
-            None => default_path()
-                .to_str()
-                .ok_or(VaultNodeError::VaultError("No default path for current OS".to_string()))?
-                .to_string(),
-        };
-        return Ok(MigrationConfig {
-            dir: dir.to_string(),
-        });
-    }
-}
+use instance::{Instance};
 
 #[neon_frame_fn]
-pub fn migrate(cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
-    let cfg = MigrationConfig::get_config(cx)?;
-    emerald_vault::migration::auto_migrate(cfg.dir.clone());
+pub fn migrate(_cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {
+    let vault = Instance::get_vault()?;
+    let vault = vault.lock().unwrap();
+
+    emerald_vault::migration::auto_migrate(vault.cfg.dir.clone());
 
     Ok(true)
 }
