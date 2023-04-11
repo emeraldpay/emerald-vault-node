@@ -17,6 +17,7 @@ extern crate num_bigint;
 #[macro_use]
 extern crate neon_frame_macro;
 extern crate base64;
+extern crate lazy_static;
 
 use neon::prelude::*;
 
@@ -33,6 +34,7 @@ mod errors;
 mod snapshot;
 mod icons;
 mod watch;
+mod instance;
 
 use env_logger::Builder;
 use chrono::Local;
@@ -56,6 +58,13 @@ register_module!(mut cx, {
             .init();
         log::warn!("START IN DEV MODE");
     }
+
+    cx.export_function("open", instance::open)
+        .expect("open not exported");
+    cx.export_function("close", instance::close)
+        .expect("close not exported");
+    cx.export_function("update", instance::update)
+        .expect("update not exported");
 
     cx.export_function("wallets_list", wallets::list)
         .expect("wallets_list not exported");

@@ -4,7 +4,7 @@ use std::str::FromStr;
 use neon::prelude::{FunctionContext, JsString};
 use uuid::Uuid;
 
-use access::{args_get_str, VaultConfig, WrappedVault, AccountIndex, args_get_wallet_and_entry_ids, args_get_uuid};
+use access::{args_get_str, args_get_wallet_and_entry_ids, args_get_uuid};
 use chrono::{DateTime, Utc};
 use emerald_vault::{
     blockchain::{
@@ -30,6 +30,7 @@ use address::AddressRefJson;
 use bitcoin::Address;
 use emerald_vault::blockchain::bitcoin::XPub;
 use errors::{VaultNodeError, JsonError};
+use instance::{AccountIndex, Instance, WrappedVault};
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -388,9 +389,7 @@ impl WrappedVault {
                             Some(seed) => seed.id,
                             None => storage.seeds().add(Seed {
                                 id: Uuid::new_v4(),
-                                source: SeedSource::Ledger(LedgerSource {
-                                    fingerprints: vec![],
-                                }),
+                                source: SeedSource::Ledger(LedgerSource::default()),
                                 label: None,
                                 created_at: Utc::now(),
                             })?,
@@ -457,14 +456,15 @@ impl WrappedVault {
     }
 }
 
-#[neon_frame_fn(channel=1)]
-pub fn list<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+#[neon_frame_fn(channel=0)]
+pub fn list<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Vec<WalletJson>, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = vault.lock().unwrap();
+        let cfg = &vault.cfg;
         let wallets = vault.load_wallets().map(|wallets| {
             let mut result = Vec::new();
             for w in wallets {
@@ -478,21 +478,21 @@ pub fn list<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeErro
     Ok(())
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn add<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Uuid, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     let json = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "json".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "json".to_string()))?
         .value(cx);
     let parsed: AddWalletJson = serde_json::from_str(json.as_str())
         .map_err(|_| JsonError::InvalidData)?;
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = vault.lock().unwrap();
         let result = vault.create_wallet(parsed)
             .map_err(VaultNodeError::from);
         handler(result);
@@ -501,22 +501,22 @@ pub fn add<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError
     Ok(())
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn add_entry_to_wallet<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<usize, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
-    let wallet_id = args_get_uuid(cx, 1)?;
+    let wallet_id = args_get_uuid(cx, 0)?;
     let entry = cx
-        .argument::<JsString>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entry".to_string()))?
+        .argument::<JsString>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entry".to_string()))?
         .value(cx);
     let entry: AddEntryJson = serde_json::from_str(entry.as_str())
         .map_err(|_| JsonError::InvalidData)?;
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = vault.lock().unwrap();
         let result = vault.create_entry(wallet_id, entry)
             .map_err(VaultNodeError::from);
         handler(result);
@@ -525,16 +525,16 @@ pub fn add_entry_to_wallet<H>(cx: &mut FunctionContext, handler: H) -> Result<()
     Ok(())
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn update_label<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
-    let wallet_id = args_get_uuid(cx, 1)?;
-    let title = args_get_str(cx, 2);
+    let vault = Instance::get_vault()?;
+    let wallet_id = args_get_uuid(cx, 0)?;
+    let title = args_get_str(cx, 1);
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = vault.lock().unwrap();
         let result = vault.set_title(wallet_id, title).map(|_| true)
             .map_err(VaultNodeError::from);
         handler(result);
@@ -543,15 +543,15 @@ pub fn update_label<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
     Ok(())
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn remove_entry<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
-    let (wallet_id, entry_id) = args_get_wallet_and_entry_ids(cx, 1)?;
+    let vault = Instance::get_vault()?;
+    let (wallet_id, entry_id) = args_get_wallet_and_entry_ids(cx, 0)?;
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = vault.lock().unwrap();
         let result = vault.remove_entry(wallet_id, entry_id)
             .map_err(VaultNodeError::from);
         handler(result);
@@ -560,15 +560,15 @@ pub fn remove_entry<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
     Ok(())
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn remove<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static  {
-    let cfg = VaultConfig::get_config(cx)?;
-    let wallet_id = args_get_uuid(cx, 1)?;
+    let vault = Instance::get_vault()?;
+    let wallet_id = args_get_uuid(cx, 0)?;
 
     std::thread::spawn(move || {
-        let vault = WrappedVault::new(cfg.clone());
+        let vault = vault.lock().unwrap();
         let result = vault.remove(wallet_id)
             .map_err(VaultNodeError::from);
         handler(result);

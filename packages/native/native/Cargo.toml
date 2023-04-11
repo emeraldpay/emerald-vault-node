@@ -19,9 +19,11 @@ neon-build = "0.10.1"
 #emerald-hwkey = { path = "../../../../emerald-hwkey" }
 emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
 emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
+hdpath = "0.6.2"
+#hdpath = { path = "../../../../hdpath", features = ["with-bitcoin"] }
+lazy_static = "1.4.0"
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
 hex = "0.4.3"
-hdpath = "0.6"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"

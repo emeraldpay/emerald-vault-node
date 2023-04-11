@@ -26,6 +26,9 @@ describe("Entries", () => {
             vault.open();
             await vault.createGlobalKey("test");
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         test("refers pk", async () => {
             let walletId = await vault.addWallet("wallet 1");
@@ -187,6 +190,10 @@ describe("Entries", () => {
                 });
                 vault.open();
             });
+            afterAll(() => {
+                vault.close()
+            });
+
 
             test("list eth", async () => {
                 let wallets = WalletsOp.of(await vault.listWallets());
@@ -219,6 +226,9 @@ describe("Entries", () => {
             let vault;
             beforeAll(() => {
                 vault = new EmeraldVaultNative();
+            });
+            afterAll(() => {
+                vault.close()
             });
 
             test("list etc", async () => {
@@ -255,6 +265,9 @@ describe("Entries", () => {
                     dir: tempPath("export-json")
                 });
                 await vault.createGlobalKey("test-global");
+            });
+            afterAll(() => {
+                vault.close()
             });
 
             test("errors for unknown entry", (done) => {
@@ -322,6 +335,9 @@ describe("Entries", () => {
                 dir: tempPath("./testdata/import-json")
             });
             await vault.createGlobalKey("test-global");
+        });
+        afterAll(() => {
+            vault.close()
         });
 
         test("import scrypt - f079f4", async () => {
@@ -479,6 +495,9 @@ describe("Entries", () => {
                 dir: "./testdata/tmp-import-pk"
             });
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         test("import 0xfac192ce", async () => {
             let walletId = await vault.addWallet("import 1");
@@ -562,6 +581,9 @@ describe("Entries", () => {
                 dir: tempPath("export-pk")
             });
             await vault.createGlobalKey("test-global")
+        });
+        afterAll(() => {
+            vault.close()
         });
 
         test("import and export pk, 0xfac192ce", async () => {
@@ -695,6 +717,9 @@ describe("Entries", () => {
             });
             await vault.createGlobalKey("test-global");
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         test("errors for invalid address", (done) => {
             vault.removeEntry("3198bc9c-6672-5ab3-d995-4942343ae5b6-1")
@@ -760,6 +785,9 @@ describe("Entries", () => {
             });
             await vault.createGlobalKey("test");
             vault.open()
+        });
+        afterEach(() => {
+            vault.close()
         });
 
         test("Create ethereum", async () => {

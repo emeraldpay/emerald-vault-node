@@ -15,6 +15,9 @@ describe("Sign message", () => {
             });
             await vault.createGlobalKey("test-global")
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         test("sign basic 1", async () => {
 
@@ -72,6 +75,9 @@ describe("Sign message", () => {
             });
             await vault.createGlobalKey("test-global")
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         test("verify basic 1", async () => {
 
@@ -123,6 +129,9 @@ describe("Sign message", () => {
             });
             await vault.createGlobalKey("test-global")
         });
+        afterAll(() => {
+            vault.close()
+        });
 
         test("sign spec example", async () => {
 
@@ -155,6 +164,9 @@ describe("Sign message", () => {
                 dir: tempPath("sign-msg")
             });
             await vault.createGlobalKey("test-global")
+        });
+        afterAll(() => {
+            vault.close()
         });
 
         test("extract address from sign spec example", async () => {

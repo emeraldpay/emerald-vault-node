@@ -15,6 +15,9 @@ describe("Snapshots", () => {
             });
             vault.open();
         });
+        afterEach(() => {
+            vault.close()
+        });
 
         test('Create', async () => {
             await vault.createGlobalKey("test-global");
@@ -117,6 +120,9 @@ describe("Snapshots", () => {
                 dir: tempPath("snapshot-create")
             });
             vault.open();
+        });
+        afterEach(() => {
+            vault.close()
         });
 
         test('Restore basic', async () => {

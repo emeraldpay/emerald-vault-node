@@ -5,9 +5,10 @@ use neon::prelude::JsArrayBuffer;
 use neon::types::buffer::TypedArray;
 use neon::types::{JsTypedArray, JsValue};
 use uuid::Uuid;
-use access::{args_get_uuid, VaultConfig};
+use access::{args_get_uuid};
 use emerald_vault::storage::vault::VaultStorage;
 use errors::VaultNodeError;
+use instance::Instance;
 
 #[derive(Serialize, Clone)]
 pub struct IconDetailsJson {
@@ -44,14 +45,15 @@ fn list_internal(vault: VaultStorage) -> Result<Vec<IconDetailsJson>, VaultNodeE
     Ok(icons)
 }
 
-#[neon_frame_fn(channel=1)]
-pub fn list<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
+#[neon_frame_fn(channel=0)]
+pub fn list<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Vec<IconDetailsJson>, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
     std::thread::spawn(move || {
-        let result = list_internal(cfg.get_storage());
+        let vault = vault.lock().unwrap();
+        let result = list_internal(vault.cfg.get_storage());
         handler(result);
     });
 
@@ -64,15 +66,15 @@ fn set_internal(vault: VaultStorage, id: Uuid, image: Option<Vec<u8>>) -> Result
         .map_err(VaultNodeError::from)
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn set<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<bool, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
-    let id = args_get_uuid(cx, 1)?;
+    let id = args_get_uuid(cx, 0)?;
 
-    let arg = cx.argument::<JsValue>(2).unwrap();
+    let arg = cx.argument::<JsValue>(1).unwrap();
 
     let image = if arg.is_a::<JsTypedArray<u8>, _>(cx) {
         let arr = arg.downcast::<JsTypedArray<u8>, _>(cx).unwrap();
@@ -87,7 +89,8 @@ pub fn set<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError
     };
 
     std::thread::spawn(move || {
-        let result = set_internal(cfg.get_storage(), id, image)
+        let vault = vault.lock().unwrap();
+        let result = set_internal(vault.cfg.get_storage(), id, image)
             .map(|_| true);
         handler(result);
     });
@@ -104,16 +107,17 @@ fn get_internal(vault: VaultStorage, id: Uuid) -> Result<Option<String>, VaultNo
         }))
 }
 
-#[neon_frame_fn(channel=2)]
+#[neon_frame_fn(channel=1)]
 pub fn get<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Option<String>, VaultNodeError>) + Send + 'static {
-    let cfg = VaultConfig::get_config(cx)?;
+    let vault = Instance::get_vault()?;
 
-    let id = args_get_uuid(cx, 1)?;
+    let id = args_get_uuid(cx, 0)?;
 
     std::thread::spawn(move || {
-        let result = get_internal(cfg.get_storage(), id);
+        let vault = vault.lock().unwrap();
+        let result = get_internal(vault.cfg.get_storage(), id);
         handler(result);
     });
 

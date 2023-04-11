@@ -4,7 +4,7 @@ use hex::FromHex;
 use neon::prelude::{FunctionContext, JsNumber, JsString};
 use uuid::Uuid;
 
-use access::{args_get_str, VaultConfig, WrappedVault};
+use access::{args_get_str};
 use emerald_vault::{to_even_str, trim_hex, EthereumAddress, EthereumLegacyTransaction, to_32bytes, keccak256};
 use errors::{JsonError, VaultNodeError};
 use emerald_vault::structs::book::AddressRef;
@@ -20,6 +20,7 @@ use emerald_vault::ethereum::signature::{EthereumBasicSignature, SignableHash};
 use emerald_vault::structs::types::UsesOddKey;
 use num_bigint::BigUint;
 use emerald_vault::ethereum::eip712::parse_eip712;
+use instance::{Instance, WrappedVault};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct AccessListItemJson {
@@ -321,7 +322,7 @@ fn bitcoin_tx_hash(tx: &Vec<u8>) -> Result<String, VaultNodeError> {
     Ok(txid)
 }
 
-fn sign_tx_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, tx_json: String, password: Option<String>) -> Result<SignedTxJson, VaultNodeError> {
+fn sign_tx_internal(vault: &WrappedVault, wallet_id: Uuid, entry_id: usize, tx_json: String, password: Option<String>) -> Result<SignedTxJson, VaultNodeError> {
     let entry = vault.get_entry(wallet_id, entry_id)
         .map_err(|_| VaultNodeError::OtherInput(format!("Unknown entry {} at {:}", entry_id, wallet_id)))?;
 
@@ -353,7 +354,7 @@ fn sign_tx_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, tx_js
     Ok(signed_tx)
 }
 
-fn sign_msg_internal(vault: WrappedVault, wallet_id: Uuid, entry_id: usize, msg: UnsignedMessageJson, password: Option<String>) -> Result<SignedMessageJson, VaultNodeError> {
+fn sign_msg_internal(vault: &WrappedVault, wallet_id: Uuid, entry_id: usize, msg: UnsignedMessageJson, password: Option<String>) -> Result<SignedMessageJson, VaultNodeError> {
     let entry = vault.get_entry(wallet_id, entry_id)
         .map_err(|_| VaultNodeError::OtherInput(format!("Unknown entry {} at {:}", entry_id, wallet_id)))?;
     let storage = &vault.cfg.get_storage();
@@ -397,97 +398,97 @@ fn signature_author_internal(msg: UnsignedMessageJson, signature: String) -> Res
     Ok(author.to_string())
 }
 
-#[neon_frame_fn(channel=5)]
+#[neon_frame_fn(channel=4)]
 pub fn sign_tx<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<SignedTxJson, VaultNodeError>) + Send + 'static {
 
-    let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
+    let vault = Instance::get_vault()?;
 
     let wallet_id = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "walletId".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "walletId".to_string()))?
         .value(cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
 
     let entry_id = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entryId".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entryId".to_string()))?
         .value(cx) as usize;
 
     let unsigned_tx = cx
-        .argument::<JsString>(3)
-        .map_err(|_| VaultNodeError::ArgumentMissing(3, "tx".to_string()))?
+        .argument::<JsString>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "tx".to_string()))?
         .value(cx);
 
-    let password = args_get_str(cx, 4);
+    let password = args_get_str(cx, 3);
 
     std::thread::spawn(move || {
-        let result = sign_tx_internal(vault, wallet_id, entry_id, unsigned_tx, password);
+        let vault = vault.lock().unwrap();
+        let result = sign_tx_internal(&vault, wallet_id, entry_id, unsigned_tx, password);
         handler(result.map_err(|e| VaultNodeError::from(e)));
     });
 
     Ok(())
 }
 
-#[neon_frame_fn(channel=5)]
+#[neon_frame_fn(channel=4)]
 pub fn sign_message<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<SignedMessageJson, VaultNodeError>) + Send + 'static {
 
-    let cfg = VaultConfig::get_config(cx)?;
-    let vault = WrappedVault::new(cfg);
+    let vault = Instance::get_vault()?;
 
     let wallet_id = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "walletId".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "walletId".to_string()))?
         .value(cx);
     let wallet_id = Uuid::from_str(wallet_id.as_str())
-        .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+        .map_err(|_| VaultNodeError::InvalidArgument(0))?;
 
     let entry_id = cx
-        .argument::<JsNumber>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "entryId".to_string()))?
+        .argument::<JsNumber>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "entryId".to_string()))?
         .value(cx) as usize;
 
     let unsigned_msg = cx
-        .argument::<JsString>(3)
-        .map_err(|_| VaultNodeError::ArgumentMissing(3, "message".to_string()))?
+        .argument::<JsString>(2)
+        .map_err(|_| VaultNodeError::ArgumentMissing(2, "message".to_string()))?
         .value(cx);
 
     let unsigned_msg =
         serde_json::from_str::<UnsignedMessageJson>(unsigned_msg.as_str())
-            .map_err(|_| VaultNodeError::InvalidArgument(3))?;
+            .map_err(|_| VaultNodeError::InvalidArgument(2))?;
 
-    let password = args_get_str(cx, 4);
+    let password = args_get_str(cx, 3);
 
     std::thread::spawn(move || {
-        let result = sign_msg_internal(vault, wallet_id, entry_id, unsigned_msg, password);
+        let vault = vault.lock().unwrap();
+        let result = sign_msg_internal(&vault, wallet_id, entry_id, unsigned_msg, password);
         handler(result.map_err(|e| VaultNodeError::from(e)));
     });
 
     Ok(())
 }
 
-#[neon_frame_fn(channel=3)]
+#[neon_frame_fn(channel=2)]
 pub fn signature_author<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<String, VaultNodeError>) + Send + 'static {
 
     let unsigned_msg = cx
-        .argument::<JsString>(1)
-        .map_err(|_| VaultNodeError::ArgumentMissing(1, "message".to_string()))?
+        .argument::<JsString>(0)
+        .map_err(|_| VaultNodeError::ArgumentMissing(0, "message".to_string()))?
         .value(cx);
 
     let unsigned_msg =
         serde_json::from_str::<UnsignedMessageJson>(unsigned_msg.as_str())
-            .map_err(|_| VaultNodeError::InvalidArgument(1))?;
+            .map_err(|_| VaultNodeError::InvalidArgument(0))?;
 
     let signature =cx
-        .argument::<JsString>(2)
-        .map_err(|_| VaultNodeError::ArgumentMissing(2, "signature".to_string()))?
+        .argument::<JsString>(1)
+        .map_err(|_| VaultNodeError::ArgumentMissing(1, "signature".to_string()))?
         .value(cx);
 
     std::thread::spawn(move || {

@@ -1,6 +1,5 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
-import {SeedPKRef} from "@emeraldpay/emerald-vault-core";
 
 const IS_CONNECTED = process.env.EMERALD_TEST_LEDGER === 'true';
 
@@ -13,6 +12,9 @@ describe("Ledger Integration Test", () => {
                 dir: tempPath("ledger")
             });
             vault.open();
+        });
+        afterAll(() => {
+            vault.close();
         });
 
         test("Apps", async () => {
@@ -67,6 +69,9 @@ describe("Ledger Integration Test", () => {
                 dir: tempPath("ledger")
             });
             vault.open();
+        });
+        afterAll(() => {
+            vault.close();
         });
 
         test("Apps", async () => {

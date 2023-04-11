@@ -14,6 +14,9 @@ describe("Icons", () => {
         vault.open();
         await vault.createGlobalKey("test");
     });
+    afterEach(() => {
+        vault.close()
+    });
 
     test("List empty", async () => {
         let icons = await vault.iconsList();

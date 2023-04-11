@@ -8,9 +8,11 @@ describe("Mnemonic", () => {
         let vault: EmeraldVaultNative;
         beforeAll(async () => {
             vault = new EmeraldVaultNative({
-                dir: tempPath("./testdata/gen-mnemonic")
+                dir: tempPath("gen-mnemonic")
             });
-            await vault.createGlobalKey("test-global")
+        });
+        afterAll(() => {
+            vault.close()
         });
 
         test("errors for invalid length", async () => {
@@ -56,6 +58,9 @@ describe("Mnemonic", () => {
                 dir: tempPath("import-mnemonic")
             });
             await vault.createGlobalKey("test-global")
+        });
+        afterAll(() => {
+            vault.close()
         });
 
         test("requires valid mnemonic", async () => {
