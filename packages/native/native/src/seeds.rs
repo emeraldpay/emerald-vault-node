@@ -21,9 +21,6 @@ use bitcoin::Address;
 use std::str::FromStr;
 use emerald_hwkey::ledger::manager::LedgerKey;
 use emerald_hwkey::errors::HWKeyError;
-use emerald_hwkey::ledger::app_bitcoin::{BitcoinApp, BitcoinApps};
-use emerald_hwkey::ledger::traits::LedgerApp;
-use emerald_hwkey::ledger::app_ethereum::{EthereumApp, EthereumApps};
 use errors::{VaultNodeError};
 use instance::{Instance, WrappedVault};
 
@@ -90,6 +87,8 @@ pub struct LedgerDetails {
     pub json_type: String,
     pub connected: bool,
     pub app: Option<String>,
+    #[serde(rename = "appVersion")]
+    pub app_version: Option<String>,
 }
 
 impl Default for LedgerDetails {
@@ -98,6 +97,7 @@ impl Default for LedgerDetails {
             json_type: "ledger".to_string(),
             connected: false,
             app: None,
+            app_version: None,
         }
     }
 }
@@ -302,29 +302,20 @@ pub fn generate_mnemonic<H>(cx: &mut FunctionContext, handler: H) -> Result<(), 
     Ok(())
 }
 
-fn get_bitcoin_app(k: &LedgerKey) -> Option<String> {
-    if let Ok(app) = k.access::<BitcoinApp>() {
-        app.is_open().map(
-            |app| match app {
-                BitcoinApps::Mainnet => "bitcoin".to_string(),
-                BitcoinApps::Testnet => "bitcoin-testnet".to_string()
-            },
-        )
-    } else {
-        None
-    }
-}
-
-fn get_ethereum_app(k: &LedgerKey) -> Option<String> {
-    if let Ok(app) = k.access::<EthereumApp>() {
-        app.is_open().map(
-            |app| match app {
-                EthereumApps::Ethereum => "ethereum".to_string(),
-                EthereumApps::EthereumClassic => "ethereum-classic".to_string()
-            },
-        )
-    } else {
-        None
+fn list_hwkey_internal() -> Result<Vec<LedgerDetails>, VaultNodeError> {
+    match LedgerKey::new_connected() {
+        Ok(k) => {
+            let mut result: Vec<LedgerDetails> = Vec::new();
+            let app = k.get_app_details().ok();
+            result.push(LedgerDetails {
+                connected: true,
+                app: app.clone().map(|a| a.name),
+                app_version: app.map(|a| a.version),
+                ..LedgerDetails::default()
+            });
+            Ok(result)
+        },
+        Err(e) => Err(VaultNodeError::from(VaultError::HWKeyFailed(e)))
     }
 }
 
@@ -334,19 +325,7 @@ pub fn list_hwkey<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultN
         H: FnOnce(Result<Vec<LedgerDetails>, VaultNodeError>) + Send + 'static {
 
     std::thread::spawn(move || {
-        let result: Result<Vec<LedgerDetails>, VaultNodeError> = match LedgerKey::new_connected() {
-            Ok(k) => {
-                let mut result: Vec<LedgerDetails> = Vec::new();
-                let name = get_bitcoin_app(&k).or_else(|| get_ethereum_app(&k));
-                result.push(LedgerDetails {
-                    connected: true,
-                    app: name,
-                    ..LedgerDetails::default()
-                });
-                Ok(result)
-            },
-            Err(e) => Err(VaultNodeError::from(VaultError::HWKeyFailed(e)))
-        };
+        let result = list_hwkey_internal();
         handler(result.map_err(VaultNodeError::from));
     });
 

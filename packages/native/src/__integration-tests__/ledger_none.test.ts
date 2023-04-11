@@ -24,9 +24,7 @@ describe("Ledger Integration Test", () => {
             let details = await vault.getConnectedHWDetails();
             console.log("Apps", details);
             expect(details.length).toBe(1);
-            details.forEach((d) =>
-                expect(d.app).toBeNull()
-            )
+            expect(details[0].app == "OLOS" || details[0].app == "BOLOS").toBeTruthy()
         });
 
         test("Create entries without app open", async () => {

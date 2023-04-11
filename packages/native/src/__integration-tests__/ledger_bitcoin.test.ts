@@ -42,9 +42,12 @@ describe("Bitcoin Integration Test", () => {
 
         test("App opened", async () => {
             let details = await vault.getConnectedHWDetails();
-            expect(details).toEqual([
-                {type: "ledger", connected: true, app: "bitcoin"}
-            ])
+            expect(details.length).toBeGreaterThanOrEqual(1);
+            console.log("details", details[0]);
+            expect(details[0].type).toBe("ledger");
+            expect(details[0].connected).toBeTruthy();
+            expect(details[0].app).toBe("Bitcoin");
+            expect(details[0].appVersion).toBeDefined();
         });
     });
 
