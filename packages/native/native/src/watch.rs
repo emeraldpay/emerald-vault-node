@@ -9,8 +9,10 @@ use emerald_vault::storage::{
 use neon::prelude::FunctionContext;
 use access::{args_require_str};
 use emerald_vault::chains::Blockchain;
+use emerald_vault::storage::watch::{DeviceDetails};
 use errors::{JsonError, VaultNodeError};
 use instance::Instance;
+use seeds::LedgerDetails;
 
 #[derive(Deserialize, Clone)]
 struct RequestJson {
@@ -31,6 +33,7 @@ pub(crate) struct DeviceJson {
     pub id: String,
     pub seed: Option<String>,
     pub blockchains: Vec<u32>,
+    pub device: Option<LedgerDetails>,
 }
 
 impl TryFrom<RequestJson> for Request {
@@ -56,12 +59,26 @@ impl TryFrom<RequestJson> for Request {
     }
 }
 
+impl From<DeviceDetails> for LedgerDetails {
+    fn from(value: DeviceDetails) -> Self {
+        match value {
+            DeviceDetails::Ledger(ledger) => LedgerDetails {
+                json_type: "ledger".to_string(),
+                connected: true,
+                app: Some(ledger.app),
+                app_version: Some(ledger.app_version),
+            }
+        }
+    }
+}
+
 impl From<ConnectedDevice> for DeviceJson {
     fn from(value: ConnectedDevice) -> Self {
         DeviceJson {
             id: value.id.to_string(),
             seed: value.seed_id.map(|v| v.to_string()),
-            blockchains: value.blockchains.iter().map(|v| v.clone().into()).collect()
+            blockchains: value.blockchains.iter().map(|v| v.clone().into()).collect(),
+            device: value.device.map(|d| d.into())
         }
     }
 }

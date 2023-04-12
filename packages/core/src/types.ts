@@ -595,7 +595,12 @@ export interface LedgerDetails {
     /**
      * Application which is opened on Ledger. Or `null` if unknown or no app is opened.
      */
-    app: LedgerApp | null;
+    app: LedgerApp | string |  null;
+
+    /**
+     * App version as provided by the `app`. It supposed to be a SemVer but there is no guarantee.
+     */
+    appVersion?: string | null;
 }
 
 export type HWKeyDetails = LedgerDetails;
@@ -724,7 +729,11 @@ interface WatchEventDevice {
     /**
      * List of available blockchain. Can be empty (ex., when the Ledger is connected but no app launched)
      */
-    blockchains: number[]
+    blockchains: number[],
+    /**
+     * Device details if available
+     */
+    device?: HWKeyDetails | undefined;
 }
 
 /**
