@@ -601,6 +601,12 @@ export interface LedgerDetails {
      * App version as provided by the `app`. It supposed to be a SemVer but there is no guarantee.
      */
     appVersion?: string | null;
+
+    /**
+     * Seed is associated with the Ledger. When it's `null` it doesn't necessary mean that it's a new device,
+     * but that the information about the seed is not available or unknown at this moment.
+     */
+    seedId?: Uuid | undefined;
 }
 
 export type HWKeyDetails = LedgerDetails;

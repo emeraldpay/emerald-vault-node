@@ -487,7 +487,7 @@ dependencies = [
 [[package]]
 name = "emerald-vault"
 version = "0.33.0-dev"
-source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#e26ebc2408d011c14047a027cc61c1286de8bfee"
+source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#82f8e5c5181a27136e3e5a9ca84d279e9217f110"
 dependencies = [
  "aes",
  "argon2",
