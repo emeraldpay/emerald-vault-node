@@ -376,6 +376,9 @@ describe("Ethereum Integration Test", () => {
             let seedId = await vault.importSeed({
                 type: "ledger",
             })
+            let ledgers = await vault.getConnectedHWDetails();
+            expect(ledgers.length).toBe(1);
+            expect(ledgers[0].seedId).toBeNull();
             let entryId = await vault.addEntry(walletId, {
                 type: "hd-path",
                 blockchain: 100,
@@ -400,6 +403,14 @@ describe("Ethereum Integration Test", () => {
             )
 
             expect(txSigned.raw).toBe("0xf8620183989680825208943d66483b4cad3518861029ff86a387ebc4705172808030a099a1d0271a0e3c3d2cd1f659b262675646653a0a3ca6adc6f1c3ec93a589572ea039ea3005f6baaf56e03440254065cf5ae7020e7c31cdc3fbf305c7fbe262a3db");
+
+            // after a successful signature seed must learn its ledger device (though it may learn it on adding the entry too)
+            let ledgers2 = await vault.getConnectedHWDetails();
+            expect(ledgers2.length).toBe(1);
+            expect(ledgers2[0].seedId).toBe(seedId);
+
+            let watchCurrent = await vault.watch({type: "get-current"});
+            expect(watchCurrent.devices[0].device!!.seedId).toBe(seedId);
         });
     });
 

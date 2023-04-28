@@ -67,6 +67,7 @@ impl From<DeviceDetails> for LedgerDetails {
                 connected: true,
                 app: Some(ledger.app),
                 app_version: Some(ledger.app_version),
+                ..LedgerDetails::default()
             }
         }
     }
@@ -76,9 +77,12 @@ impl From<ConnectedDevice> for DeviceJson {
     fn from(value: ConnectedDevice) -> Self {
         DeviceJson {
             id: value.id.to_string(),
-            seed: value.seed_id.map(|v| v.to_string()),
+            seed: value.seed_id.as_ref().map(|v| v.to_string()),
             blockchains: value.blockchains.iter().map(|v| v.clone().into()).collect(),
-            device: value.device.map(|d| d.into())
+            device: value.device.clone().map(|d| LedgerDetails {
+                seed_id: value.seed_id,
+                ..d.into()
+            })
         }
     }
 }

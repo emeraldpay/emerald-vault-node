@@ -21,6 +21,8 @@ use bitcoin::Address;
 use std::str::FromStr;
 use emerald_hwkey::ledger::manager::LedgerKey;
 use emerald_hwkey::errors::HWKeyError;
+use emerald_vault::structs::seed::WithFingerprint;
+use emerald_vault::crypto::fingerprint::Fingerprints;
 use errors::{VaultNodeError};
 use instance::{Instance, WrappedVault};
 
@@ -89,6 +91,8 @@ pub struct LedgerDetails {
     pub app: Option<String>,
     #[serde(rename = "appVersion")]
     pub app_version: Option<String>,
+    #[serde(rename = "seedId")]
+    pub seed_id: Option<Uuid>,
 }
 
 impl Default for LedgerDetails {
@@ -98,6 +102,7 @@ impl Default for LedgerDetails {
             connected: false,
             app: None,
             app_version: None,
+            seed_id: None,
         }
     }
 }
@@ -302,15 +307,28 @@ pub fn generate_mnemonic<H>(cx: &mut FunctionContext, handler: H) -> Result<(), 
     Ok(())
 }
 
-fn list_hwkey_internal() -> Result<Vec<LedgerDetails>, VaultNodeError> {
+fn list_hwkey_internal(vault: &WrappedVault) -> Result<Vec<LedgerDetails>, VaultNodeError> {
     match LedgerKey::new_connected() {
         Ok(k) => {
             let mut result: Vec<LedgerDetails> = Vec::new();
             let app = k.get_app_details().ok();
+            let seed_id = if let Ok(fps) = k.find_fingerprints() {
+                if let Ok(seeds) = vault.list_seeds() {
+                    let seed = seeds.iter().find(|seed| {
+                        fps.iter().any(|fp| seed.is_same(fp))
+                    });
+                    seed.map(|seed| seed.id)
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
             result.push(LedgerDetails {
                 connected: true,
                 app: app.clone().map(|a| a.name),
                 app_version: app.map(|a| a.version),
+                seed_id,
                 ..LedgerDetails::default()
             });
             Ok(result)
@@ -323,9 +341,11 @@ fn list_hwkey_internal() -> Result<Vec<LedgerDetails>, VaultNodeError> {
 pub fn list_hwkey<H>(_cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
         H: FnOnce(Result<Vec<LedgerDetails>, VaultNodeError>) + Send + 'static {
+    let vault = Instance::get_vault()?;
 
     std::thread::spawn(move || {
-        let result = list_hwkey_internal();
+        let vault = vault.lock().unwrap();
+        let result = list_hwkey_internal(&vault);
         handler(result.map_err(VaultNodeError::from));
     });
 
