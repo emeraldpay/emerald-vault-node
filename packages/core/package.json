@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-core",
-  "version": "0.11.0-dev",
+  "version": "0.11.0",
   "description": "Emerald Vault Core data types",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
   "license": "Apache-2.0",
@@ -23,13 +23,12 @@
     "prepublishOnly": "npm run clean && npm run build && npm run test",
     "prepack": "npm run build"
   },
-  "dependencies": {},
   "devDependencies": {
-    "typescript": "^3.9.10",
-    "rimraf": "^2.6.3",
-    "jest": "24.8.0",
     "@types/jest": "24.0.13",
+    "jest": "24.8.0",
+    "jest-serial-runner": "1.1.0",
+    "rimraf": "^2.6.3",
     "ts-jest": "24.0.2",
-    "jest-serial-runner": "1.1.0"
+    "typescript": "^3.9.10"
   }
 }
