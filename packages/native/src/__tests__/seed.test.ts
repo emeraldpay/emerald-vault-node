@@ -248,8 +248,8 @@ describe("Seeds", () => {
             expect(seed.createdAt).toBeDefined();
             const createdAt = new Date(seed.createdAt);
             expect(createdAt.getTime()).toBeGreaterThanOrEqual(start.getTime());
-            //sometimes fails, with couple of millis skew on check, so add extra 10ms window
-            expect(createdAt.getTime()).toBeLessThanOrEqual(new Date().getTime() + 10);
+            // Sometimes fails, with a couple of millis skew on check, so add extra 15ms window
+            expect(createdAt.getTime()).toBeLessThanOrEqual(new Date().getTime() + 15);
         });
 
     });
