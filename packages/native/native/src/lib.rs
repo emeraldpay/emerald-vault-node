@@ -48,13 +48,14 @@ register_module!(mut cx, {
         Builder::new()
             .format(|buf, record| {
                 writeln!(buf,
-                         "{} [{}] - {}",
+                         "{} {} [{}] - {}",
                          Local::now().format("%Y-%m-%dT%H:%M:%S"),
+                         record.module_path().or(Some("")).unwrap(),
                          record.level(),
                          record.args()
                 )
             })
-            .filter(None, LevelFilter::Trace)
+            .filter(None, LevelFilter::Debug)
             .init();
         log::warn!("START IN DEV MODE");
     }
