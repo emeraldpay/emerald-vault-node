@@ -96,13 +96,6 @@ impl From<Event> for EventJson {
     }
 }
 
-fn watch_internal(vault: VaultStorage, request: Request) -> Result<EventJson, VaultNodeError> {
-    let event = vault.watch(request);
-    event.recv()
-        .map_err(|_| VaultNodeError::OtherProcessing("No response".to_string()))
-        .map(|event| event.into())
-}
-
 #[neon_frame_fn(channel=1)]
 pub(crate) fn watch<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeError>
     where
@@ -115,8 +108,14 @@ pub(crate) fn watch<H>(cx: &mut FunctionContext, handler: H) -> Result<(), Vault
     let request = Request::try_from(json)?;
 
     std::thread::spawn(move || {
-        let vault = vault.lock().unwrap();
-        let result = watch_internal(vault.cfg.get_storage(), request);
+        let event = {
+            // the whole watching takes time, so make sure we lock the vault only for the period of adding the request
+            let vault = vault.lock().unwrap();
+            vault.cfg.get_storage().watch(request)
+        };
+        let result = event.recv()
+            .map_err(|_| VaultNodeError::OtherProcessing("No response".to_string()))
+            .map(|event| event.into());
         handler(result);
     });
 

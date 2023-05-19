@@ -1,6 +1,6 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
-import {isLedgerDetails} from "@emeraldpay/emerald-vault-core";
+import {BlockchainId, isLedgerDetails} from "@emeraldpay/emerald-vault-core";
 
 describe("Watch Ledger", () => {
 
@@ -49,6 +49,51 @@ describe("Watch Ledger", () => {
             expect(isLedgerDetails(avail.devices[0].device)).toBeTruthy();
             expect(avail.devices[0].device.app).toBe("Bitcoin");
         })
+    });
+
+    describe('Get addresses', () => {
+        let vault: EmeraldVaultNative;
+        beforeAll(() => {
+            vault = new EmeraldVaultNative({
+                dir: tempPath("ledger-watch")
+            });
+            vault.open();
+        });
+        afterAll(() => {
+            vault.close();
+        });
+
+        test("Get Bitcoin and Ethereum addresses", async () => {
+            let current = await vault.watch({type: "get-current"});
+            console.log("Current state", JSON.stringify(current));
+
+            let bitcoin = vault
+                .watch({type: "available", blockchain: 1})
+                .then((event) => {
+                    console.log("Bitcoin available", JSON.stringify(event));
+                    return vault.listSeedAddresses({type: "ledger"}, BlockchainId.BITCOIN, ["m/84'/0'/0'/0/0"])
+                })
+                .then((addresses) => {
+                    console.log("Bitcoin addresses", JSON.stringify(addresses));
+                    return addresses["m/84'/0'/0'/0/0"];
+                });
+
+            let ethereum = vault
+                .watch({type: "available", blockchain: 100})
+                .then((event) => {
+                    console.log("Ethereum available", JSON.stringify(event));
+                    return vault.listSeedAddresses({type: "ledger"}, BlockchainId.ETHEREUM, ["m/44'/60'/0'/0/0"]);
+                })
+                .then((addresses) => {
+                    console.log("Ethereum addresses", JSON.stringify(addresses));
+                    return addresses["m/44'/60'/0'/0/0"];
+                });
+
+            let results = await Promise.all([bitcoin, ethereum]);
+
+            expect(results[0]).toBe("bc1qaaayykrrx84clgnpcfqu00nmf2g3mf7f53pk3n");
+            expect(results[1]).toBe("0x3d66483b4cad3518861029ff86a387ebc4705172");
+        });
     });
 
 });
