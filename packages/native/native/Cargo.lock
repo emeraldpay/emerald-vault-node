@@ -539,7 +539,7 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault-node"
-version = "0.11.0-dev"
+version = "0.12.0-dev"
 dependencies = [
  "base64 0.21.0",
  "bitcoin",
