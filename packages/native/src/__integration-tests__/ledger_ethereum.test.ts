@@ -2,18 +2,24 @@ import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "../__tests__/_commons";
 import {
     BitcoinEntry,
-    EthereumEntry, isEntryId,
+    EthereumEntry,
+    isEntryId,
     LedgerSeedReference,
-    SeedPKRef, UnsignedBasicEthereumTx,
+    SeedPKRef,
+    UnsignedBasicEthereumTx,
     Uuid
 } from "@emeraldpay/emerald-vault-core";
+import {TransactionFactory} from '@ethereumjs/tx';
+import {Common, Hardfork} from '@ethereumjs/common';
 
 const IS_CONNECTED = process.env.EMERALD_TEST_LEDGER === 'true';
 
 const testAddresses = {
     "m/44'/60'/0'/0/0": '0x3d66483b4cad3518861029ff86a387ebc4705172',
     "m/44'/60'/0'/0/1": '0x40a11b117f14376ca6de569974c7be566249a0d5',
-    "m/44'/60'/0'/0/2": '0x722cfc11488ee6fa4041b6fdf8d708b21936f0fa'
+    "m/44'/60'/0'/0/2": '0x722cfc11488ee6fa4041b6fdf8d708b21936f0fa',
+
+    "m/44'/61'/0'/0/0": '0x903A5B134315B2A450740eb61C5446A580e4A781',
 }
 
 describe("Ethereum Integration Test", () => {
@@ -367,7 +373,7 @@ describe("Ethereum Integration Test", () => {
             vault.close();
         });
 
-        test("Sign standard tx", async () => {
+        test("Sign standard ETH tx", async () => {
             if (!IS_CONNECTED) {
                 console.warn("Ignore Ledger tests");
                 return;
@@ -402,7 +408,77 @@ describe("Ethereum Integration Test", () => {
                 entryId, tx, null
             )
 
-            expect(txSigned.raw).toBe("0xf8620183989680825208943d66483b4cad3518861029ff86a387ebc4705172808030a099a1d0271a0e3c3d2cd1f659b262675646653a0a3ca6adc6f1c3ec93a589572ea039ea3005f6baaf56e03440254065cf5ae7020e7c31cdc3fbf305c7fbe262a3db");
+            // first check with an external lib in case we have a broken logic
+            const data = Buffer.from(txSigned.raw.slice(2), 'hex');
+            let options = new Common({ hardfork: Hardfork.Shanghai, chain: 1 });
+            let parsedTx = TransactionFactory.fromSerializedData(data, {common: options});
+            expect(parsedTx.isSigned()).toBeTruthy();
+            expect(parsedTx.verifySignature()).toBeTruthy();
+            expect(parsedTx.getSenderAddress().toString().toLowerCase()).toBe("0x3d66483b4cad3518861029ff86a387ebc4705172");
+
+            // that's an expected encoded tx
+            expect(txSigned.raw).toBe("0xf8620183989680825208943d66483b4cad3518861029ff86a387ebc47051728080" +
+                "26" + // encoded chain id
+                "a099a1d0271a0e3c3d2cd1f659b262675646653a0a3ca6adc6f1c3ec93a589572e" +
+                "a039ea3005f6baaf56e03440254065cf5ae7020e7c31cdc3fbf305c7fbe262a3db");
+
+            // after a successful signature seed must learn its ledger device (though it may learn it on adding the entry too)
+            let ledgers2 = await vault.getConnectedHWDetails();
+            expect(ledgers2.length).toBe(1);
+            expect(ledgers2[0].seedId).toBe(seedId);
+
+            let watchCurrent = await vault.watch({type: "get-current"});
+            expect(watchCurrent.devices[0].device!!.seedId).toBe(seedId);
+        });
+
+        test("Sign standard ETC tx", async () => {
+            if (!IS_CONNECTED) {
+                console.warn("Ignore Ledger tests");
+                return;
+            }
+            let walletId = await vault.addWallet("wallet 1");
+            let seedId = await vault.importSeed({
+                type: "ledger",
+            })
+            let ledgers = await vault.getConnectedHWDetails();
+            expect(ledgers.length).toBe(1);
+            expect(ledgers[0].seedId).toBeNull();
+            let entryId = await vault.addEntry(walletId, {
+                type: "hd-path",
+                blockchain: 101,
+                key: {
+                    seed: {type: "id", value: seedId},
+                    hdPath: "m/44'/61'/0'/0/0",
+                    address: testAddresses["m/44'/61'/0'/0/0"]
+                },
+            });
+
+            let tx: UnsignedBasicEthereumTx = {
+                from: "0x903A5B134315B2A450740eb61C5446A580e4A781",
+                to: "0x903A5B134315B2A450740eb61C5446A580e4A781",
+                value: "0",
+                gas: 21000,
+                gasPrice: "10000000",
+                nonce: 1,
+            }
+
+            let txSigned = await vault.signTx(
+                entryId, tx, null
+            )
+
+            // first check with an external lib in case we have a broken logic
+            const data = Buffer.from(txSigned.raw.slice(2), 'hex');
+            let options = Common.custom({ chainId: 61 }, { baseChain: 1, hardfork: Hardfork.Byzantium });
+            let parsedTx = TransactionFactory.fromSerializedData(data, {common: options});
+            expect(parsedTx.isSigned()).toBeTruthy();
+            expect(parsedTx.verifySignature()).toBeTruthy();
+            expect(parsedTx.getSenderAddress().toString().toLowerCase()).toBe("0x903a5b134315b2a450740eb61c5446a580e4a781");
+
+            // that's an expected encoded tx
+            expect(txSigned.raw).toBe("0xf863018398968082520894903a5b134315b2a450740eb61c5446a580e4a781808081" +
+                "9d" + // encoded chain id
+                "a011faa926106ef424580c8166202b6497e4b0649a334092b5c46b7793476e6b7b" +
+                "a05a70fefbd65b8937ca152110b9f15e5688856c678ae7baa6901b0ffdbeb77e78");
 
             // after a successful signature seed must learn its ledger device (though it may learn it on adding the entry too)
             let ledgers2 = await vault.getConnectedHWDetails();

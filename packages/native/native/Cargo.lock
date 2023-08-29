@@ -487,9 +487,8 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault"
-version = "0.33.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e933f47d8c7346c7e47c1383de270be5edcadb91b65ef0ad05aff3e9821607be"
+version = "0.34.0-dev"
+source = "git+https://github.com/emeraldpay/emerald-vault?branch=master#83a178ca19bb1a9a42c655879f7965df4f698b07"
 dependencies = [
  "aes",
  "argon2",

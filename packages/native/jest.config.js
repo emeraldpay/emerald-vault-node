@@ -14,6 +14,10 @@ module.exports = {
   collectCoverageFrom: [
     "src/**/*.ts"
   ],
+  globals: {
+    // needed for @ethereumjs/tx crypto, see https://github.com/jestjs/jest/issues/4422
+    Uint8Array: Uint8Array,
+  },
   runner: 'jest-serial-runner',
   testTimeout: 60000, // one minute, because it's very slow on Github CI
 };

@@ -72,7 +72,6 @@
     "crypto-js": "^4.0.0",
     "electron": "^15.0.0",
     "electron-build-env": "0.2.0",
-    "ethereumjs-tx": "^2.1.2",
     "fs-extra": "^10.0.0",
     "if-env": "^1.0.4",
     "jest": "24.8.0",
@@ -82,6 +81,8 @@
     "rimraf": "^2.6.3",
     "ts-jest": "24.0.2",
     "typescript": "^3.9.10",
-    "unzipper": "0.10.5"
+    "unzipper": "0.10.5",
+    "@ethereumjs/common": "^3.2.0",
+    "@ethereumjs/tx": "^4.2.0"
   }
 }
