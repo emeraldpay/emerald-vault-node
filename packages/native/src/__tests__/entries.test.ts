@@ -19,14 +19,14 @@ describe("Entries", () => {
 
     describe("Details", () => {
         let vault: EmeraldVaultNative;
-        beforeAll(async () => {
+        beforeEach(async () => {
             vault = new EmeraldVaultNative({
                 dir: tempPath("entry-details")
             });
             vault.open();
             await vault.createGlobalKey("test");
         });
-        afterAll(() => {
+        afterEach(() => {
             vault.close()
         });
 
