@@ -17,7 +17,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "16.x"
+          node-version: "18.x"
           always-auth: true
 
       - name: Configure NPM
@@ -35,9 +35,6 @@ jobs:
 
       - name: Install JS dependencies
         run: yarn install
-
-      - name: Configure Node.js Path
-        run: npm config set scripts-prepend-node-path true
 
       - name: Publish to NPM - core
         run: npm publish --access=public
