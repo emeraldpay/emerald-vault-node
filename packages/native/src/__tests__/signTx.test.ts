@@ -1,6 +1,8 @@
 import {EmeraldVaultNative} from "../EmeraldVaultNative";
 import {tempPath} from "./_commons";
 import {BlockchainId, UnsignedBitcoinTx, WalletsOp} from "@emeraldpay/emerald-vault-core";
+import {TransactionFactory, TypedTransaction} from '@ethereumjs/tx';
+import {Common, Hardfork} from "@ethereumjs/common";
 
 
 describe("Sign transaction", () => {
@@ -209,6 +211,44 @@ describe("Sign transaction", () => {
 
             expect(raw.raw).toBe("0x02f8690119830186a08477359400825208943eaf0b987b49c4d782ee134fdc1243fd0ccdfdd38080c001a08a6736c1ec07c2017362eed9a89823f3d6220ab8bacf81fa8a14da9581421f70a04e5f507d99bb20f0956b4b257fa660f5759dfdb7e04c7e8fcf6645ab8845cf7f");
             expect(raw.txid).toBe("0x7b0958868a76aee6803da842859c40e4594e762c8f26304d54e05cff60b1fac4");
+        });
+
+        test("sign sepolia tx", async () => {
+            let walletId = await vault.addWallet("test");
+            let seedId = await vault.importSeed({
+                type: "mnemonic",
+                value: {
+                    value: "fever misery evidence miss toddler fold scatter mail believe fire cabbage story verify tunnel echo"
+                },
+                password: "test-global"
+            });
+            let entryId = await vault.addEntry(walletId, {
+                blockchain: 10009,
+                type: "hd-path",
+                key: {
+                    seed: {type: "id", value: seedId, password: "test-global"},
+                    hdPath: "m/44'/60'/0'/0/3",
+                }
+            });
+
+            let tx = {
+                from: "0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1",
+                to: "0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3",
+                value: "0",
+                gas: 0x5208,
+                maxGasPrice: "2000000000",
+                priorityGasPrice: "100000",
+                nonce: 0x19
+            };
+            let raw = await vault.signTx(entryId, tx, "test-global");
+
+            let chainConfig = new Common({ chain: 'sepolia', hardfork: 'shanghai' });
+            const bytes = Buffer.from(raw.raw.slice(2), 'hex');
+            let parsed = TransactionFactory.fromSerializedData(bytes, {common: chainConfig});
+
+            expect(parsed.getSenderAddress().toString().toLowerCase()).toBe("0xD4345AbBeEF14d2Fd2E0DEB898A67c26F1cbC4F1".toLowerCase());
+            expect(parsed.nonce.toString()).toBe("25");
+            expect(parsed.to.toString().toLowerCase()).toBe("0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3".toLowerCase());
         });
 
         test("sign bitcoin tx", async () => {

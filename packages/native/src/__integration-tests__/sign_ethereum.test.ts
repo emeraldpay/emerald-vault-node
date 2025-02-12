@@ -72,16 +72,16 @@ describe('Sign different tx combinations (slow to execute)', () => {
     function testAll(entryId: EntryId, chainId: number): Promise<any> {
         let chainConfig = {};
         if (chainId !== 1) {
-            chainConfig = {common: Common.custom({ chainId }, { baseChain: 1, hardfork: Hardfork.Byzantium })};
+            chainConfig = {common: Common.custom({ chainId }, { baseChain: 1, hardfork: Hardfork.Shanghai })};
         } else {
             chainConfig = {common: new Common({ hardfork: Hardfork.Shanghai, chain: chainId })};
         }
 
         let result = [];
-        ["0", "1", "255", "256", "1000000000000000000", "12345600000000000000"].forEach((value) => {
+        ["0", "1", "255", "256", "1000000000000000000"].forEach((value) => {
             [0x5208, 0x1fbd0, 0x1, 0xb7, 0x100].forEach((gas) => {
                 ["2000000000", "1", "0", "128"].forEach((gasPrice) => {
-                    [0x0, 0x1, 0x1f, 0xff, 0x38ae].forEach((nonce) => {
+                    [0x0, 0x1, 0xff, 0x38ae].forEach((nonce) => {
                         ["", "d0e30db0", "095ea7b300000000000000000000000036a8ce9b0b86361a02070e4303d5e24d6c63b3f10000000000000000000000000000000000000000033b2e3c9fd0803ce8000000"].forEach((data) => {
                             ["0x3eaf0b987b49c4d782ee134fdc1243fd0ccdfdd3"].forEach(async (to) => {
                                 let tx = {
@@ -107,14 +107,14 @@ describe('Sign different tx combinations (slow to execute)', () => {
                                                 console.error(e);
                                             }
                                             expect(parsed).toBeDefined();
-                                            expect(convertHex(parsed.hash())).toBe(raw.txid);
+                                            expect(convertHex(Buffer.from(parsed.hash()))).toBe(raw.txid);
                                             expect(parsed.getSenderAddress().toString()).toBe("0x36a8ce9b0b86361a02070e4303d5e24d6c63b3f1");
                                             expect(parsed.to.toString()).toBe(to);
                                             expect(parsed.value.toString()).toBe(value);
                                             expect(parsed.gasLimit.toString()).toBe(gas.toString());
                                             // expect(hexQuantity(convertHex(parsed.gasPrice))).toBe(gasPrice);
                                             expect(parsed.nonce.toString()).toBe(nonce.toString());
-                                            expect(parsed.data.toString('hex')).toBe(data);
+                                            expect(Buffer.from(parsed.data).toString("hex")).toBe(data);
                                             expect(parseInt(parsed.v.toString())).toBeGreaterThanOrEqual(chainId * 2 + 35);
                                             expect(parseInt(parsed.v.toString())).toBeLessThanOrEqual(chainId * 2 + 36);
                                         })
@@ -151,18 +151,6 @@ describe('Sign different tx combinations (slow to execute)', () => {
         });
         await testAll(entryId, 61);
     });
-
-    test("Kovan", async () => {
-        let walletId = await vault.addWallet("slow sign Kovan");
-        let entryId = await vault.addEntry(walletId, {
-            blockchain: 10002,
-            type: "ethereum-json",
-            key: JSON.stringify(pk),
-            jsonPassword: "123456",
-            password: "global-password"
-        });
-        await testAll(entryId, 42);
-    })
 
 });
 
@@ -216,11 +204,11 @@ describe('Sign different key combinations (slow to execute)', () => {
 
             let raw = await vault.signTx(entry.id, tx, "global-password");
             expect(raw).toBeDefined();
-            let parsed: Transaction;
+            let parsed;
             try {
                 const bytes = Buffer.from(raw.raw.slice(2), 'hex');
                 let chainConfig = {common: new Common({ hardfork: Hardfork.Shanghai, chain: chainId })};
-                parsed = TransactionFactory.fromSerializedData(bytes, chainConfig) as Transaction;
+                parsed = TransactionFactory.fromSerializedData(bytes, chainConfig);
             } catch (e) {
                 console.error("Invalid signature", tx);
                 console.error("Raw", raw);

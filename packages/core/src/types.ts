@@ -31,6 +31,7 @@ export enum BlockchainId {
     KOVAN_TESTNET = 10002,
     BITCOIN_TESTNET = 10003,
     GOERLI_TESTNET = 10005,
+    SEPOLIA_TESTNET = 10009,
 }
 
 export const DEFAULT_BITCOIN_SEQ = 0xfffffffe;
@@ -39,7 +40,7 @@ export function getBlockchainType(id: BlockchainId): BlockchainType {
     if (id == BlockchainId.BITCOIN || id == BlockchainId.BITCOIN_TESTNET) {
         return "bitcoin";
     }
-    if (id == BlockchainId.ETHEREUM || id == BlockchainId.ETHEREUM_CLASSIC || id == BlockchainId.KOVAN_TESTNET || id == BlockchainId.GOERLI_TESTNET) {
+    if (id == BlockchainId.ETHEREUM || id == BlockchainId.ETHEREUM_CLASSIC || id == BlockchainId.KOVAN_TESTNET  || id == BlockchainId.GOERLI_TESTNET || id == BlockchainId.SEPOLIA_TESTNET) {
         return "ethereum";
     }
     throw new Error("Unsupported id: " + id);
@@ -48,7 +49,8 @@ export function getBlockchainType(id: BlockchainId): BlockchainType {
 export function isBlockchainId(id: number): id is BlockchainId {
     return id === BlockchainId.BITCOIN || id === BlockchainId.BITCOIN_TESTNET
         || id === BlockchainId.ETHEREUM || id === BlockchainId.ETHEREUM_CLASSIC
-        || id === BlockchainId.KOVAN_TESTNET || id === BlockchainId.GOERLI_TESTNET;
+        || id === BlockchainId.KOVAN_TESTNET || id === BlockchainId.GOERLI_TESTNET || id === BlockchainId.SEPOLIA_TESTNET
+        ;
 }
 
 /**
