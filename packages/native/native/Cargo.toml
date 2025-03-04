@@ -13,14 +13,14 @@ crate-type = ["cdylib"]
 neon-build = "0.10.1"
 
 [dependencies]
-emerald-vault = "=0.34.0"
-emerald-hwkey = "=0.5.0"
+#emerald-vault = "=0.34.0"
+#emerald-hwkey = "=0.5.0"
 hdpath = "0.6.3"
 
 #emerald-vault = { path = "../../../../emerald-vault" }
 #emerald-hwkey = { path = "../../../../emerald-hwkey" }
-#emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
-#emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
+emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
+emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
 #hdpath = { path = "../../../../hdpath", features = ["with-bitcoin"] }
 
 lazy_static = "1.4.0"

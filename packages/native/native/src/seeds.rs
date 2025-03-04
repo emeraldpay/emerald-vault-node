@@ -19,8 +19,7 @@ use emerald_vault::blockchain::chains::BlockchainType;
 use emerald_vault::chains::Blockchain;
 use bitcoin::Address;
 use std::str::FromStr;
-use emerald_hwkey::ledger::manager::LedgerKey;
-use emerald_hwkey::errors::HWKeyError;
+use emerald_hwkey::ledger::manager_mt::LedgerKeyShared;
 use emerald_vault::structs::seed::WithFingerprint;
 use emerald_vault::crypto::fingerprint::Fingerprints;
 use errors::{VaultNodeError};
@@ -308,7 +307,7 @@ pub fn generate_mnemonic<H>(cx: &mut FunctionContext, handler: H) -> Result<(), 
 }
 
 fn list_hwkey_internal(vault: &WrappedVault) -> Result<Vec<LedgerDetails>, VaultNodeError> {
-    match LedgerKey::new_connected() {
+    match LedgerKeyShared::instance() {
         Ok(k) => {
             let mut result: Vec<LedgerDetails> = Vec::new();
             let app = k.get_app_details().ok();
@@ -391,12 +390,8 @@ pub fn update<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeEr
 
 impl WrappedVault {
     pub fn is_ledger_connected() -> Result<bool, VaultError> {
-        let opened = LedgerKey::new_connected().and_then(|a| a.open());
-        match opened {
-            Ok(_) => Ok(true),
-            Err(HWKeyError::Unavailable) => Ok(false),
-            Err(e) => Err(VaultError::HWKeyFailed(e)),
-        }
+        Ok(LedgerKeyShared::instance()?
+            .is_connected())
     }
 
     pub fn is_available(
@@ -488,7 +483,6 @@ impl WrappedVault {
         hd_path_all: Vec<String>,
         blockchain: Blockchain,
     ) -> Result<Vec<HDPathAddress>, VaultError> {
-
         let storage = &self.cfg.get_storage();
         let addresses = match seed_ref.value {
             SeedDefinitionOrReferenceType::Reference(id) => {
