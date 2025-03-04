@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         node: [ "electron", "node" ]
-        os: [ "windows-latest", "macos-latest", "ubuntu-latest" ]
+        os: [ "windows-latest", "macos-latest", "ubuntu-latest", 'macos-13' ]
     # CONTINUE because it can fail for completely irrelevant reason like IO timeout and that would prevent the
     # whole job from restarting because some part of the packages are already published and would fail anyway
     continue-on-error: true
@@ -62,8 +62,6 @@ jobs:
         if: runner.os != 'Windows'
         env:
           RUST_BACKTRACE: "1"
-          # support macOS High Sierra
-          MACOSX_DEPLOYMENT_TARGET: "10.13"
 
       - name: Show lib details
         run: |
