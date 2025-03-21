@@ -19,7 +19,14 @@ use emerald_vault::blockchain::chains::BlockchainType;
 use emerald_vault::chains::Blockchain;
 use bitcoin::Address;
 use std::str::FromStr;
-use emerald_hwkey::ledger::manager_mt::LedgerKeyShared;
+use emerald_hwkey::{
+    ledger::{
+        connect::{
+            LedgerKeyShared,
+            LedgerKey
+        }
+    }
+};
 use emerald_vault::structs::seed::WithFingerprint;
 use emerald_vault::crypto::fingerprint::Fingerprints;
 use errors::{VaultNodeError};
@@ -390,7 +397,8 @@ pub fn update<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeEr
 
 impl WrappedVault {
     pub fn is_ledger_connected() -> Result<bool, VaultError> {
-        Ok(LedgerKeyShared::instance()?
+        Ok(LedgerKeyShared::instance()
+            .map_err(|_| VaultError::PrivateKeyUnavailable)?
             .is_connected())
     }
 

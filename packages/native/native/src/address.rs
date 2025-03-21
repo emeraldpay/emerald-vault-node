@@ -37,7 +37,7 @@ impl TryFrom<AddressRefJson> for AddressRef {
                     )
                 } else {
                     AddressRef::BitcoinAddress(
-                        BitcoinAddress::from_str(s).map_err(|_| ())?
+                        BitcoinAddress::from_str(s).map_err(|_| ())?.assume_checked()
                     )
                 }
             },

@@ -15,13 +15,15 @@ neon-build = "0.10.1"
 [dependencies]
 #emerald-vault = "=0.34.0"
 #emerald-hwkey = "=0.5.0"
-hdpath = "0.6.3"
+#hdpath = "0.6.3"
 
 #emerald-vault = { path = "../../../../emerald-vault" }
 #emerald-hwkey = { path = "../../../../emerald-hwkey" }
-emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault", branch = "master" }
-emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
 #hdpath = { path = "../../../../hdpath", features = ["with-bitcoin"] }
+
+emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault" }
+emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
+hdpath = { git = "https://github.com/emeraldpay/hdpath-rs", features = ["with-bitcoin"] }
 
 lazy_static = "1.4.0"
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
@@ -30,7 +32,7 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
-bitcoin = "0.29"
+bitcoin = "0.32"
 env_logger = "0.8.1"
 log = "0.4.11"
 byteorder = "1.4.3"

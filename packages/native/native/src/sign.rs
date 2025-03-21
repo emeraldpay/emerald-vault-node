@@ -12,8 +12,15 @@ use emerald_vault::blockchain::chains::BlockchainType;
 use emerald_vault::blockchain::bitcoin::{BitcoinTransferProposal, InputReference, InputScriptSource, KeyMapping, XPub};
 use emerald_vault::structs::wallet::PKType;
 use hdpath::{StandardHDPath, AccountHDPath};
-use bitcoin::{Address, TxOut, OutPoint, Txid, Transaction};
-use bitcoin::consensus::Decodable;
+use bitcoin::{
+    Address,
+    TxOut,
+    OutPoint,
+    Txid,
+    Transaction,
+    consensus::Decodable,
+    Amount
+};
 use emerald_vault::chains::EthereumChainId;
 use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, TxAccess};
 use emerald_vault::ethereum::signature::{EthereumBasicSignature, SignableHash};
@@ -176,7 +183,8 @@ fn convert_inputs(inputs: Vec<InputJson>, xpub: &XPub, seed_id: Uuid, hd_account
             None => match &input.address {
                 Some(value) => {
                     let address = Address::from_str(value)
-                        .map_err(|_| VaultNodeError::OtherInput("Invalid input bitcoin address".to_string()))?;
+                        .map_err(|_| VaultNodeError::OtherInput("Invalid input bitcoin address".to_string()))?
+                        .assume_checked();
                     //TODO use actual number of used address from current state
                     match xpub.find_path(hd_account, &address, 1000) {
                         Some(path) => path,
@@ -207,8 +215,8 @@ fn convert_output(outputs: Vec<OutputJson>) -> Result<Vec<TxOut>, VaultNodeError
         let address = Address::from_str(output.address.as_str())
             .map_err(|_| VaultNodeError::OtherInput("Invalid output bitcoin address".to_string()))?;
         let value = TxOut {
-            value: output.amount,
-            script_pubkey: address.script_pubkey(),
+            value: Amount::from_sat(output.amount),
+            script_pubkey: address.assume_checked().script_pubkey(),
         };
         result.push(value);
     }
@@ -295,7 +303,7 @@ impl WrappedVault {
         };
 
         let proposal = BitcoinTransferProposal {
-            network: entry.blockchain.as_bitcoin_network(),
+            network: entry.blockchain.as_bitcoin_network_kind(),
             seed: vec![seed],
             keys,
             input: convert_inputs(unsigned_tx.inputs, &xpub, seed_id, &hd_account)?,
@@ -318,7 +326,7 @@ fn bitcoin_tx_hash(tx: &Vec<u8>) -> Result<String, VaultNodeError> {
     let mut raw = tx.as_slice().clone();
     let parsed = Transaction::consensus_decode(&mut raw)
         .map_err(|_| VaultNodeError::OtherProcessing("Generated an invalid tx".to_string()))?;
-    let txid = parsed.txid().as_hash().to_string();
+    let txid = parsed.txid().to_string();
     Ok(txid)
 }
 
