@@ -1,16 +1,13 @@
 use std::str::FromStr;
 
 use neon::prelude::*;
-use uuid::Uuid;
 
 use chrono::{DateTime, Utc};
 use emerald_vault::{
-    blockchain::chains::Blockchain,
     storage::{addressbook::AddressBookmark, vault::VaultAccess},
-    structs::{book::AddressRef, book::BookmarkDetails},
+    structs::{book::AddressRef},
     EthereumAddress,
 };
-use std::convert::{TryFrom, TryInto};
 use address::AddressRefJson;
 use errors::VaultNodeError;
 use instance::{Instance, WrappedVault};
@@ -26,6 +23,7 @@ pub struct AddressBookmarkJson {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct NewAddressBookItem {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -41,21 +39,6 @@ impl From<&AddressBookmark> for AddressBookmarkJson {
             description: value.details.description.clone(),
             blockchain: value.details.blockchain as u32,
             created_at: value.details.created_at,
-        }
-    }
-}
-
-impl NewAddressBookItem {
-    pub fn into_bookmark(self, blockchain: Blockchain) -> AddressBookmark {
-        AddressBookmark {
-            id: Uuid::new_v4(),
-            details: BookmarkDetails {
-                blockchain,
-                label: self.name,
-                description: self.description,
-                address: self.address.try_into().expect("Invalid address"),
-                created_at: Utc::now(),
-            },
         }
     }
 }

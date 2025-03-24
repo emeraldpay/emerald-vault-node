@@ -430,7 +430,7 @@ impl WrappedVault {
                            blockchain: Blockchain) -> Result<Vec<HDPathAddress>, VaultError> {
         let hd_path_std: Vec<StandardHDPath> = hd_path_all.iter()
             .map(|s|
-                StandardHDPath::from_str(s.as_str().clone())
+                StandardHDPath::from_str(s.as_str())
             )
             .filter(|a| a.is_ok())
             .map(|a| a.unwrap())

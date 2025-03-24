@@ -56,6 +56,7 @@ pub enum AddEntryType {
 }
 
 #[derive(Deserialize, Clone)]
+#[allow(dead_code)]
 pub struct SeedEntry {
     #[serde(rename = "seed")]
     pub seed: SeedDefinitionOrReferenceJson,

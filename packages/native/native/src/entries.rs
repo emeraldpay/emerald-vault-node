@@ -16,6 +16,7 @@ use errors::VaultNodeError;
 use instance::{Instance, WrappedVault};
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct UpdateAccount {
     #[serde(default)]
     pub name: Option<String>,
@@ -23,6 +24,7 @@ pub struct UpdateAccount {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct ImportPrivateKey {
     pub pk: String,
     pub password: String,
@@ -31,6 +33,7 @@ pub struct ImportPrivateKey {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct NewMnemonicAccount {
     #[serde(default)]
     pub name: String,
@@ -43,6 +46,7 @@ pub struct NewMnemonicAccount {
 }
 
 #[derive(Serialize, Clone)]
+#[allow(dead_code)]
 pub struct ExportedWeb3Json {
     pub password: String,
     pub json: String,

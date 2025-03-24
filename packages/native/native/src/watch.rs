@@ -1,6 +1,5 @@
 use std::convert::TryFrom;
 use emerald_vault::storage::{
-    vault::VaultStorage,
     watch::{
         Request, Event, ConnectedDevice,
     }
