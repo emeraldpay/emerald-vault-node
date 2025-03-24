@@ -1,9 +1,7 @@
-use neon::prelude::{FunctionContext, JsObject, JsString};
+use neon::prelude::{FunctionContext, JsString};
 use uuid::Uuid;
 
-use access::{obj_get_str};
 use emerald_vault::storage::admin::VaultAdmin;
-use emerald_vault::storage::default_path;
 use emerald_vault::storage::global_key::LegacyEntryRef;
 use errors::VaultNodeError;
 use instance::{Instance};

@@ -43,7 +43,7 @@ pub fn obj_get_number(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &s
     }
 }
 
-pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
+pub fn args_get_str(cx: &mut FunctionContext, pos: usize) -> Option<String> {
     match cx.argument_opt(pos) {
         None => None,
         Some(v) => {
@@ -59,12 +59,12 @@ pub fn args_get_str(cx: &mut FunctionContext, pos: i32) -> Option<String> {
     }
 }
 
-pub fn args_require_str(cx: &mut FunctionContext, pos: i32, name: &str) -> Result<String, VaultNodeError> {
+pub fn args_require_str(cx: &mut FunctionContext, pos: usize, name: &str) -> Result<String, VaultNodeError> {
     args_get_str(cx, pos)
         .ok_or(VaultNodeError::ArgumentMissing(pos as usize, name.to_string()))
 }
 
-pub fn args_get_uuid(cx: &mut FunctionContext, pos: i32) -> Result<Uuid, VaultNodeError> {
+pub fn args_get_uuid(cx: &mut FunctionContext, pos: usize) -> Result<Uuid, VaultNodeError> {
     let wallet_id = cx
         .argument::<JsString>(pos)
         .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "id".to_string()))?
@@ -72,7 +72,7 @@ pub fn args_get_uuid(cx: &mut FunctionContext, pos: i32) -> Result<Uuid, VaultNo
     Uuid::parse_str(wallet_id.as_str()).map_err(|_| VaultNodeError::InvalidArgument(pos as usize))
 }
 
-pub fn args_get_wallet_and_entry_ids(cx: &mut FunctionContext, pos: i32) -> Result<(Uuid, usize), VaultNodeError> {
+pub fn args_get_wallet_and_entry_ids(cx: &mut FunctionContext, pos: usize) -> Result<(Uuid, usize), VaultNodeError> {
     let wallet_id = cx
         .argument::<JsString>(pos)
         .map_err(|_| VaultNodeError::ArgumentMissing(pos as usize, "wallet_id".to_string()))?

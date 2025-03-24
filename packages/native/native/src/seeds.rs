@@ -366,7 +366,7 @@ pub fn update<H>(cx: &mut FunctionContext, handler: H) -> Result<(), VaultNodeEr
     let vault = Instance::get_vault()?;
 
     let json = cx
-        .argument::<JsString>(0 as i32)
+        .argument::<JsString>(0)
         .map_err(|_| VaultNodeError::ArgumentMissing(0, "seed".to_string()))?
         .value(cx);
     let seed_id = Uuid::parse_str(json.as_str())

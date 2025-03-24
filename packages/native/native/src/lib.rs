@@ -11,7 +11,6 @@ extern crate uuid;
 extern crate bitcoin;
 extern crate emerald_hwkey;
 extern crate env_logger;
-#[macro_use]
 extern crate log;
 extern crate num_bigint;
 #[macro_use]
@@ -43,7 +42,8 @@ use std::io::Write;
 
 const DEV_MODE: bool = false;
 
-register_module!(mut cx, {
+#[neon::main]
+fn main(mut cx: ModuleContext) -> NeonResult<()> {
     if DEV_MODE {
         Builder::new()
             .format(|buf, record| {
@@ -156,4 +156,4 @@ register_module!(mut cx, {
         .expect("watch not exported");
 
     Ok(())
-});
+}
