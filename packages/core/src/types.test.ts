@@ -239,6 +239,7 @@ describe("Types", () => {
         });
         it("for invalid", () => {
             expect(() => {
+                // @ts-ignore
                 getBlockchainType(0)
             }).toThrow()
         });

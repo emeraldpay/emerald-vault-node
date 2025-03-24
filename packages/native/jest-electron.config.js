@@ -3,7 +3,7 @@
 // $ yarn workspace @emeraldpay/emerald-vault-native run jest:all
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
+  testEnvironment: 'electron',
   testPathIgnorePatterns: [
     "<rootDir>/lib/",
     "<rootDir>/node_modules/",

@@ -4,6 +4,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  testEnvironmentOptions: {},
   testPathIgnorePatterns: [
     "<rootDir>/lib/",
     "<rootDir>/node_modules/",
