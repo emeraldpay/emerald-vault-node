@@ -1,6 +1,6 @@
 [package]
 name = "emerald-vault-node"
-version = "0.14.0-dev"
+version = "0.14.0"
 authors = ["Igor Artamonov <igor@artamonov.ru>"]
 license = "Apache-2.0"
 exclude = ["artifacts.json", "index.node"]
@@ -13,17 +13,17 @@ crate-type = ["cdylib"]
 neon-build = "0.10.1"
 
 [dependencies]
-#emerald-vault = "=0.34.0"
-#emerald-hwkey = "=0.5.0"
-#hdpath = "0.6.3"
+emerald-vault = "=0.35.0"
+emerald-hwkey = "=0.6.0"
+hdpath = "0.7"
 
 #emerald-vault = { path = "../../../../emerald-vault" }
 #emerald-hwkey = { path = "../../../../emerald-hwkey" }
 #hdpath = { path = "../../../../hdpath", features = ["with-bitcoin"] }
 
-emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault" }
-emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
-hdpath = { git = "https://github.com/emeraldpay/hdpath-rs", features = ["with-bitcoin"] }
+#emerald-vault = { git = "https://github.com/emeraldpay/emerald-vault" }
+#emerald-hwkey = { git = "https://github.com/emeraldpay/emerald-hwkey", branch = "master" }
+#hdpath = { git = "https://github.com/emeraldpay/hdpath-rs", features = ["with-bitcoin"] }
 
 lazy_static = "1.4.0"
 uuid = { version = "1.2.2", features = ["serde", "v4"] }

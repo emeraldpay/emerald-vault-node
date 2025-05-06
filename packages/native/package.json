@@ -1,6 +1,6 @@
 {
   "name": "@emeraldpay/emerald-vault-native",
-  "version": "0.14.0-dev",
+  "version": "0.14.0",
   "description": "Emerald Vault as NodeJS library",
   "author": "Igor Artamonov <splix@emeraldpay.io>",
   "license": "Apache-2.0",
@@ -59,7 +59,7 @@
     "prepack": "npm run clean && npm run build:ts"
   },
   "dependencies": {
-    "@emeraldpay/emerald-vault-core": "0.14.0-dev",
+    "@emeraldpay/emerald-vault-core": "0.14.0",
     "@emeraldpay/neon-frame": "0.2.0"
   },
   "devDependencies": {
