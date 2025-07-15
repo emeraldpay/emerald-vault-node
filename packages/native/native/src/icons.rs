@@ -5,10 +5,10 @@ use neon::prelude::JsArrayBuffer;
 use neon::types::buffer::TypedArray;
 use neon::types::{JsTypedArray, JsValue};
 use uuid::Uuid;
-use access::{args_get_uuid};
+use crate::access::{args_get_uuid};
 use emerald_vault::storage::vault::VaultStorage;
-use errors::VaultNodeError;
-use instance::Instance;
+use crate::errors::VaultNodeError;
+use crate::instance::Instance;
 
 #[derive(Serialize, Clone)]
 pub struct IconDetailsJson {

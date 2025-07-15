@@ -8,9 +8,9 @@ use emerald_vault::{
     structs::{book::AddressRef},
     EthereumAddress,
 };
-use address::AddressRefJson;
-use errors::VaultNodeError;
-use instance::{Instance, WrappedVault};
+use crate::address::AddressRefJson;
+use crate::errors::VaultNodeError;
+use crate::instance::{Instance, WrappedVault};
 
 #[derive(Serialize, Clone)]
 pub struct AddressBookmarkJson {

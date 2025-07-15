@@ -603,9 +603,8 @@ dependencies = [
 
 [[package]]
 name = "emerald-hwkey"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2bf2eca8e394aaac41cb391cff49dba4f133af370620c3eb98b63d68f6ec9de"
+version = "0.7.0-dev"
+source = "git+https://github.com/emeraldpay/emerald-hwkey?branch=master#a67221b4f49f80e948c2f16c912a8bc3312e5ebd"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -624,9 +623,8 @@ dependencies = [
 
 [[package]]
 name = "emerald-vault"
-version = "0.35.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7138bad9416d921bec503ff6e340693974566e8f2b4e462f33d340a3c8550cb"
+version = "0.36.0-dev"
+source = "git+https://github.com/emeraldpay/emerald-vault#d71a9377cf6b2e1eccf389d02b113bcbdfed64f4"
 dependencies = [
  "aes",
  "argon2",

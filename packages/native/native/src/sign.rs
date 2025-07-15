@@ -4,13 +4,32 @@ use hex::FromHex;
 use neon::prelude::{FunctionContext, JsNumber, JsString};
 use uuid::Uuid;
 
-use access::{args_get_str};
-use emerald_vault::{to_even_str, trim_hex, EthereumAddress, EthereumLegacyTransaction, to_32bytes, keccak256};
-use errors::{JsonError, VaultNodeError};
-use emerald_vault::structs::book::AddressRef;
-use emerald_vault::blockchain::chains::BlockchainType;
-use emerald_vault::blockchain::bitcoin::{BitcoinTransferProposal, InputReference, InputScriptSource, KeyMapping, XPub};
-use emerald_vault::structs::wallet::PKType;
+use crate::access::{args_get_str};
+use crate::errors::{JsonError, VaultNodeError};
+use emerald_vault::{
+    blockchain::{
+        bitcoin::{BitcoinTransferProposal, InputReference, InputScriptSource, KeyMapping, XPub},
+        chains::BlockchainType
+    },
+    to_even_str,
+    trim_hex,
+    EthereumAddress,
+    EthereumLegacyTransaction,
+    to_32bytes,
+    keccak256,
+    structs::{
+        wallet::PKType,
+        book::AddressRef,
+        types::UsesOddKey
+    },
+    sign::ethereum::SignMessage,
+    chains::EthereumChainId,
+    ethereum::{
+        transaction::{EthereumEIP1559Transaction, TxAccess},
+        signature::{EthereumBasicSignature, SignableHash},
+        eip712::parse_eip712
+    },
+};
 use hdpath::{StandardHDPath, AccountHDPath};
 use bitcoin::{
     Address,
@@ -21,13 +40,8 @@ use bitcoin::{
     consensus::Decodable,
     Amount
 };
-use emerald_vault::chains::EthereumChainId;
-use emerald_vault::ethereum::transaction::{EthereumEIP1559Transaction, TxAccess};
-use emerald_vault::ethereum::signature::{EthereumBasicSignature, SignableHash};
-use emerald_vault::structs::types::UsesOddKey;
 use num_bigint::BigUint;
-use emerald_vault::ethereum::eip712::parse_eip712;
-use instance::{Instance, WrappedVault};
+use crate::instance::{Instance, WrappedVault};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct AccessListItemJson {
@@ -370,16 +384,22 @@ fn sign_msg_internal(vault: &WrappedVault, wallet_id: Uuid, entry_id: usize, msg
 
     let signed = match entry.blockchain.get_type() {
         BlockchainType::Ethereum => {
-            match msg {
+            let input = match &msg {
                 UnsignedMessageJson::EIP191 { message } => {
-                    let signature = entry.sign_message(&message, password, storage)?;
-                    let address = entry.address.expect("No address").to_string(); //TODO
-                    SignedMessageJson::EIP191 { signature, address }
+                    SignMessage::EIP191(message.clone())
                 },
                 UnsignedMessageJson::EIP712 { message } => {
                     let data = parse_eip712(message)?;
-                    let signature = entry.sign_message(&data, password, storage)?;
-                    let address = entry.address.expect("No address").to_string(); //TODO
+                    SignMessage::EIP712(data)
+                }
+            };
+            let signature = entry.sign_message(input, password, storage)?;
+            let address = entry.address.expect("No address").to_string(); //TODO
+            match msg {
+                UnsignedMessageJson::EIP191 { .. } => {
+                    SignedMessageJson::EIP191 { signature, address }
+                },
+                UnsignedMessageJson::EIP712 { .. } => {
                     SignedMessageJson::EIP712 { signature, address }
                 }
             }
@@ -510,7 +530,7 @@ pub fn signature_author<H>(cx: &mut FunctionContext, handler: H) -> Result<(), V
 
 #[cfg(test)]
 mod tests {
-    use sign::bitcoin_tx_hash;
+    use crate::sign::bitcoin_tx_hash;
 
     #[test]
     fn extract_bitcoin_txid() {

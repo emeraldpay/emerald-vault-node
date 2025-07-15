@@ -3,17 +3,17 @@ use std::str::FromStr;
 use neon::prelude::*;
 use uuid::Uuid;
 
-use access::{args_get_str};
+use crate::access::{args_get_str};
 use emerald_vault::{
     convert::json::keyfile::EthereumJsonV3File, error::VaultError, EthereumAddress,
     EthereumPrivateKey,
 };
-use wallets::CurrentAddressJson;
+use crate::wallets::CurrentAddressJson;
 use emerald_vault::structs::wallet::{AddressRole};
 use emerald_vault::chains::BlockchainType;
 use bitcoin::Address;
-use errors::VaultNodeError;
-use instance::{Instance, WrappedVault};
+use crate::errors::VaultNodeError;
+use crate::instance::{Instance, WrappedVault};
 
 #[derive(Deserialize)]
 #[allow(dead_code)]

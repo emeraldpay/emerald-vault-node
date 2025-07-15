@@ -29,8 +29,8 @@ use emerald_hwkey::{
 };
 use emerald_vault::structs::seed::WithFingerprint;
 use emerald_vault::crypto::fingerprint::Fingerprints;
-use errors::{VaultNodeError};
-use instance::{Instance, WrappedVault};
+use crate::errors::{VaultNodeError};
+use crate::instance::{Instance, WrappedVault};
 
 #[derive(Serialize, Deserialize, Clone)]
 struct HDPathAddress {
@@ -550,7 +550,7 @@ impl WrappedVault {
 
 #[cfg(test)]
 mod tests {
-    use seeds::{MnemonicSeedJson, SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
+    use crate::seeds::{MnemonicSeedJson, SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
     use std::str::FromStr;
     use uuid::Uuid;
 

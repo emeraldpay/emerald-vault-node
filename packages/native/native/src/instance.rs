@@ -4,13 +4,13 @@ use std::sync::{Arc, Mutex, RwLock};
 use lazy_static::lazy_static;
 use neon::prelude::*;
 use uuid::Uuid;
-use access::{obj_get_number, obj_get_str};
+use crate::access::{obj_get_number, obj_get_str};
 use emerald_vault::chains::EthereumChainId;
 use emerald_vault::error::VaultError;
 use emerald_vault::storage::default_path;
 use emerald_vault::storage::vault::VaultStorage;
 use emerald_vault::structs::wallet::{Wallet, WalletEntry};
-use errors::{JsonError, VaultNodeError};
+use crate::errors::{JsonError, VaultNodeError};
 
 
 #[derive(Clone, Eq, PartialEq, Debug)]

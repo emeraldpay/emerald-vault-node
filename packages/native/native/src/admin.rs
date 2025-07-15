@@ -3,8 +3,8 @@ use uuid::Uuid;
 
 use emerald_vault::storage::admin::VaultAdmin;
 use emerald_vault::storage::global_key::LegacyEntryRef;
-use errors::VaultNodeError;
-use instance::{Instance};
+use crate::errors::VaultNodeError;
+use crate::instance::{Instance};
 
 #[neon_frame_fn]
 pub fn migrate(_cx: &mut FunctionContext) -> Result<bool, VaultNodeError> {

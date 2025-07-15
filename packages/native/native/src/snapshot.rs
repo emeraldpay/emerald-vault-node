@@ -5,8 +5,8 @@ use emerald_vault::error::VaultError;
 use emerald_vault::storage::vault::VaultStorage;
 use neon::context::{FunctionContext};
 use neon::prelude::{JsString};
-use errors::VaultNodeError;
-use instance::Instance;
+use crate::errors::VaultNodeError;
+use crate::instance::Instance;
 
 fn create_internal(storage: VaultStorage, target_file: String) -> Result<bool, VaultError> {
     let target = PathBuf::from(&target_file);

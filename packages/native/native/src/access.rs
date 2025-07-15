@@ -4,7 +4,7 @@ use neon::prelude::{FunctionContext, JsObject, JsString, JsNumber, JsValue, Neon
 use neon::types::{JsNull, JsUndefined};
 
 use uuid::Uuid;
-use errors::{VaultNodeError};
+use crate::errors::{VaultNodeError};
 
 pub fn obj_get_str(cx: &mut FunctionContext, obj: &Handle<JsObject>, name: &str) -> Option<String> {
     let value: NeonResult<Handle<JsValue>> = obj.get(cx, name);

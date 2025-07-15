@@ -4,7 +4,7 @@ use std::str::FromStr;
 use neon::prelude::{FunctionContext, JsString};
 use uuid::Uuid;
 
-use access::{args_get_str, args_get_wallet_and_entry_ids, args_get_uuid};
+use crate::access::{args_get_str, args_get_wallet_and_entry_ids, args_get_uuid};
 use chrono::{DateTime, Utc};
 use emerald_vault::{
     blockchain::{
@@ -25,12 +25,12 @@ use emerald_vault::{
     EthereumPrivateKey,
 };
 use hdpath::{StandardHDPath, AccountHDPath};
-use seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
-use address::AddressRefJson;
+use crate::seeds::{SeedDefinitionOrReferenceJson, SeedDefinitionOrReferenceType};
+use crate::address::AddressRefJson;
 use bitcoin::Address;
 use emerald_vault::blockchain::bitcoin::XPub;
-use errors::{VaultNodeError, JsonError};
-use instance::{AccountIndex, Instance, WrappedVault};
+use crate::errors::{VaultNodeError, JsonError};
+use crate::instance::{AccountIndex, Instance, WrappedVault};
 
 #[derive(Deserialize, Clone)]
 pub struct AddEntryJson {
@@ -421,7 +421,7 @@ impl WrappedVault {
                 if entry.password.is_none() {
                     return Err(VaultNodeError::from(JsonError::MissingField("password".to_string())));
                 }
-                let pk = EthereumPrivateKey::gen();
+                let pk = EthereumPrivateKey::generate();
                 storage.add_ethereum_entry(wallet_id).raw_pk(
                     pk.0.to_vec(),
                     entry.password.unwrap().as_str(),
